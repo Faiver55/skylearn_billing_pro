@@ -1,0 +1,216 @@
+<?php
+/**
+ * Admin functionality for Skylearn Billing Pro
+ *
+ * @package SkyLearnBillingPro
+ * @author Ferdous Khalifa
+ * @copyright 2024 Skyian LLC
+ * @license GPLv3
+ */
+
+// Prevent direct access
+if (!defined('ABSPATH')) {
+    exit;
+}
+
+/**
+ * Admin class for handling WordPress admin interface
+ */
+class SkyLearn_Billing_Pro_Admin {
+    
+    /**
+     * Constructor
+     */
+    public function __construct() {
+        add_action('admin_menu', array($this, 'add_admin_menu'));
+        add_action('admin_init', array($this, 'admin_init'));
+        add_action('admin_enqueue_scripts', array($this, 'enqueue_scripts'));
+    }
+    
+    /**
+     * Add admin menu items
+     */
+    public function add_admin_menu() {
+        // Add main menu page
+        add_menu_page(
+            __('Skylearn Billing', 'skylearn-billing-pro'),
+            __('Skylearn Billing', 'skylearn-billing-pro'),
+            'manage_options',
+            'skylearn-billing-pro',
+            array($this, 'admin_page'),
+            'dashicons-credit-card',
+            30
+        );
+        
+        // Add submenu pages
+        add_submenu_page(
+            'skylearn-billing-pro',
+            __('General Settings', 'skylearn-billing-pro'),
+            __('General', 'skylearn-billing-pro'),
+            'manage_options',
+            'skylearn-billing-pro',
+            array($this, 'admin_page')
+        );
+    }
+    
+    /**
+     * Enqueue admin scripts and styles
+     */
+    public function enqueue_scripts($hook) {
+        // Only load on our admin pages
+        if (strpos($hook, 'skylearn-billing-pro') === false) {
+            return;
+        }
+        
+        wp_enqueue_style(
+            'skylearn-billing-pro-admin',
+            SKYLEARN_BILLING_PRO_PLUGIN_URL . 'assets/css/admin.css',
+            array(),
+            SKYLEARN_BILLING_PRO_VERSION
+        );
+        
+        wp_enqueue_script(
+            'skylearn-billing-pro-admin',
+            SKYLEARN_BILLING_PRO_PLUGIN_URL . 'assets/js/admin.js',
+            array('jquery'),
+            SKYLEARN_BILLING_PRO_VERSION,
+            true
+        );
+    }
+    
+    /**
+     * Render admin page
+     */
+    public function admin_page() {
+        $active_tab = isset($_GET['tab']) ? sanitize_text_field($_GET['tab']) : 'general';
+        include SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'templates/admin-page.php';
+    }
+    
+    /**
+     * Initialize admin settings
+     */
+    public function admin_init() {
+        // Register settings
+        register_setting('skylearn_billing_pro_general', 'skylearn_billing_pro_options', array($this, 'sanitize_options'));
+        
+        // Add settings sections
+        add_settings_section(
+            'skylearn_billing_pro_general_section',
+            __('General Settings', 'skylearn-billing-pro'),
+            array($this, 'general_section_callback'),
+            'skylearn_billing_pro_general'
+        );
+        
+        // Add settings fields
+        add_settings_field(
+            'company_name',
+            __('Company Name', 'skylearn-billing-pro'),
+            array($this, 'company_name_callback'),
+            'skylearn_billing_pro_general',
+            'skylearn_billing_pro_general_section'
+        );
+        
+        add_settings_field(
+            'company_email',
+            __('Company Email', 'skylearn-billing-pro'),
+            array($this, 'company_email_callback'),
+            'skylearn_billing_pro_general',
+            'skylearn_billing_pro_general_section'
+        );
+        
+        add_settings_field(
+            'currency',
+            __('Default Currency', 'skylearn-billing-pro'),
+            array($this, 'currency_callback'),
+            'skylearn_billing_pro_general',
+            'skylearn_billing_pro_general_section'
+        );
+        
+        add_settings_field(
+            'test_mode',
+            __('Test Mode', 'skylearn-billing-pro'),
+            array($this, 'test_mode_callback'),
+            'skylearn_billing_pro_general',
+            'skylearn_billing_pro_general_section'
+        );
+    }
+    
+    /**
+     * Sanitize options
+     */
+    public function sanitize_options($input) {
+        $options = get_option('skylearn_billing_pro_options', array());
+        
+        if (isset($input['general_settings'])) {
+            $options['general_settings']['company_name'] = sanitize_text_field($input['general_settings']['company_name']);
+            $options['general_settings']['company_email'] = sanitize_email($input['general_settings']['company_email']);
+            $options['general_settings']['currency'] = sanitize_text_field($input['general_settings']['currency']);
+            $options['general_settings']['test_mode'] = isset($input['general_settings']['test_mode']) ? true : false;
+        }
+        
+        return $options;
+    }
+    
+    /**
+     * General section callback
+     */
+    public function general_section_callback() {
+        echo '<p>' . esc_html__('Configure the general settings for Skylearn Billing Pro.', 'skylearn-billing-pro') . '</p>';
+    }
+    
+    /**
+     * Company name field callback
+     */
+    public function company_name_callback() {
+        $options = get_option('skylearn_billing_pro_options', array());
+        $value = isset($options['general_settings']['company_name']) ? $options['general_settings']['company_name'] : '';
+        echo '<input type="text" name="skylearn_billing_pro_options[general_settings][company_name]" value="' . esc_attr($value) . '" class="regular-text" />';
+        echo '<p class="description">' . esc_html__('Enter your company name as it will appear on invoices and emails.', 'skylearn-billing-pro') . '</p>';
+    }
+    
+    /**
+     * Company email field callback
+     */
+    public function company_email_callback() {
+        $options = get_option('skylearn_billing_pro_options', array());
+        $value = isset($options['general_settings']['company_email']) ? $options['general_settings']['company_email'] : get_option('admin_email');
+        echo '<input type="email" name="skylearn_billing_pro_options[general_settings][company_email]" value="' . esc_attr($value) . '" class="regular-text" />';
+        echo '<p class="description">' . esc_html__('Email address for billing notifications and correspondence.', 'skylearn-billing-pro') . '</p>';
+    }
+    
+    /**
+     * Currency field callback
+     */
+    public function currency_callback() {
+        $options = get_option('skylearn_billing_pro_options', array());
+        $value = isset($options['general_settings']['currency']) ? $options['general_settings']['currency'] : 'USD';
+        
+        $currencies = array(
+            'USD' => __('US Dollar (USD)', 'skylearn-billing-pro'),
+            'EUR' => __('Euro (EUR)', 'skylearn-billing-pro'),
+            'GBP' => __('British Pound (GBP)', 'skylearn-billing-pro'),
+            'CAD' => __('Canadian Dollar (CAD)', 'skylearn-billing-pro'),
+            'AUD' => __('Australian Dollar (AUD)', 'skylearn-billing-pro'),
+        );
+        
+        echo '<select name="skylearn_billing_pro_options[general_settings][currency]">';
+        foreach ($currencies as $code => $name) {
+            echo '<option value="' . esc_attr($code) . '"' . selected($value, $code, false) . '>' . esc_html($name) . '</option>';
+        }
+        echo '</select>';
+        echo '<p class="description">' . esc_html__('Default currency for billing and payments.', 'skylearn-billing-pro') . '</p>';
+    }
+    
+    /**
+     * Test mode field callback
+     */
+    public function test_mode_callback() {
+        $options = get_option('skylearn_billing_pro_options', array());
+        $value = isset($options['general_settings']['test_mode']) ? $options['general_settings']['test_mode'] : true;
+        echo '<label>';
+        echo '<input type="checkbox" name="skylearn_billing_pro_options[general_settings][test_mode]" value="1"' . checked($value, true, false) . ' />';
+        echo ' ' . esc_html__('Enable test mode', 'skylearn-billing-pro');
+        echo '</label>';
+        echo '<p class="description">' . esc_html__('When enabled, all payments will be processed in test mode.', 'skylearn-billing-pro') . '</p>';
+    }
+}

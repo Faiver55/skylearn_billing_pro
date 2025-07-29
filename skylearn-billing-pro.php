@@ -70,18 +70,34 @@ class SkyLearnBillingPro {
     private function init_hooks() {
         add_action('init', array($this, 'init'));
         add_action('plugins_loaded', array($this, 'load_textdomain'));
+        add_action('admin_enqueue_scripts', array($this, 'admin_scripts'));
         
-        // Activation and deactivation hooks
+        // Activation, deactivation and uninstall hooks
         register_activation_hook(__FILE__, array($this, 'activate'));
         register_deactivation_hook(__FILE__, array($this, 'deactivate'));
+        register_uninstall_hook(__FILE__, array('SkyLearnBillingPro', 'uninstall'));
     }
     
     /**
      * Initialize plugin
      */
     public function init() {
+        // Initialize plugin components
+        $this->includes();
+        
         // Plugin initialization code will go here
         do_action('skylearn_billing_pro_init');
+    }
+    
+    /**
+     * Include required files
+     */
+    private function includes() {
+        // Include admin class if in admin
+        if (is_admin()) {
+            require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/class-admin.php';
+            new SkyLearn_Billing_Pro_Admin();
+        }
     }
     
     /**
@@ -95,7 +111,25 @@ class SkyLearnBillingPro {
      * Plugin activation
      */
     public function activate() {
-        // Activation code will go here
+        // Create plugin options with default values
+        $default_options = array(
+            'version' => SKYLEARN_BILLING_PRO_VERSION,
+            'general_settings' => array(
+                'company_name' => '',
+                'company_email' => get_option('admin_email'),
+                'currency' => 'USD',
+                'test_mode' => true,
+            )
+        );
+        
+        add_option('skylearn_billing_pro_options', $default_options);
+        
+        // Set plugin installation timestamp
+        add_option('skylearn_billing_pro_installed', time());
+        
+        // Flush rewrite rules
+        flush_rewrite_rules();
+        
         do_action('skylearn_billing_pro_activate');
     }
     
@@ -103,8 +137,46 @@ class SkyLearnBillingPro {
      * Plugin deactivation
      */
     public function deactivate() {
-        // Deactivation code will go here
+        // Clear any scheduled events
+        wp_clear_scheduled_hook('skylearn_billing_pro_daily_tasks');
+        
+        // Flush rewrite rules
+        flush_rewrite_rules();
+        
         do_action('skylearn_billing_pro_deactivate');
+    }
+    
+    /**
+     * Plugin uninstall
+     */
+    public static function uninstall() {
+        // Remove all plugin options
+        delete_option('skylearn_billing_pro_options');
+        delete_option('skylearn_billing_pro_installed');
+        
+        // Remove any custom database tables if they exist
+        global $wpdb;
+        
+        // Note: In the future, we would drop custom tables here
+        // Example: $wpdb->query("DROP TABLE IF EXISTS {$wpdb->prefix}skylearn_billing_subscriptions");
+        
+        // Clear any scheduled events
+        wp_clear_scheduled_hook('skylearn_billing_pro_daily_tasks');
+        
+        do_action('skylearn_billing_pro_uninstall');
+    }
+    
+    /**
+     * Enqueue admin scripts and styles
+     */
+    public function admin_scripts($hook) {
+        // Only load on our admin pages
+        if (strpos($hook, 'skylearn-billing-pro') === false) {
+            return;
+        }
+        
+        wp_enqueue_style('skylearn-billing-pro-admin', SKYLEARN_BILLING_PRO_PLUGIN_URL . 'assets/css/admin.css', array(), SKYLEARN_BILLING_PRO_VERSION);
+        wp_enqueue_script('skylearn-billing-pro-admin', SKYLEARN_BILLING_PRO_PLUGIN_URL . 'assets/js/admin.js', array('jquery'), SKYLEARN_BILLING_PRO_VERSION, true);
     }
 }
 
