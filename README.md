@@ -1,83 +1,48 @@
-# Skylearn Billing Pro
+# Skylearn Billing Pro – Ultimate billing solution for WordPress course creators
 
-A professional billing and subscription management WordPress plugin designed for educational platforms, online courses, and digital service providers.
+![Plugin Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
+![WordPress Version](https://img.shields.io/badge/wordpress-5.0%2B-blue.svg)
+![PHP Version](https://img.shields.io/badge/php-7.4%2B-purple.svg)
+![License](https://img.shields.io/badge/license-GPLv3-green.svg)
 
-## Overview
+## Description
 
-Skylearn Billing Pro is a comprehensive billing solution that integrates seamlessly with WordPress to provide advanced subscription management, multi-gateway payment processing, and detailed financial reporting. Built with scalability and extensibility in mind, it supports complex billing scenarios while maintaining ease of use.
+Skylearn Billing Pro is the ultimate billing solution designed specifically for WordPress course creators, educational platforms, and digital service providers. Seamlessly integrate with popular payment gateways and manage your course subscriptions, billing, and student access with ease. Built with scalability and extensibility in mind, it supports complex billing scenarios while maintaining ease of use.
 
-## Planned Features
+### Key Features
 
-### Core Billing Features
-- **Subscription Management**: Flexible recurring billing with customizable intervals
-- **One-time Payments**: Support for single purchases and one-off charges
-- **Payment Gateway Integration**: Multiple payment processors (Stripe, PayPal, etc.)
-- **Invoice Generation**: Professional PDF invoices with customizable templates
-- **Tax Management**: VAT/tax calculations with regional compliance
-- **Currency Support**: Multi-currency billing with real-time exchange rates
-
-### Customer Management
-- **Customer Portal**: Self-service account management and billing history
-- **Communication Tools**: Automated billing notifications and reminders
-- **Credit Management**: Credit notes, refunds, and account adjustments
-- **Payment Methods**: Secure storage and management of payment methods
-
-### Reporting & Analytics
-- **Financial Reports**: Revenue tracking, payment analytics, and trend analysis
-- **Subscription Metrics**: Churn analysis, MRR/ARR tracking, and growth metrics
-- **Export Capabilities**: CSV/Excel exports for accounting integration
-- **Dashboard Widgets**: At-a-glance financial overview in WordPress admin
-
-### Integration & API
-- **WordPress Integration**: Seamless integration with users, posts, and custom post types
-- **WooCommerce Compatibility**: Optional integration with WooCommerce products
-- **REST API**: Full API access for external integrations
-- **Webhook Support**: Real-time notifications for external systems
-
-### Advanced Features
-- **Dunning Management**: Smart retry logic for failed payments
-- **Proration Handling**: Automatic calculations for plan changes
-- **Team/Multi-user Billing**: Support for team subscriptions and seat-based billing
-- **Compliance Tools**: GDPR compliance, data export, and privacy controls
-
-## Development Approach
-
-### Architecture Principles
-- **Modular Design**: Component-based architecture for easy extension
-- **WordPress Standards**: Follows WordPress coding standards and best practices
-- **Database Optimization**: Efficient database design with proper indexing
-- **Caching Integration**: Built-in support for WordPress caching plugins
-- **Security First**: Input validation, data sanitization, and secure API endpoints
-
-### Technology Stack
-- **Backend**: PHP 7.4+ with object-oriented programming
-- **Frontend**: Modern JavaScript (ES6+) with WordPress REST API
-- **Database**: WordPress database with custom tables for billing data
-- **Payment Processing**: PCI-compliant integration with payment gateways
-- **Testing**: PHPUnit for backend testing, Jest for frontend testing
-
-### Development Phases
-1. **Phase 1**: Project bootstrapping and core structure *(current)*
-2. **Phase 2**: Database schema and basic models
-3. **Phase 3**: Payment gateway integrations
-4. **Phase 4**: Subscription management core
-5. **Phase 5**: Customer portal and admin interface
-6. **Phase 6**: Reporting and analytics
-7. **Phase 7**: Advanced features and optimizations
+- **Payment Gateway Integration:** Full support for Stripe and Lemon Squeezy (more coming soon)
+- **Subscription Management:** Flexible recurring billing with customizable intervals and lifecycles
+- **Course Access Control:** Automatically manage student access based on billing status
+- **Professional Dashboard:** Clean, modern interface for managing all billing operations
+- **Secure & Reliable:** Built with WordPress best practices and security standards
+- **One-time Payments:** Support for single purchases and one-off charges
+- **Invoice Generation:** Professional PDF invoices with customizable templates
+- **Tax Management:** VAT/tax calculations with regional compliance
+- **Currency Support:** Multi-currency billing with real-time exchange rates
+- **Customer Portal:** Self-service account management and billing history
+- **Automated Notifications:** Billing reminders, dunning management, and proration handling
+- **Reporting & Analytics:** Revenue tracking, subscription metrics, export capabilities
+- **Integration & API:** REST API access, webhook support, WooCommerce compatibility
 
 ## Installation
 
-### Requirements
-- WordPress 5.0 or higher
-- PHP 7.4 or higher
-- MySQL 5.6 or higher
-- HTTPS enabled (required for payment processing)
+1. Download the plugin from the [official website](https://skyian.com/skylearn-billing/)
+2. Upload the plugin files to `/wp-content/plugins/skylearn-billing-pro/`
+3. Activate the plugin through the 'Plugins' screen in WordPress
+4. Navigate to the Skylearn Billing Pro settings to configure your payment gateways
 
-### Development Installation
-1. Clone the repository to your WordPress plugins directory
-2. Run `composer install` (when dependencies are added)
-3. Activate the plugin through the WordPress admin
-4. Configure payment gateways and settings
+## Requirements
+
+- **WordPress:** 5.0 or higher
+- **PHP:** 7.4 or higher
+- **MySQL:** 5.6 or higher
+- **HTTPS:** Enabled (required for payment processing)
+- **Payment Gateway Account:** Stripe or Lemon Squeezy (or both)
+
+## Documentation
+
+Comprehensive documentation is available at: [https://skyian.com/skylearn-billing/doc/](https://skyian.com/skylearn-billing/doc/)
 
 ## Configuration
 
@@ -101,7 +66,7 @@ Full API documentation will be available once the REST API endpoints are impleme
 
 ## Contributing
 
-We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on how to contribute to this project.
+We welcome contributions! Please read our [Contributing Guidelines](CONTRIBUTING.md) and [Style Guide](STYLE_GUIDE.md) before submitting pull requests.
 
 ## Security
 
@@ -109,25 +74,47 @@ Security is a top priority for a billing system. We follow WordPress security be
 
 ## Support
 
-- **Documentation**: Will be available at project completion
-- **Issues**: Please use GitHub issues for bug reports and feature requests
-- **Community**: Discussion forum will be set up for community support
+For support and questions:
+- **Email:** support@skyian.com
+- **Documentation:** [https://skyian.com/skylearn-billing/doc/](https://skyian.com/skylearn-billing/doc/)
+- **Website:** [https://skyian.com/skylearn-billing/](https://skyian.com/skylearn-billing/)
 
 ## License
 
-This project is licensed under the GNU General Public License v3.0 or later - see the [LICENSE](LICENSE) file for details.
+This plugin is licensed under the GPLv3 License. See the [LICENSE](LICENSE) file for details.
+
+## Legal
+
+- **Privacy Policy:** [https://skyian.com/skylearn-billing/privacy-policy/](https://skyian.com/skylearn-billing/privacy-policy/)
+- **Terms of Service:** [https://skyian.com/skylearn-billing/tos/](https://skyian.com/skylearn-billing/tos/)
+
+## Company Information
+
+**Skylearn Billing Pro** is developed and maintained by [Skyian LLC](https://skyian.com/).
+
+- **Author:** Ferdous Khalifa
+- **Company:** Skyian LLC
+- **Website:** [https://skyian.com/](https://skyian.com/)
+
+## Marketplace Availability
+
+- WordPress.org Plugin Repository
+- Envato Market
+- [Official Website](https://skyian.com/skylearn-billing/)
 
 ## Roadmap
 
-- **Q1 2024**: Core billing engine and basic subscriptions
-- **Q2 2024**: Payment gateway integrations and customer portal
-- **Q3 2024**: Advanced reporting and analytics
-- **Q4 2024**: Team billing and enterprise features
+- **Q1 2024:** Core billing engine and basic subscriptions
+- **Q2 2024:** Payment gateway integrations and customer portal
+- **Q3 2024:** Advanced reporting and analytics
+- **Q4 2024:** Team billing and enterprise features
 
 ## Credits
 
 Developed by the Skylearn Team with inspiration from the WordPress and open-source communities.
 
 ---
+
+© 2025 Skyian LLC. All rights reserved.
 
 *This project is currently in active development. Features and documentation will be updated as development progresses.*
