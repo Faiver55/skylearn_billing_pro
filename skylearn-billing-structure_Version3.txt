@@ -1,0 +1,111 @@
+skylearn-billing/
+├── skylearn-billing.php                  # Main plugin bootstrap file
+├── README.md                             # Project documentation
+├── LICENSE                               # License file
+├── uninstall.php                         # Clean uninstall logic
+├── assets/
+│   ├── css/
+│   ├── js/
+│   └── images/
+├── includes/
+│   ├── admin/
+│   │   ├── class-admin-ui.php            # Admin screens/settings/sidebar
+│   │   ├── class-addon-manager.php       # Addon status/activation, UI for free/paid addons
+│   │   ├── class-status.php              # Site/server status
+│   │   ├── class-settings.php            # All settings sections (general, payment, email, etc.)
+│   │   ├── class-email.php               # Email templates & notifications (customizable)
+│   │   ├── class-welcome-email.php       # Customizable Welcome Email (with login credentials)
+│   │   ├── class-pricing-tier.php        # Pricing tier logic (Free, Pro, Pro Plus)
+│   │   ├── class-license-manager.php     # Licensing/feature flags for paid tiers & addons
+│   │   ├── class-migration-tool.php      # Migration logic
+│   │   ├── class-onboarding.php          # Onboarding wizard, contextual help
+│   ├── lms/
+│   │   ├── class-lms-manager.php         # Detect/select native LMS (one per site, future multi-LMS support)
+│   │   ├── class-course-mapping.php      # Map products to courses/bundles/triggers
+│   │   ├── class-learndash.php           # LMS connector (LearnDash)
+│   │   └── ...                           # Other LMS connectors as needed
+│   ├── payment/
+│   │   ├── class-payment-manager.php     # Payment gateway setup, API connection, warning logic
+│   │   ├── class-stripe.php              # Stripe API logic, inline/overlay checkout, custom fields
+│   │   ├── class-paddle.php              # Paddle API logic, inline/overlay checkout
+│   │   ├── class-lemonsqueezy.php        # Lemon Squeezy connector, hosted checkout warning
+│   │   ├── class-woocommerce.php         # WooCommerce bridge (optional)
+│   │   ├── class-payment-fields.php      # Customizable fields, conditional logic
+│   │   ├── class-tax.php                 # Tax/region-specific logic
+│   │   └── ...                           # Additional gateways, payout logic
+│   ├── class-webhook-handler.php         # Webhook listener, third-party automation
+│   ├── automation/
+│   │   ├── class-automation-manager.php  # Visual automation builder, templates, logs
+│   │   └── integrations/                 # CRM, email, SMS, marketing integrations
+│   ├── class-user-enrollment.php         # WP user creation, course enrollment logic
+│   ├── portal/
+│   │   ├── class-portal.php              # Customer portal logic, widgets, API
+│   │   ├── class-portal-widgets.php      # Extensible widgets for dashboard, orders, etc.
+│   │   └── class-nurture-popup.php       # Nurture modal flows for cancel/upgrade/renew
+│   ├── subscriptions/
+│   │   ├── class-subscription-manager.php# Subscription logic, multi-tier, bundles, pause/resume
+│   │   └── class-loyalty.php             # Rewards/loyalty tied to subscriptions
+│   ├── affiliates/
+│   │   ├── class-affiliate-manager.php   # Affiliate/referral/payout system
+│   ├── memberships/
+│   │   ├── class-membership-manager.php  # Membership logic, access control
+│   ├── emails/
+│   │   ├── class-email-builder.php       # Drag-and-drop builder, triggers, analytics
+│   │   ├── templates/                    # Email templates (order, invoice, welcome, etc.)
+│   ├── analytics/
+│   │   ├── class-analytics.php           # Dashboard, custom widgets, exporting
+│   │   ├── class-reporting.php           # Custom/scheduled/AI reports
+│   ├── helpers.php                       # Utility functions
+│   └── addons/
+│       ├── email-addon.php               # Email Addon (free/paid)
+│       ├── webhook-addon.php             # Webhook Addon (free/paid)
+│       ├── ...                           # Other feature addons (free/paid)
+├── templates/
+│   ├── admin/
+│   │   ├── addons.php                    # Addon UI
+│   │   ├── status.php                    # Status UI
+│   │   ├── settings.php                  # Settings UI
+│   │   ├── page-setup.php                # Setup frontend pages
+│   │   ├── onboarding.php                # Onboarding wizard
+│   ├── checkout/
+│   │   ├── form-inline.php               # Inline checkout
+│   │   ├── form-overlay.php              # Overlay checkout
+│   │   ├── form-hosted-warning.php       # Hosted checkout warning
+│   │   ├── builder.php                   # Drag-and-drop checkout builder
+│   │   └── success.php                   # Post-payment success
+│   ├── portal/
+│   │   ├── dashboard.php                 # Customer portal dashboard
+│   │   ├── orders.php                    # Order history
+│   │   ├── plans.php                     # Subscription/plans history
+│   │   ├── downloads.php                 # Downloads
+│   │   ├── addresses.php                 # Addresses
+│   │   ├── account.php                   # Account details
+│   │   ├── widgets/                      # Portal widgets (customizable)
+│   │   ├── cancel-popup.php              # Nurture popup for cancel
+│   │   ├── upgrade-popup.php             # Nurture popup for upgrade
+│   │   ├── downgrade-popup.php           # Nurture popup for downgrade
+│   │   └── renew-popup.php               # Nurture popup for renew
+│   └── email/
+│       ├── order-confirmation.php
+│       ├── invoice.php
+│       ├── welcome-email.php             # Welcome email template with credentials
+│       └── ...                           # Other email templates
+├── frontend/
+│   ├── page-generator.php                # Auto-create necessary pages on activation
+│   ├── shortcodes.php                    # Shortcodes for checkout, portal, etc.
+│   ├── block-editor/                     # Custom Gutenberg blocks for checkout, portal, etc.
+├── languages/
+│   └── skylearn-billing.pot              # Localization template
+├── api/
+│   ├── rest-endpoints.php                # REST API endpoints for headless/frontend/mobile
+│   ├── graphql-endpoints.php             # GraphQL API if needed
+├── cli/
+│   ├── cli-commands.php                  # WP-CLI commands for automation
+└── tests/
+    ├── test-lms-manager.php
+    ├── test-payment-manager.php
+    ├── test-webhook-handler.php
+    ├── test-automation-manager.php
+    ├── test-portal.php
+    ├── test-subscription-manager.php
+    └── ...
