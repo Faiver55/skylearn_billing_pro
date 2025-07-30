@@ -91,6 +91,15 @@ class SkyLearn_Billing_Pro_Admin {
         
         add_submenu_page(
             'skylearn-billing-pro',
+            __('Email Settings', 'skylearn-billing-pro'),
+            __('Email Settings', 'skylearn-billing-pro'),
+            'manage_options',
+            'skylearn-billing-pro-email',
+            array($this, 'admin_page')
+        );
+        
+        add_submenu_page(
+            'skylearn-billing-pro',
             __('License', 'skylearn-billing-pro'),
             __('License', 'skylearn-billing-pro'),
             'manage_options',
@@ -161,6 +170,8 @@ class SkyLearn_Billing_Pro_Admin {
             $this->render_products_page();
         } elseif ($current_page === 'skylearn-billing-pro-bundles') {
             $this->render_bundles_page();
+        } elseif ($current_page === 'skylearn-billing-pro-email') {
+            include SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'templates/admin/email-settings.php';
         } else {
             $active_tab = isset($_GET['tab']) ? sanitize_text_field($_GET['tab']) : 'general';
             include SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'templates/admin-page.php';
