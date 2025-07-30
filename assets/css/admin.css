@@ -436,3 +436,531 @@
 .skylearn-billing-admin .updated {
     margin: 15px 0 15px 0;
 }
+
+/* Licensing Styles */
+
+/* Tier Badge in Sidebar */
+.skylearn-billing-tier-badge {
+    margin: 24px 20px;
+    padding: 20px;
+    background: var(--skylearn-white);
+    border-radius: 8px;
+    box-shadow: 0 2px 10px var(--skylearn-shadow);
+    border-left: 4px solid var(--skylearn-accent);
+}
+
+.skylearn-billing-tier-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.skylearn-billing-tier-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--skylearn-white);
+    font-size: 16px;
+}
+
+.skylearn-billing-tier-details {
+    flex: 1;
+}
+
+.skylearn-billing-tier-name {
+    font-weight: 600;
+    color: var(--skylearn-primary);
+    font-size: 14px;
+    margin-bottom: 2px;
+}
+
+.skylearn-billing-tier-status {
+    font-size: 12px;
+}
+
+.skylearn-billing-status-active {
+    color: var(--skylearn-success);
+    font-weight: 500;
+}
+
+.skylearn-billing-status-inactive {
+    color: var(--skylearn-medium-gray);
+    font-weight: 500;
+}
+
+.skylearn-billing-upgrade-btn {
+    display: block;
+    width: 100%;
+    padding: 8px 16px;
+    background: var(--skylearn-accent);
+    color: var(--skylearn-white);
+    text-decoration: none;
+    border-radius: 6px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.skylearn-billing-upgrade-btn:hover {
+    background: #e63300;
+    color: var(--skylearn-white);
+}
+
+/* License Form Styles */
+.skylearn-billing-license-form {
+    max-width: 500px;
+}
+
+.skylearn-billing-form-group {
+    margin-bottom: 20px;
+}
+
+.skylearn-billing-form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: var(--skylearn-primary);
+}
+
+.skylearn-billing-input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid var(--skylearn-border);
+    border-radius: 6px;
+    font-size: 14px;
+    transition: border-color 0.3s ease;
+}
+
+.skylearn-billing-input:focus {
+    outline: none;
+    border-color: var(--skylearn-primary);
+}
+
+.skylearn-billing-btn-loading {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.skylearn-billing-btn-loading .dashicons {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Active License Display */
+.skylearn-billing-license-active {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 30px;
+}
+
+.skylearn-billing-license-info {
+    flex: 1;
+}
+
+.skylearn-billing-license-key {
+    margin-bottom: 20px;
+}
+
+.skylearn-billing-license-key label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: var(--skylearn-primary);
+}
+
+.skylearn-billing-license-key code {
+    background: var(--skylearn-light-gray);
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 14px;
+    color: var(--skylearn-primary);
+}
+
+.skylearn-billing-license-details {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.skylearn-billing-license-detail {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.skylearn-billing-tier-label {
+    color: var(--skylearn-white);
+    font-size: 12px;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.skylearn-billing-license-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 160px;
+}
+
+/* Demo Keys */
+.skylearn-billing-demo-keys {
+    margin-top: 30px;
+    padding: 20px;
+    background: var(--skylearn-light-gray);
+    border-radius: 6px;
+    border: 1px solid var(--skylearn-border);
+}
+
+.skylearn-billing-demo-keys h4 {
+    margin-top: 0;
+    margin-bottom: 12px;
+    color: var(--skylearn-primary);
+}
+
+.skylearn-billing-demo-keys ul {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.skylearn-billing-demo-keys li {
+    margin-bottom: 8px;
+}
+
+.skylearn-billing-demo-keys code {
+    background: var(--skylearn-white);
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.skylearn-billing-demo-keys code:hover {
+    background: var(--skylearn-primary);
+    color: var(--skylearn-white);
+}
+
+/* Feature Comparison */
+.skylearn-billing-feature-comparison {
+    overflow-x: auto;
+}
+
+.skylearn-billing-comparison-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+}
+
+.skylearn-billing-comparison-table th,
+.skylearn-billing-comparison-table td {
+    padding: 12px 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--skylearn-border);
+}
+
+.skylearn-billing-comparison-table th {
+    background: var(--skylearn-light-gray);
+    font-weight: 600;
+    color: var(--skylearn-primary);
+}
+
+.skylearn-billing-feature-cell {
+    text-align: center;
+    width: 80px;
+}
+
+.skylearn-billing-feature-available {
+    color: var(--skylearn-success);
+    font-size: 18px;
+}
+
+.skylearn-billing-feature-unavailable {
+    color: var(--skylearn-medium-gray);
+    font-size: 18px;
+}
+
+.skylearn-billing-upgrade-cta {
+    text-align: center;
+    padding: 20px;
+    background: var(--skylearn-light-gray);
+    border-radius: 6px;
+    border: 1px solid var(--skylearn-border);
+}
+
+/* Locked Feature Styles */
+.skylearn-billing-feature-locked {
+    opacity: 0.6;
+    pointer-events: none;
+    position: relative;
+}
+
+.skylearn-billing-feature-locked::after {
+    content: '\f160'; /* dashicons lock */
+    font-family: 'dashicons';
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    color: var(--skylearn-accent);
+    font-size: 16px;
+}
+
+.skylearn-billing-upgrade-notice {
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    color: #856404;
+    padding: 12px 16px;
+    border-radius: 6px;
+    margin: 16px 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.skylearn-billing-upgrade-notice .dashicons {
+    color: var(--skylearn-warning);
+    font-size: 18px;
+}
+
+.skylearn-billing-upgrade-notice a {
+    color: var(--skylearn-accent);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.skylearn-billing-upgrade-notice a:hover {
+    text-decoration: underline;
+}
+
+/* Pro Badge */
+.skylearn-billing-pro-badge {
+    background: var(--skylearn-accent);
+    color: var(--skylearn-white);
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-left: 8px;
+}
+
+/* Disabled state for form elements */
+.skylearn-billing-admin .disabled,
+.skylearn-billing-admin input:disabled,
+.skylearn-billing-admin select:disabled,
+.skylearn-billing-admin textarea:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Responsive adjustments for licensing */
+@media (max-width: 768px) {
+    .skylearn-billing-tier-badge {
+        margin: 16px;
+        padding: 16px;
+    }
+    
+    .skylearn-billing-license-active {
+        flex-direction: column;
+        gap: 20px;
+    }
+    
+    .skylearn-billing-license-actions {
+        width: 100%;
+        flex-direction: row;
+    }
+    
+    .skylearn-billing-comparison-table {
+        font-size: 14px;
+    }
+    
+    .skylearn-billing-comparison-table th,
+    .skylearn-billing-comparison-table td {
+        padding: 8px 12px;
+    }
+}
+
+/* Addons Styles */
+.skylearn-billing-addons-section {
+    margin-bottom: 40px;
+}
+
+.skylearn-billing-addons-section h3 {
+    color: var(--skylearn-primary);
+    margin-bottom: 20px;
+    font-size: 18px;
+}
+
+.skylearn-billing-addons-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.skylearn-billing-addon-item {
+    background: var(--skylearn-white);
+    border: 1px solid var(--skylearn-border);
+    border-radius: 8px;
+    padding: 20px;
+    transition: all 0.3s ease;
+}
+
+.skylearn-billing-addon-item:hover {
+    box-shadow: 0 4px 12px var(--skylearn-shadow);
+}
+
+.skylearn-billing-addon-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+}
+
+.skylearn-billing-addon-header h4 {
+    margin: 0;
+    color: var(--skylearn-primary);
+    font-size: 16px;
+}
+
+.skylearn-billing-addon-badge {
+    font-size: 10px;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.skylearn-billing-addon-free {
+    background: var(--skylearn-success);
+    color: var(--skylearn-white);
+}
+
+.skylearn-billing-addon-pro {
+    background: var(--skylearn-accent);
+    color: var(--skylearn-white);
+}
+
+.skylearn-billing-addon-plus {
+    background: var(--skylearn-primary);
+    color: var(--skylearn-white);
+}
+
+.skylearn-billing-addon-item p {
+    color: var(--skylearn-medium-gray);
+    margin: 0 0 16px 0;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.skylearn-billing-addon-status {
+    margin-top: auto;
+}
+
+.skylearn-billing-status-locked {
+    color: var(--skylearn-medium-gray);
+    font-weight: 500;
+    font-size: 12px;
+}
+
+/* Gateway Styles */
+.skylearn-billing-gateway-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.skylearn-billing-gateway-item {
+    background: var(--skylearn-white);
+    border: 1px solid var(--skylearn-border);
+    border-radius: 8px;
+    padding: 20px;
+    transition: all 0.3s ease;
+}
+
+.skylearn-billing-gateway-item:hover {
+    box-shadow: 0 4px 12px var(--skylearn-shadow);
+}
+
+.skylearn-billing-gateway-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.skylearn-billing-gateway-header h4 {
+    margin: 0;
+    color: var(--skylearn-primary);
+    font-size: 16px;
+}
+
+.skylearn-billing-gateway-item p {
+    color: var(--skylearn-medium-gray);
+    margin: 0 0 16px 0;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.skylearn-billing-gateway-status {
+    margin-top: auto;
+}
+
+/* Responsive adjustments for addons */
+@media (max-width: 768px) {
+    .skylearn-billing-addons-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .skylearn-billing-gateway-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .skylearn-billing-addon-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    
+    .skylearn-billing-gateway-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+}
+
+/* Limit Info Styles */
+.skylearn-billing-limit-info {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.skylearn-billing-limit-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--skylearn-border);
+}
+
+.skylearn-billing-limit-item:last-child {
+    border-bottom: none;
+}
