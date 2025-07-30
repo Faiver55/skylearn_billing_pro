@@ -317,7 +317,7 @@ class SkyLearn_Billing_Pro_Bundle_Manager {
         
         // Get available courses from LMS
         $lms_manager = skylearn_billing_pro_lms_manager();
-        $available_courses = $lms_manager->get_available_courses();
+        $available_courses = $lms_manager->get_courses();
         
         ?>
         <table class="form-table">

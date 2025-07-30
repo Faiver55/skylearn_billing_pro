@@ -84,7 +84,7 @@ if (isset($_POST['save_product'])) {
 }
 
 $lms_manager = skylearn_billing_pro_lms_manager();
-$available_courses = $lms_manager->get_available_courses();
+$available_courses = $lms_manager->get_courses();
 ?>
 
 <div class="wrap skylearn-billing-admin">
