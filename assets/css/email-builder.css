@@ -1,0 +1,699 @@
+/**
+ * Email Builder CSS for Skylearn Billing Pro
+ */
+
+/* Email Builder Container */
+.skylearn-email-builder-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #f1f1f1;
+    z-index: 999999;
+    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+}
+
+/* Builder Toolbar */
+.skylearn-builder-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #fff;
+    border-bottom: 1px solid #ddd;
+    padding: 12px 20px;
+    height: 56px;
+    box-sizing: border-box;
+}
+
+.skylearn-toolbar-left,
+.skylearn-toolbar-center,
+.skylearn-toolbar-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.skylearn-builder-title {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #1d2327;
+}
+
+/* Device Preview Buttons */
+.skylearn-device-preview {
+    display: flex;
+    background: #f6f7f7;
+    border-radius: 6px;
+    padding: 4px;
+}
+
+.skylearn-device-btn {
+    background: none;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    color: #50575e;
+    transition: all 0.2s ease;
+}
+
+.skylearn-device-btn:hover {
+    background: #e0e5e7;
+}
+
+.skylearn-device-btn.active {
+    background: #fff;
+    color: #1d2327;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Builder Buttons */
+.skylearn-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.skylearn-btn-primary {
+    background: #2271b1;
+    color: #fff;
+}
+
+.skylearn-btn-primary:hover {
+    background: #135e96;
+    color: #fff;
+}
+
+.skylearn-btn-secondary {
+    background: #f6f7f7;
+    color: #1d2327;
+    border: 1px solid #c3c4c7;
+}
+
+.skylearn-btn-secondary:hover {
+    background: #e0e5e7;
+    color: #1d2327;
+}
+
+/* Builder Content */
+.skylearn-builder-content {
+    display: flex;
+    height: calc(100vh - 56px);
+    overflow: hidden;
+}
+
+/* Sidebar */
+.skylearn-builder-sidebar {
+    width: 280px;
+    background: #fff;
+    border-right: 1px solid #ddd;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.skylearn-sidebar-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid #ddd;
+}
+
+.skylearn-sidebar-header h4 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #1d2327;
+}
+
+.skylearn-block-categories {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+}
+
+.skylearn-block-category {
+    margin-bottom: 24px;
+}
+
+.skylearn-block-category h5 {
+    margin: 0 0 12px 0;
+    font-size: 12px;
+    font-weight: 600;
+    color: #646970;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.skylearn-blocks-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+}
+
+.skylearn-block-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 12px 8px;
+    background: #f6f7f7;
+    border: 1px solid #c3c4c7;
+    border-radius: 6px;
+    cursor: grab;
+    transition: all 0.2s ease;
+    text-align: center;
+}
+
+.skylearn-block-item:hover {
+    background: #e0e5e7;
+    border-color: #8c8f94;
+}
+
+.skylearn-block-item:active {
+    cursor: grabbing;
+}
+
+.skylearn-block-item .dashicons {
+    font-size: 20px;
+    color: #50575e;
+}
+
+.skylearn-block-name {
+    font-size: 11px;
+    font-weight: 500;
+    color: #1d2327;
+}
+
+/* Tokens Panel */
+.skylearn-tokens-panel {
+    padding: 20px;
+    border-top: 1px solid #ddd;
+    background: #f9f9f9;
+}
+
+.skylearn-tokens-panel h5 {
+    margin: 0 0 12px 0;
+    font-size: 12px;
+    font-weight: 600;
+    color: #646970;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.skylearn-tokens-list {
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.skylearn-token-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 8px;
+    margin-bottom: 8px;
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.skylearn-token-item:hover {
+    border-color: #2271b1;
+    box-shadow: 0 0 0 1px #2271b1;
+}
+
+.skylearn-token-item code {
+    font-size: 11px;
+    font-weight: 600;
+    color: #d63384;
+    background: none;
+    padding: 0;
+}
+
+.skylearn-token-desc {
+    font-size: 10px;
+    color: #646970;
+}
+
+/* Canvas */
+.skylearn-builder-canvas {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: #f1f1f1;
+    overflow: hidden;
+}
+
+.skylearn-canvas-wrapper {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.skylearn-canvas-header {
+    background: #fff;
+    border-bottom: 1px solid #ddd;
+    padding: 16px 20px;
+}
+
+.skylearn-subject-editor {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.skylearn-subject-editor label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #1d2327;
+    min-width: 60px;
+}
+
+.skylearn-subject-input {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid #8c8f94;
+    border-radius: 4px;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.skylearn-subject-input:focus {
+    border-color: #2271b1;
+    box-shadow: 0 0 0 1px #2271b1;
+    outline: none;
+}
+
+.skylearn-canvas-body {
+    flex: 1;
+    overflow: auto;
+    padding: 20px;
+}
+
+.skylearn-email-canvas {
+    max-width: 600px;
+    margin: 0 auto;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    min-height: 400px;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Canvas Device Responsiveness */
+.skylearn-canvas-wrapper[data-device="tablet"] .skylearn-email-canvas {
+    max-width: 480px;
+}
+
+.skylearn-canvas-wrapper[data-device="mobile"] .skylearn-email-canvas {
+    max-width: 320px;
+}
+
+/* Canvas Placeholder */
+.skylearn-canvas-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 400px;
+    text-align: center;
+}
+
+.skylearn-placeholder-content {
+    max-width: 280px;
+}
+
+.skylearn-placeholder-content .dashicons {
+    font-size: 48px;
+    color: #c3c4c7;
+    margin-bottom: 16px;
+}
+
+.skylearn-placeholder-content h4 {
+    margin: 0 0 8px 0;
+    font-size: 18px;
+    color: #50575e;
+}
+
+.skylearn-placeholder-content p {
+    margin: 0;
+    font-size: 14px;
+    color: #646970;
+    line-height: 1.5;
+}
+
+/* Email Blocks */
+.skylearn-email-block {
+    position: relative;
+    margin: 0;
+    transition: all 0.2s ease;
+}
+
+.skylearn-email-block:hover {
+    outline: 2px solid #2271b1;
+    outline-offset: -2px;
+}
+
+.skylearn-email-block.selected {
+    outline: 2px solid #2271b1;
+    outline-offset: -2px;
+}
+
+.skylearn-block-content {
+    padding: 16px;
+    position: relative;
+}
+
+.skylearn-block-controls {
+    position: absolute;
+    top: -1px;
+    right: -1px;
+    display: flex;
+    opacity: 0;
+    transform: translateY(-100%);
+    transition: opacity 0.2s ease;
+    z-index: 10;
+}
+
+.skylearn-email-block:hover .skylearn-block-controls,
+.skylearn-email-block.selected .skylearn-block-controls {
+    opacity: 1;
+}
+
+.skylearn-block-control {
+    background: #2271b1;
+    color: #fff;
+    border: none;
+    padding: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    line-height: 1;
+    transition: background 0.2s ease;
+}
+
+.skylearn-block-control:hover {
+    background: #135e96;
+}
+
+.skylearn-block-control:first-child {
+    border-radius: 4px 0 0 0;
+}
+
+.skylearn-block-control:last-child {
+    border-radius: 0 4px 0 0;
+}
+
+/* Editable Content */
+.skylearn-editable {
+    outline: none;
+    min-height: 1em;
+}
+
+.skylearn-editable:focus {
+    background: rgba(34, 113, 177, 0.1);
+    border-radius: 2px;
+}
+
+/* Drop Zone */
+.skylearn-drop-zone {
+    min-height: 40px;
+    border: 2px dashed #c3c4c7;
+    border-radius: 4px;
+    margin: 8px 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #646970;
+    font-size: 12px;
+    transition: all 0.2s ease;
+    opacity: 0;
+}
+
+.skylearn-drop-zone.active {
+    opacity: 1;
+    border-color: #2271b1;
+    background: rgba(34, 113, 177, 0.05);
+    color: #2271b1;
+}
+
+/* Properties Panel */
+.skylearn-builder-properties {
+    width: 280px;
+    background: #fff;
+    border-left: 1px solid #ddd;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.skylearn-properties-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid #ddd;
+}
+
+.skylearn-properties-header h4 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #1d2327;
+}
+
+.skylearn-properties-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+}
+
+.skylearn-no-selection {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 200px;
+    text-align: center;
+    color: #646970;
+}
+
+.skylearn-no-selection .dashicons {
+    font-size: 32px;
+    margin-bottom: 12px;
+    color: #c3c4c7;
+}
+
+.skylearn-property-group {
+    margin-bottom: 20px;
+}
+
+.skylearn-property-group label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #1d2327;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.skylearn-property-input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #8c8f94;
+    border-radius: 4px;
+    font-size: 14px;
+    line-height: 1.4;
+    box-sizing: border-box;
+}
+
+.skylearn-property-input:focus {
+    border-color: #2271b1;
+    box-shadow: 0 0 0 1px #2271b1;
+    outline: none;
+}
+
+.skylearn-property-input[type="color"] {
+    height: 36px;
+    padding: 2px;
+}
+
+.skylearn-select-image {
+    margin-top: 8px;
+    width: 100%;
+}
+
+/* Modal Styles */
+.skylearn-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.skylearn-modal-content {
+    background: #fff;
+    border-radius: 8px;
+    max-width: 90vw;
+    max-height: 90vh;
+    overflow: hidden;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+.skylearn-preview-modal-content {
+    width: 90vw;
+    height: 90vh;
+}
+
+.skylearn-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 24px;
+    border-bottom: 1px solid #ddd;
+}
+
+.skylearn-modal-header h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #1d2327;
+}
+
+.skylearn-modal-close {
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    color: #646970;
+    padding: 4px;
+    line-height: 1;
+}
+
+.skylearn-modal-close:hover {
+    color: #1d2327;
+}
+
+.skylearn-modal-body {
+    padding: 24px;
+}
+
+.skylearn-modal-footer {
+    padding: 16px 24px;
+    border-top: 1px solid #ddd;
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+/* Preview Frame */
+.skylearn-preview-container {
+    height: calc(90vh - 120px);
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.skylearn-preview-frame {
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
+/* Responsive Design */
+@media (max-width: 1400px) {
+    .skylearn-builder-sidebar,
+    .skylearn-builder-properties {
+        width: 240px;
+    }
+}
+
+@media (max-width: 1200px) {
+    .skylearn-builder-sidebar,
+    .skylearn-builder-properties {
+        width: 200px;
+    }
+    
+    .skylearn-blocks-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Drag and Drop States */
+.skylearn-dragging {
+    opacity: 0.5;
+}
+
+.skylearn-drag-over {
+    background: rgba(34, 113, 177, 0.1) !important;
+}
+
+/* Loading States */
+.skylearn-loading {
+    position: relative;
+    pointer-events: none;
+}
+
+.skylearn-loading::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Animations */
+@keyframes skylearn-fade-in {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.skylearn-fade-in {
+    animation: skylearn-fade-in 0.3s ease;
+}
+
+@keyframes skylearn-slide-in {
+    from { transform: translateX(-100%); }
+    to { transform: translateX(0); }
+}
+
+.skylearn-slide-in {
+    animation: skylearn-slide-in 0.3s ease;
+}
+
+/* Utility Classes */
+.skylearn-hidden {
+    display: none !important;
+}
+
+.skylearn-sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}

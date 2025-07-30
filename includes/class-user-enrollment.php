@@ -161,6 +161,29 @@ class SkyLearn_Billing_Pro_User_Enrollment {
             // Log enrollment for analytics
             $this->log_enrollment_activity($user_id, $product_id, 'success', $trigger, $result);
             
+            // Send course enrollment email if enhanced email system is available
+            if (function_exists('skylearn_billing_pro_email') && isset($result['course_title'])) {
+                $email_manager = skylearn_billing_pro_email();
+                $course_data = array(
+                    'course_title' => $result['course_title'],
+                    'course_id' => $result['course_id'] ?? '',
+                    'product_id' => $product_id
+                );
+                
+                // Add course URL and instructor if available
+                $mapping = $this->course_mapping->get_course_mapping($product_id);
+                if ($mapping) {
+                    $course_details = $this->lms_manager->get_course_details($mapping['course_id']);
+                    if ($course_details) {
+                        $course_data['course_url'] = $course_details['url'] ?? '';
+                        $course_data['instructor_name'] = $course_details['instructor'] ?? '';
+                    }
+                }
+                
+                // Trigger course enrollment email
+                $email_manager->trigger_course_enrollment($user_id, $course_data);
+            }
+            
             return $result;
         } else {
             $result = array(
@@ -278,6 +301,35 @@ class SkyLearn_Billing_Pro_User_Enrollment {
         
         if (!$send_welcome) {
             return;
+        }
+
+        // Use the enhanced email system if available
+        if (function_exists('skylearn_billing_pro_email')) {
+            $email_manager = skylearn_billing_pro_email();
+            $additional_data = array();
+            
+            // Add course information if available
+            if (isset($user_data['product_id'])) {
+                $mapping = $this->course_mapping->get_course_mapping($user_data['product_id']);
+                if ($mapping) {
+                    $course_details = $this->lms_manager->get_course_details($mapping['course_id']);
+                    if ($course_details) {
+                        $additional_data['course_title'] = $course_details['title'];
+                        $additional_data['course_url'] = $course_details['url'] ?? '';
+                        $additional_data['instructor_name'] = $course_details['instructor'] ?? '';
+                    }
+                }
+            }
+            
+            // Add any additional order/payment data
+            if (isset($user_data['order_id'])) {
+                $additional_data['order_id'] = $user_data['order_id'];
+            }
+            if (isset($user_data['product_name'])) {
+                $additional_data['product_name'] = $user_data['product_name'];
+            }
+            
+            return $email_manager->trigger_welcome_email($user_id, $password, $additional_data);
         }
 
         // Use the new welcome email admin class if available
