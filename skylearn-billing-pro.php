@@ -137,8 +137,10 @@ class SkyLearnBillingPro {
         
         // Include admin class if in admin
         if (is_admin()) {
+            require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/admin/class-welcome-email.php';
             require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/class-admin.php';
             new SkyLearn_Billing_Pro_Admin();
+            skylearn_billing_pro_welcome_email_admin();
         }
     }
     
@@ -153,6 +155,11 @@ class SkyLearnBillingPro {
      * Plugin activation
      */
     public function activate() {
+        // Load the welcome email admin class for default template
+        if (!class_exists('SkyLearn_Billing_Pro_Welcome_Email_Admin')) {
+            require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/admin/class-welcome-email.php';
+        }
+        
         // Create plugin options with default values
         $default_options = array(
             'version' => SKYLEARN_BILLING_PRO_VERSION,
@@ -166,13 +173,21 @@ class SkyLearnBillingPro {
                 'active_lms' => '',
                 'auto_enroll' => true,
             ),
+            'email_settings' => array(
+                'welcome_email_enabled' => true,
+                'welcome_email_subject' => __('Welcome to {{site_name}}', 'skylearn-billing-pro'),
+                'welcome_email_template' => SkyLearn_Billing_Pro_Welcome_Email_Admin::get_default_email_template(),
+                'welcome_email_format' => 'html',
+            ),
             'webhook_settings' => array(
                 'secret' => wp_generate_password(32, false),
                 'send_welcome_email' => true,
                 'enabled' => true,
             ),
             'course_mappings' => array(),
-            'enrollment_log' => array()
+            'enrollment_log' => array(),
+            'email_log' => array(),
+            'user_activity_log' => array()
         );
         
         add_option('skylearn_billing_pro_options', $default_options);

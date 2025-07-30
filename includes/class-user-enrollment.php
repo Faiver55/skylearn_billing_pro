@@ -84,6 +84,9 @@ class SkyLearn_Billing_Pro_User_Enrollment {
         // Fire action hook
         do_action('skylearn_billing_pro_user_created', $user_id, $user_data);
         
+        // Log user creation for analytics
+        $this->log_user_activity($user_id, 'created', $user_data);
+        
         return $user_id;
     }
     
@@ -155,15 +158,23 @@ class SkyLearn_Billing_Pro_User_Enrollment {
                 }
             }
             
+            // Log enrollment for analytics
+            $this->log_enrollment_activity($user_id, $product_id, 'success', $trigger, $result);
+            
             return $result;
         } else {
-            return array(
+            $result = array(
                 'success' => false,
                 'error' => 'Course enrollment failed',
                 'code' => 'enrollment_failed',
                 'user_id' => $user_id,
                 'product_id' => $product_id
             );
+            
+            // Log failed enrollment
+            $this->log_enrollment_activity($user_id, $product_id, 'failed', $trigger, $result);
+            
+            return $result;
         }
     }
     
@@ -263,12 +274,32 @@ class SkyLearn_Billing_Pro_User_Enrollment {
      */
     private function maybe_send_welcome_email($user_id, $password, $user_data) {
         $options = get_option('skylearn_billing_pro_options', array());
-        $send_welcome = isset($options['general_settings']['send_welcome_email']) ? $options['general_settings']['send_welcome_email'] : true;
+        $send_welcome = isset($options['email_settings']['welcome_email_enabled']) ? $options['email_settings']['welcome_email_enabled'] : true;
         
         if (!$send_welcome) {
             return;
         }
+
+        // Use the new welcome email admin class if available
+        if (function_exists('skylearn_billing_pro_welcome_email_admin')) {
+            $welcome_email_admin = skylearn_billing_pro_welcome_email_admin();
+            $additional_data = array();
+            
+            // Add course information if available
+            if (isset($user_data['product_id'])) {
+                $mapping = $this->course_mapping->get_course_mapping($user_data['product_id']);
+                if ($mapping) {
+                    $course_details = $this->lms_manager->get_course_details($mapping['course_id']);
+                    if ($course_details) {
+                        $additional_data['course_title'] = $course_details['title'];
+                    }
+                }
+            }
+            
+            return $welcome_email_admin->send_welcome_email($user_id, $password, $additional_data);
+        }
         
+        // Fallback to basic email (backward compatibility)
         $user = get_user_by('id', $user_id);
         if (!$user) {
             return;
@@ -298,7 +329,7 @@ Best regards,
             get_bloginfo('name')
         );
         
-        wp_mail($user->user_email, $subject, $message);
+        return wp_mail($user->user_email, $subject, $message);
     }
     
     /**
@@ -362,6 +393,227 @@ Best regards,
         $user_data = array_merge(array('email' => $email), $additional_data);
         
         return $this->process_full_enrollment($user_data, $product_id, 'manual');
+    }
+    
+    /**
+     * Log user activity for analytics
+     *
+     * @param int $user_id User ID
+     * @param string $action Action performed
+     * @param array $user_data User data
+     */
+    private function log_user_activity($user_id, $action, $user_data) {
+        $options = get_option('skylearn_billing_pro_options', array());
+        
+        if (!isset($options['user_activity_log'])) {
+            $options['user_activity_log'] = array();
+        }
+        
+        $log_entry = array(
+            'timestamp' => current_time('mysql'),
+            'user_id' => $user_id,
+            'action' => $action,
+            'email' => $user_data['email'] ?? '',
+            'display_name' => $user_data['display_name'] ?? '',
+            'source' => 'billing_plugin',
+            'ip_address' => $this->get_user_ip(),
+            'user_agent' => isset($_SERVER['HTTP_USER_AGENT']) ? sanitize_text_field($_SERVER['HTTP_USER_AGENT']) : ''
+        );
+        
+        $options['user_activity_log'][] = $log_entry;
+        
+        // Keep only last 1000 entries
+        if (count($options['user_activity_log']) > 1000) {
+            $options['user_activity_log'] = array_slice($options['user_activity_log'], -1000);
+        }
+        
+        update_option('skylearn_billing_pro_options', $options);
+    }
+    
+    /**
+     * Log enrollment activity for analytics
+     *
+     * @param int $user_id User ID
+     * @param string $product_id Product ID
+     * @param string $status Status (success/failed)
+     * @param string $trigger Trigger type
+     * @param array $result Enrollment result
+     */
+    private function log_enrollment_activity($user_id, $product_id, $status, $trigger, $result) {
+        $options = get_option('skylearn_billing_pro_options', array());
+        
+        if (!isset($options['enrollment_log'])) {
+            $options['enrollment_log'] = array();
+        }
+        
+        $log_entry = array(
+            'timestamp' => current_time('mysql'),
+            'user_id' => $user_id,
+            'product_id' => $product_id,
+            'course_id' => $result['course_id'] ?? '',
+            'course_title' => $result['course_title'] ?? '',
+            'status' => $status,
+            'trigger' => $trigger,
+            'error_message' => $result['error'] ?? '',
+            'ip_address' => $this->get_user_ip()
+        );
+        
+        $options['enrollment_log'][] = $log_entry;
+        
+        // Keep only last 1000 entries  
+        if (count($options['enrollment_log']) > 1000) {
+            $options['enrollment_log'] = array_slice($options['enrollment_log'], -1000);
+        }
+        
+        update_option('skylearn_billing_pro_options', $options);
+    }
+    
+    /**
+     * Get user IP address
+     *
+     * @return string IP address
+     */
+    private function get_user_ip() {
+        if (!empty($_SERVER['HTTP_CLIENT_IP'])) {
+            return sanitize_text_field($_SERVER['HTTP_CLIENT_IP']);
+        } elseif (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+            return sanitize_text_field($_SERVER['HTTP_X_FORWARDED_FOR']);
+        } elseif (!empty($_SERVER['REMOTE_ADDR'])) {
+            return sanitize_text_field($_SERVER['REMOTE_ADDR']);
+        }
+        return '';
+    }
+    
+    /**
+     * Get detailed analytics data
+     *
+     * @return array Analytics data
+     */
+    public function get_detailed_analytics() {
+        $options = get_option('skylearn_billing_pro_options', array());
+        $enrollment_log = isset($options['enrollment_log']) ? $options['enrollment_log'] : array();
+        $user_activity_log = isset($options['user_activity_log']) ? $options['user_activity_log'] : array();
+        
+        $analytics = array(
+            'enrollment_stats' => $this->get_enrollment_stats(),
+            'user_creation_stats' => $this->get_user_creation_stats(),
+            'recent_enrollments' => array_slice(array_reverse($enrollment_log), 0, 10),
+            'recent_user_activity' => array_slice(array_reverse($user_activity_log), 0, 10),
+            'popular_courses' => $this->get_popular_courses($enrollment_log),
+            'conversion_by_trigger' => $this->get_conversion_by_trigger($enrollment_log)
+        );
+        
+        return $analytics;
+    }
+    
+    /**
+     * Get user creation statistics
+     *
+     * @return array User creation stats
+     */
+    private function get_user_creation_stats() {
+        $options = get_option('skylearn_billing_pro_options', array());
+        $user_activity_log = isset($options['user_activity_log']) ? $options['user_activity_log'] : array();
+        
+        $stats = array(
+            'total_users_created' => 0,
+            'users_today' => 0,
+            'users_this_week' => 0,
+            'users_this_month' => 0
+        );
+        
+        $today = date('Y-m-d');
+        $week_start = date('Y-m-d', strtotime('monday this week'));
+        $month_start = date('Y-m-01');
+        
+        foreach ($user_activity_log as $entry) {
+            if ($entry['action'] === 'created') {
+                $stats['total_users_created']++;
+                
+                $entry_date = date('Y-m-d', strtotime($entry['timestamp']));
+                
+                if ($entry_date === $today) {
+                    $stats['users_today']++;
+                }
+                
+                if ($entry_date >= $week_start) {
+                    $stats['users_this_week']++;
+                }
+                
+                if ($entry_date >= $month_start) {
+                    $stats['users_this_month']++;
+                }
+            }
+        }
+        
+        return $stats;
+    }
+    
+    /**
+     * Get popular courses from enrollment data
+     *
+     * @param array $enrollment_log Enrollment log
+     * @return array Popular courses
+     */
+    private function get_popular_courses($enrollment_log) {
+        $course_counts = array();
+        
+        foreach ($enrollment_log as $entry) {
+            if ($entry['status'] === 'success' && !empty($entry['course_id'])) {
+                $course_key = $entry['course_id'];
+                if (!isset($course_counts[$course_key])) {
+                    $course_counts[$course_key] = array(
+                        'course_id' => $entry['course_id'],
+                        'course_title' => $entry['course_title'],
+                        'enrollment_count' => 0
+                    );
+                }
+                $course_counts[$course_key]['enrollment_count']++;
+            }
+        }
+        
+        // Sort by enrollment count
+        uasort($course_counts, function($a, $b) {
+            return $b['enrollment_count'] - $a['enrollment_count'];
+        });
+        
+        return array_slice($course_counts, 0, 5);
+    }
+    
+    /**
+     * Get conversion rates by trigger type
+     *
+     * @param array $enrollment_log Enrollment log
+     * @return array Conversion data
+     */
+    private function get_conversion_by_trigger($enrollment_log) {
+        $trigger_stats = array();
+        
+        foreach ($enrollment_log as $entry) {
+            $trigger = $entry['trigger'];
+            if (!isset($trigger_stats[$trigger])) {
+                $trigger_stats[$trigger] = array(
+                    'total' => 0,
+                    'successful' => 0,
+                    'failed' => 0
+                );
+            }
+            
+            $trigger_stats[$trigger]['total']++;
+            
+            if ($entry['status'] === 'success') {
+                $trigger_stats[$trigger]['successful']++;
+            } else {
+                $trigger_stats[$trigger]['failed']++;
+            }
+        }
+        
+        // Calculate conversion rates
+        foreach ($trigger_stats as $trigger => &$stats) {
+            $stats['conversion_rate'] = $stats['total'] > 0 ? round(($stats['successful'] / $stats['total']) * 100, 2) : 0;
+        }
+        
+        return $trigger_stats;
     }
 }
 
