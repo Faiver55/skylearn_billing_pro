@@ -1,0 +1,27 @@
+# Test files
+test-phase14-security.php
+
+# Development files
+*.log
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Temporary files
+/tmp/
+*.tmp
+
+# Node modules (if any)
+node_modules/
+
+# Composer dependencies (if any)
+/vendor/
+
+# Build artifacts
+/dist/
+/build/
