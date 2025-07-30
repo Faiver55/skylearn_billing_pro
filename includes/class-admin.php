@@ -142,10 +142,19 @@ class SkyLearn_Billing_Pro_Admin {
                 SKYLEARN_BILLING_PRO_VERSION
             );
             
+            // Enqueue Chart.js from CDN
+            wp_enqueue_script(
+                'chart-js',
+                'https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js',
+                array(),
+                '3.9.1',
+                true
+            );
+            
             wp_enqueue_script(
                 'skylearn-billing-pro-reports',
                 SKYLEARN_BILLING_PRO_PLUGIN_URL . 'assets/js/reports.js',
-                array('jquery'),
+                array('jquery', 'chart-js'),
                 SKYLEARN_BILLING_PRO_VERSION,
                 true
             );

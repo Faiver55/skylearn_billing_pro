@@ -797,3 +797,16 @@ function skylearn_billing_pro_reporting() {
     
     return $instance;
 }
+
+/**
+ * Helper function to get retention color for cohort display
+ *
+ * @param float $retention Retention percentage
+ * @return string CSS color value
+ */
+function skylearn_get_retention_color($retention) {
+    if ($retention >= 70) return 'rgba(40, 167, 69, 0.8)'; // Green
+    if ($retention >= 50) return 'rgba(255, 193, 7, 0.8)'; // Yellow
+    if ($retention >= 30) return 'rgba(255, 133, 82, 0.8)'; // Orange
+    return 'rgba(220, 53, 69, 0.8)'; // Red
+}
