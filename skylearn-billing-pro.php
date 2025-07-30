@@ -169,6 +169,19 @@ class SkyLearnBillingPro {
         skylearn_billing_pro_loyalty();
         skylearn_billing_pro_nurture_popup();
         
+        // Initialize security and compliance features
+        require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/security/class-security.php';
+        require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/security/class-audit-logger.php';
+        require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/security/class-gdpr-tools.php';
+        require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/security/class-performance.php';
+        require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/security/class-role-access.php';
+        
+        skylearn_billing_pro_security();
+        skylearn_billing_pro_audit_logger();
+        skylearn_billing_pro_gdpr_tools();
+        skylearn_billing_pro_performance();
+        skylearn_billing_pro_role_access();
+        
         // Include admin class if in admin
         if (is_admin()) {
             require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/admin/class-welcome-email.php';

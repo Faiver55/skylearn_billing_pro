@@ -152,6 +152,25 @@ class SkyLearn_Billing_Pro_Admin {
             array($this, 'admin_page')
         );
         
+        // Security and compliance menu items
+        add_submenu_page(
+            'skylearn-billing-pro',
+            __('Audit Logs', 'skylearn-billing-pro'),
+            __('Audit Logs', 'skylearn-billing-pro'),
+            'skylearn_view_logs',
+            'skylearn-billing-pro-audit-logs',
+            array($this, 'admin_page')
+        );
+        
+        add_submenu_page(
+            'skylearn-billing-pro',
+            __('Privacy Settings', 'skylearn-billing-pro'),
+            __('Privacy', 'skylearn-billing-pro'),
+            'skylearn_manage_privacy',
+            'skylearn-billing-pro-privacy',
+            array($this, 'admin_page')
+        );
+        
         add_submenu_page(
             'skylearn-billing-pro',
             __('Status & Logs', 'skylearn-billing-pro'),
@@ -277,6 +296,20 @@ class SkyLearn_Billing_Pro_Admin {
             $this->render_automation_page();
         } elseif ($current_page === 'skylearn-billing-pro-addons') {
             include SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'templates/admin/addons.php';
+        } elseif ($current_page === 'skylearn-billing-pro-audit-logs') {
+            // Check capability before including
+            if (current_user_can('skylearn_view_logs')) {
+                include SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'templates/admin/audit-log.php';
+            } else {
+                wp_die(__('You do not have sufficient permissions to access this page.', 'skylearn-billing-pro'));
+            }
+        } elseif ($current_page === 'skylearn-billing-pro-privacy') {
+            // Check capability before including
+            if (current_user_can('skylearn_manage_privacy')) {
+                include SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'templates/admin/privacy-settings.php';
+            } else {
+                wp_die(__('You do not have sufficient permissions to access this page.', 'skylearn-billing-pro'));
+            }
         } elseif ($current_page === 'skylearn-billing-pro-status') {
             include SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'templates/admin/status.php';
         } elseif ($current_page === 'skylearn-billing-pro-email') {
