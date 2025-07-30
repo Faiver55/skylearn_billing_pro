@@ -109,6 +109,33 @@ class SkyLearn_Billing_Pro_Admin {
         
         add_submenu_page(
             'skylearn-billing-pro',
+            __('Subscriptions', 'skylearn-billing-pro'),
+            __('Subscriptions', 'skylearn-billing-pro'),
+            'manage_options',
+            'skylearn-billing-pro-subscriptions',
+            array($this, 'admin_page')
+        );
+        
+        add_submenu_page(
+            'skylearn-billing-pro',
+            __('Memberships', 'skylearn-billing-pro'),
+            __('Memberships', 'skylearn-billing-pro'),
+            'manage_options',
+            'skylearn-billing-pro-memberships',
+            array($this, 'admin_page')
+        );
+        
+        add_submenu_page(
+            'skylearn-billing-pro',
+            __('Loyalty & Rewards', 'skylearn-billing-pro'),
+            __('Loyalty', 'skylearn-billing-pro'),
+            'manage_options',
+            'skylearn-billing-pro-loyalty',
+            array($this, 'admin_page')
+        );
+        
+        add_submenu_page(
+            'skylearn-billing-pro',
             __('License', 'skylearn-billing-pro'),
             __('License', 'skylearn-billing-pro'),
             'manage_options',
@@ -213,6 +240,12 @@ class SkyLearn_Billing_Pro_Admin {
             $this->render_products_page();
         } elseif ($current_page === 'skylearn-billing-pro-bundles') {
             $this->render_bundles_page();
+        } elseif ($current_page === 'skylearn-billing-pro-subscriptions') {
+            $this->render_subscriptions_page();
+        } elseif ($current_page === 'skylearn-billing-pro-memberships') {
+            $this->render_memberships_page();
+        } elseif ($current_page === 'skylearn-billing-pro-loyalty') {
+            $this->render_loyalty_page();
         } elseif ($current_page === 'skylearn-billing-pro-email') {
             include SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'templates/admin/email-settings.php';
         } elseif ($current_page === 'skylearn-billing-pro-reports') {
@@ -491,5 +524,451 @@ class SkyLearn_Billing_Pro_Admin {
         } else {
             include SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'templates/admin/bundles-list.php';
         }
+    }
+    
+    /**
+     * Render subscriptions page
+     */
+    public function render_subscriptions_page() {
+        $action = isset($_GET['action']) ? sanitize_text_field($_GET['action']) : '';
+        $tab = isset($_GET['tab']) ? sanitize_text_field($_GET['tab']) : 'list';
+        
+        if ($action === 'view') {
+            $this->render_subscription_details();
+        } elseif ($tab === 'plans') {
+            $this->render_subscription_plans();
+        } elseif ($tab === 'settings') {
+            $this->render_subscription_settings();
+        } else {
+            $this->render_subscriptions_list();
+        }
+    }
+    
+    /**
+     * Render subscriptions list
+     */
+    private function render_subscriptions_list() {
+        echo '<div class="wrap">';
+        echo '<h1>' . esc_html__('Subscriptions', 'skylearn-billing-pro') . '</h1>';
+        
+        echo '<nav class="nav-tab-wrapper">';
+        echo '<a href="?page=skylearn-billing-pro-subscriptions&tab=list" class="nav-tab nav-tab-active">' . esc_html__('All Subscriptions', 'skylearn-billing-pro') . '</a>';
+        echo '<a href="?page=skylearn-billing-pro-subscriptions&tab=plans" class="nav-tab">' . esc_html__('Plans', 'skylearn-billing-pro') . '</a>';
+        echo '<a href="?page=skylearn-billing-pro-subscriptions&tab=settings" class="nav-tab">' . esc_html__('Settings', 'skylearn-billing-pro') . '</a>';
+        echo '</nav>';
+        
+        echo '<div class="subscription-stats" style="margin: 20px 0;">';
+        echo '<div class="stat-cards" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">';
+        
+        // Get subscription statistics
+        $users = get_users(array('meta_key' => 'skylearn_billing_subscriptions'));
+        $total_subscriptions = 0;
+        $active_subscriptions = 0;
+        $paused_subscriptions = 0;
+        $cancelled_subscriptions = 0;
+        
+        foreach ($users as $user) {
+            $subscriptions = skylearn_billing_pro_subscription_manager()->get_user_subscriptions($user->ID);
+            $total_subscriptions += count($subscriptions);
+            
+            foreach ($subscriptions as $subscription) {
+                switch ($subscription['status']) {
+                    case 'active':
+                        $active_subscriptions++;
+                        break;
+                    case 'paused':
+                        $paused_subscriptions++;
+                        break;
+                    case 'cancelled':
+                        $cancelled_subscriptions++;
+                        break;
+                }
+            }
+        }
+        
+        echo '<div class="stat-card" style="background: #fff; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">';
+        echo '<h3 style="margin: 0; color: #333;">' . number_format($total_subscriptions) . '</h3>';
+        echo '<p style="margin: 5px 0 0 0; color: #666;">' . esc_html__('Total Subscriptions', 'skylearn-billing-pro') . '</p>';
+        echo '</div>';
+        
+        echo '<div class="stat-card" style="background: #fff; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">';
+        echo '<h3 style="margin: 0; color: #10b981;">' . number_format($active_subscriptions) . '</h3>';
+        echo '<p style="margin: 5px 0 0 0; color: #666;">' . esc_html__('Active Subscriptions', 'skylearn-billing-pro') . '</p>';
+        echo '</div>';
+        
+        echo '<div class="stat-card" style="background: #fff; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">';
+        echo '<h3 style="margin: 0; color: #f59e0b;">' . number_format($paused_subscriptions) . '</h3>';
+        echo '<p style="margin: 5px 0 0 0; color: #666;">' . esc_html__('Paused Subscriptions', 'skylearn-billing-pro') . '</p>';
+        echo '</div>';
+        
+        echo '<div class="stat-card" style="background: #fff; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">';
+        echo '<h3 style="margin: 0; color: #ef4444;">' . number_format($cancelled_subscriptions) . '</h3>';
+        echo '<p style="margin: 5px 0 0 0; color: #666;">' . esc_html__('Cancelled Subscriptions', 'skylearn-billing-pro') . '</p>';
+        echo '</div>';
+        
+        echo '</div>';
+        echo '</div>';
+        
+        // Subscriptions table
+        echo '<table class="wp-list-table widefat fixed striped">';
+        echo '<thead>';
+        echo '<tr>';
+        echo '<th>' . esc_html__('User', 'skylearn-billing-pro') . '</th>';
+        echo '<th>' . esc_html__('Plan', 'skylearn-billing-pro') . '</th>';
+        echo '<th>' . esc_html__('Status', 'skylearn-billing-pro') . '</th>';
+        echo '<th>' . esc_html__('Amount', 'skylearn-billing-pro') . '</th>';
+        echo '<th>' . esc_html__('Next Payment', 'skylearn-billing-pro') . '</th>';
+        echo '<th>' . esc_html__('Actions', 'skylearn-billing-pro') . '</th>';
+        echo '</tr>';
+        echo '</thead>';
+        echo '<tbody>';
+        
+        if (!empty($users)) {
+            foreach ($users as $user) {
+                $subscriptions = skylearn_billing_pro_subscription_manager()->get_user_subscriptions($user->ID);
+                foreach ($subscriptions as $subscription) {
+                    echo '<tr>';
+                    echo '<td>' . esc_html($user->display_name) . '<br><small>' . esc_html($user->user_email) . '</small></td>';
+                    echo '<td>' . esc_html($subscription['plan_id']) . '<br><small>Tier: ' . esc_html(ucfirst($subscription['tier'])) . '</small></td>';
+                    echo '<td><span class="status-badge status-' . esc_attr($subscription['status']) . '">' . esc_html(ucfirst($subscription['status'])) . '</span></td>';
+                    echo '<td>' . esc_html($subscription['currency']) . ' ' . esc_html(number_format($subscription['amount'], 2)) . '</td>';
+                    echo '<td>';
+                    if ($subscription['status'] === 'active' && !empty($subscription['next_payment_date'])) {
+                        echo esc_html(date_i18n(get_option('date_format'), strtotime($subscription['next_payment_date'])));
+                    } else {
+                        echo '—';
+                    }
+                    echo '</td>';
+                    echo '<td>';
+                    echo '<a href="?page=skylearn-billing-pro-subscriptions&action=view&id=' . esc_attr($subscription['id']) . '" class="button button-small">' . esc_html__('View', 'skylearn-billing-pro') . '</a>';
+                    echo '</td>';
+                    echo '</tr>';
+                }
+            }
+        } else {
+            echo '<tr><td colspan="6">' . esc_html__('No subscriptions found.', 'skylearn-billing-pro') . '</td></tr>';
+        }
+        
+        echo '</tbody>';
+        echo '</table>';
+        echo '</div>';
+    }
+    
+    /**
+     * Render subscription plans
+     */
+    private function render_subscription_plans() {
+        echo '<div class="wrap">';
+        echo '<h1>' . esc_html__('Subscription Plans', 'skylearn-billing-pro') . '</h1>';
+        echo '<p>' . esc_html__('Manage your subscription plans and pricing tiers.', 'skylearn-billing-pro') . '</p>';
+        echo '<div class="notice notice-info"><p>' . esc_html__('Subscription plans management is coming soon. For now, plans are managed through the available_plans filter.', 'skylearn-billing-pro') . '</p></div>';
+        echo '</div>';
+    }
+    
+    /**
+     * Render subscription settings
+     */
+    private function render_subscription_settings() {
+        echo '<div class="wrap">';
+        echo '<h1>' . esc_html__('Subscription Settings', 'skylearn-billing-pro') . '</h1>';
+        echo '<p>' . esc_html__('Configure subscription-related settings.', 'skylearn-billing-pro') . '</p>';
+        echo '<div class="notice notice-info"><p>' . esc_html__('Subscription settings management is coming soon.', 'skylearn-billing-pro') . '</p></div>';
+        echo '</div>';
+    }
+    
+    /**
+     * Render memberships page
+     */
+    public function render_memberships_page() {
+        $tab = isset($_GET['tab']) ? sanitize_text_field($_GET['tab']) : 'levels';
+        
+        if ($tab === 'members') {
+            $this->render_members_list();
+        } elseif ($tab === 'settings') {
+            $this->render_membership_settings();
+        } else {
+            $this->render_membership_levels();
+        }
+    }
+    
+    /**
+     * Render membership levels
+     */
+    private function render_membership_levels() {
+        echo '<div class="wrap">';
+        echo '<h1>' . esc_html__('Membership Levels', 'skylearn-billing-pro') . '</h1>';
+        
+        echo '<nav class="nav-tab-wrapper">';
+        echo '<a href="?page=skylearn-billing-pro-memberships&tab=levels" class="nav-tab nav-tab-active">' . esc_html__('Levels', 'skylearn-billing-pro') . '</a>';
+        echo '<a href="?page=skylearn-billing-pro-memberships&tab=members" class="nav-tab">' . esc_html__('Members', 'skylearn-billing-pro') . '</a>';
+        echo '<a href="?page=skylearn-billing-pro-memberships&tab=settings" class="nav-tab">' . esc_html__('Settings', 'skylearn-billing-pro') . '</a>';
+        echo '</nav>';
+        
+        $membership_levels = skylearn_billing_pro_membership_manager()->get_membership_levels();
+        
+        echo '<table class="wp-list-table widefat fixed striped">';
+        echo '<thead>';
+        echo '<tr>';
+        echo '<th>' . esc_html__('Level', 'skylearn-billing-pro') . '</th>';
+        echo '<th>' . esc_html__('Description', 'skylearn-billing-pro') . '</th>';
+        echo '<th>' . esc_html__('Priority', 'skylearn-billing-pro') . '</th>';
+        echo '<th>' . esc_html__('Course Limit', 'skylearn-billing-pro') . '</th>';
+        echo '<th>' . esc_html__('Download Limit', 'skylearn-billing-pro') . '</th>';
+        echo '<th>' . esc_html__('Support Level', 'skylearn-billing-pro') . '</th>';
+        echo '</tr>';
+        echo '</thead>';
+        echo '<tbody>';
+        
+        foreach ($membership_levels as $level_id => $level) {
+            echo '<tr>';
+            echo '<td><strong>' . esc_html($level['name']) . '</strong><br><small>' . esc_html($level_id) . '</small></td>';
+            echo '<td>' . esc_html($level['description']) . '</td>';
+            echo '<td>' . esc_html($level['priority']) . '</td>';
+            echo '<td>' . ($level['restrictions']['course_limit'] === -1 ? esc_html__('Unlimited', 'skylearn-billing-pro') : esc_html($level['restrictions']['course_limit'])) . '</td>';
+            echo '<td>' . ($level['restrictions']['download_limit'] === -1 ? esc_html__('Unlimited', 'skylearn-billing-pro') : esc_html($level['restrictions']['download_limit'])) . '</td>';
+            echo '<td>' . esc_html(ucfirst(str_replace('_', ' ', $level['restrictions']['support_level']))) . '</td>';
+            echo '</tr>';
+        }
+        
+        echo '</tbody>';
+        echo '</table>';
+        echo '</div>';
+    }
+    
+    /**
+     * Render members list
+     */
+    private function render_members_list() {
+        echo '<div class="wrap">';
+        echo '<h1>' . esc_html__('Members', 'skylearn-billing-pro') . '</h1>';
+        
+        echo '<nav class="nav-tab-wrapper">';
+        echo '<a href="?page=skylearn-billing-pro-memberships&tab=levels" class="nav-tab">' . esc_html__('Levels', 'skylearn-billing-pro') . '</a>';
+        echo '<a href="?page=skylearn-billing-pro-memberships&tab=members" class="nav-tab nav-tab-active">' . esc_html__('Members', 'skylearn-billing-pro') . '</a>';
+        echo '<a href="?page=skylearn-billing-pro-memberships&tab=settings" class="nav-tab">' . esc_html__('Settings', 'skylearn-billing-pro') . '</a>';
+        echo '</nav>';
+        
+        $users = get_users(array('meta_key' => 'skylearn_billing_membership_level'));
+        
+        echo '<table class="wp-list-table widefat fixed striped">';
+        echo '<thead>';
+        echo '<tr>';
+        echo '<th>' . esc_html__('User', 'skylearn-billing-pro') . '</th>';
+        echo '<th>' . esc_html__('Membership Level', 'skylearn-billing-pro') . '</th>';
+        echo '<th>' . esc_html__('Assigned Date', 'skylearn-billing-pro') . '</th>';
+        echo '<th>' . esc_html__('Actions', 'skylearn-billing-pro') . '</th>';
+        echo '</tr>';
+        echo '</thead>';
+        echo '<tbody>';
+        
+        if (!empty($users)) {
+            foreach ($users as $user) {
+                $membership_data = skylearn_billing_pro_membership_manager()->get_user_membership_data($user->ID);
+                echo '<tr>';
+                echo '<td>' . esc_html($user->display_name) . '<br><small>' . esc_html($user->user_email) . '</small></td>';
+                echo '<td>' . esc_html($membership_data['level_name']) . '<br><small>' . esc_html($membership_data['level_id']) . '</small></td>';
+                echo '<td>' . esc_html(date_i18n(get_option('date_format'), strtotime($membership_data['assigned_at']))) . '</td>';
+                echo '<td><a href="' . esc_url(get_edit_user_link($user->ID)) . '" class="button button-small">' . esc_html__('Edit User', 'skylearn-billing-pro') . '</a></td>';
+                echo '</tr>';
+            }
+        } else {
+            echo '<tr><td colspan="4">' . esc_html__('No members found.', 'skylearn-billing-pro') . '</td></tr>';
+        }
+        
+        echo '</tbody>';
+        echo '</table>';
+        echo '</div>';
+    }
+    
+    /**
+     * Render loyalty page
+     */
+    public function render_loyalty_page() {
+        $tab = isset($_GET['tab']) ? sanitize_text_field($_GET['tab']) : 'overview';
+        
+        if ($tab === 'rewards') {
+            $this->render_loyalty_rewards();
+        } elseif ($tab === 'settings') {
+            $this->render_loyalty_settings();
+        } else {
+            $this->render_loyalty_overview();
+        }
+    }
+    
+    /**
+     * Render loyalty overview
+     */
+    private function render_loyalty_overview() {
+        echo '<div class="wrap">';
+        echo '<h1>' . esc_html__('Loyalty & Rewards', 'skylearn-billing-pro') . '</h1>';
+        
+        echo '<nav class="nav-tab-wrapper">';
+        echo '<a href="?page=skylearn-billing-pro-loyalty&tab=overview" class="nav-tab nav-tab-active">' . esc_html__('Overview', 'skylearn-billing-pro') . '</a>';
+        echo '<a href="?page=skylearn-billing-pro-loyalty&tab=rewards" class="nav-tab">' . esc_html__('Rewards', 'skylearn-billing-pro') . '</a>';
+        echo '<a href="?page=skylearn-billing-pro-loyalty&tab=settings" class="nav-tab">' . esc_html__('Settings', 'skylearn-billing-pro') . '</a>';
+        echo '</nav>';
+        
+        // Get loyalty statistics
+        $users = get_users(array('meta_key' => 'skylearn_billing_loyalty_points'));
+        $total_points_awarded = 0;
+        $total_points_redeemed = 0;
+        $active_members = count($users);
+        
+        foreach ($users as $user) {
+            $current_points = skylearn_billing_pro_loyalty()->get_user_points($user->ID);
+            $history = skylearn_billing_pro_loyalty()->get_user_points_history($user->ID);
+            
+            foreach ($history as $transaction) {
+                if ($transaction['points'] > 0) {
+                    $total_points_awarded += $transaction['points'];
+                } else {
+                    $total_points_redeemed += abs($transaction['points']);
+                }
+            }
+        }
+        
+        echo '<div class="loyalty-stats" style="margin: 20px 0;">';
+        echo '<div class="stat-cards" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">';
+        
+        echo '<div class="stat-card" style="background: #fff; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">';
+        echo '<h3 style="margin: 0; color: #333;">' . number_format($active_members) . '</h3>';
+        echo '<p style="margin: 5px 0 0 0; color: #666;">' . esc_html__('Active Members', 'skylearn-billing-pro') . '</p>';
+        echo '</div>';
+        
+        echo '<div class="stat-card" style="background: #fff; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">';
+        echo '<h3 style="margin: 0; color: #10b981;">' . number_format($total_points_awarded) . '</h3>';
+        echo '<p style="margin: 5px 0 0 0; color: #666;">' . esc_html__('Points Awarded', 'skylearn-billing-pro') . '</p>';
+        echo '</div>';
+        
+        echo '<div class="stat-card" style="background: #fff; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">';
+        echo '<h3 style="margin: 0; color: #ef4444;">' . number_format($total_points_redeemed) . '</h3>';
+        echo '<p style="margin: 5px 0 0 0; color: #666;">' . esc_html__('Points Redeemed', 'skylearn-billing-pro') . '</p>';
+        echo '</div>';
+        
+        echo '<div class="stat-card" style="background: #fff; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">';
+        echo '<h3 style="margin: 0; color: #f59e0b;">' . number_format($total_points_awarded - $total_points_redeemed) . '</h3>';
+        echo '<p style="margin: 5px 0 0 0; color: #666;">' . esc_html__('Points Outstanding', 'skylearn-billing-pro') . '</p>';
+        echo '</div>';
+        
+        echo '</div>';
+        echo '</div>';
+        
+        // Recent activity
+        echo '<h2>' . esc_html__('Recent Point Activity', 'skylearn-billing-pro') . '</h2>';
+        echo '<table class="wp-list-table widefat fixed striped">';
+        echo '<thead>';
+        echo '<tr>';
+        echo '<th>' . esc_html__('User', 'skylearn-billing-pro') . '</th>';
+        echo '<th>' . esc_html__('Points', 'skylearn-billing-pro') . '</th>';
+        echo '<th>' . esc_html__('Type', 'skylearn-billing-pro') . '</th>';
+        echo '<th>' . esc_html__('Description', 'skylearn-billing-pro') . '</th>';
+        echo '<th>' . esc_html__('Date', 'skylearn-billing-pro') . '</th>';
+        echo '</tr>';
+        echo '</thead>';
+        echo '<tbody>';
+        
+        $recent_activity = array();
+        foreach ($users as $user) {
+            $history = skylearn_billing_pro_loyalty()->get_user_points_history($user->ID, 5);
+            foreach ($history as $transaction) {
+                $transaction['user'] = $user;
+                $recent_activity[] = $transaction;
+            }
+        }
+        
+        // Sort by timestamp
+        usort($recent_activity, function($a, $b) {
+            return strtotime($b['timestamp']) - strtotime($a['timestamp']);
+        });
+        
+        $recent_activity = array_slice($recent_activity, 0, 10);
+        
+        if (!empty($recent_activity)) {
+            foreach ($recent_activity as $activity) {
+                echo '<tr>';
+                echo '<td>' . esc_html($activity['user']->display_name) . '</td>';
+                echo '<td style="color: ' . ($activity['points'] > 0 ? '#10b981' : '#ef4444') . ';">' . 
+                     ($activity['points'] > 0 ? '+' : '') . number_format($activity['points']) . '</td>';
+                echo '<td>' . esc_html(ucfirst(str_replace('_', ' ', $activity['type']))) . '</td>';
+                echo '<td>' . esc_html($activity['description']) . '</td>';
+                echo '<td>' . esc_html(date_i18n(get_option('date_format') . ' ' . get_option('time_format'), strtotime($activity['timestamp']))) . '</td>';
+                echo '</tr>';
+            }
+        } else {
+            echo '<tr><td colspan="5">' . esc_html__('No recent activity found.', 'skylearn-billing-pro') . '</td></tr>';
+        }
+        
+        echo '</tbody>';
+        echo '</table>';
+        echo '</div>';
+    }
+    
+    /**
+     * Render loyalty rewards
+     */
+    private function render_loyalty_rewards() {
+        echo '<div class="wrap">';
+        echo '<h1>' . esc_html__('Loyalty Rewards', 'skylearn-billing-pro') . '</h1>';
+        
+        echo '<nav class="nav-tab-wrapper">';
+        echo '<a href="?page=skylearn-billing-pro-loyalty&tab=overview" class="nav-tab">' . esc_html__('Overview', 'skylearn-billing-pro') . '</a>';
+        echo '<a href="?page=skylearn-billing-pro-loyalty&tab=rewards" class="nav-tab nav-tab-active">' . esc_html__('Rewards', 'skylearn-billing-pro') . '</a>';
+        echo '<a href="?page=skylearn-billing-pro-loyalty&tab=settings" class="nav-tab">' . esc_html__('Settings', 'skylearn-billing-pro') . '</a>';
+        echo '</nav>';
+        
+        $available_rewards = skylearn_billing_pro_loyalty()->get_available_rewards();
+        
+        echo '<table class="wp-list-table widefat fixed striped">';
+        echo '<thead>';
+        echo '<tr>';
+        echo '<th>' . esc_html__('Reward', 'skylearn-billing-pro') . '</th>';
+        echo '<th>' . esc_html__('Type', 'skylearn-billing-pro') . '</th>';
+        echo '<th>' . esc_html__('Cost (Points)', 'skylearn-billing-pro') . '</th>';
+        echo '<th>' . esc_html__('Value', 'skylearn-billing-pro') . '</th>';
+        echo '<th>' . esc_html__('Status', 'skylearn-billing-pro') . '</th>';
+        echo '</tr>';
+        echo '</thead>';
+        echo '<tbody>';
+        
+        if (!empty($available_rewards)) {
+            foreach ($available_rewards as $reward_id => $reward) {
+                echo '<tr>';
+                echo '<td><strong>' . esc_html($reward['name']) . '</strong><br><small>' . esc_html($reward['description']) . '</small></td>';
+                echo '<td>' . esc_html(ucfirst(str_replace('_', ' ', $reward['type']))) . '</td>';
+                echo '<td>' . number_format($reward['cost']) . '</td>';
+                echo '<td>' . esc_html($reward['value']) . '</td>';
+                echo '<td><span class="status-badge status-' . ($reward['active'] ? 'active' : 'inactive') . '">' . 
+                     ($reward['active'] ? esc_html__('Active', 'skylearn-billing-pro') : esc_html__('Inactive', 'skylearn-billing-pro')) . '</span></td>';
+                echo '</tr>';
+            }
+        } else {
+            echo '<tr><td colspan="5">' . esc_html__('No rewards configured.', 'skylearn-billing-pro') . '</td></tr>';
+        }
+        
+        echo '</tbody>';
+        echo '</table>';
+        echo '</div>';
+    }
+    
+    /**
+     * Render loyalty settings
+     */
+    private function render_loyalty_settings() {
+        echo '<div class="wrap">';
+        echo '<h1>' . esc_html__('Loyalty Settings', 'skylearn-billing-pro') . '</h1>';
+        echo '<p>' . esc_html__('Configure loyalty program settings and earning rules.', 'skylearn-billing-pro') . '</p>';
+        echo '<div class="notice notice-info"><p>' . esc_html__('Loyalty settings management is coming soon.', 'skylearn-billing-pro') . '</p></div>';
+        echo '</div>';
+    }
+    
+    /**
+     * Render membership settings
+     */
+    private function render_membership_settings() {
+        echo '<div class="wrap">';
+        echo '<h1>' . esc_html__('Membership Settings', 'skylearn-billing-pro') . '</h1>';
+        echo '<p>' . esc_html__('Configure membership-related settings.', 'skylearn-billing-pro') . '</p>';
+        echo '<div class="notice notice-info"><p>' . esc_html__('Membership settings management is coming soon.', 'skylearn-billing-pro') . '</p></div>';
+        echo '</div>';
     }
 }
