@@ -122,6 +122,10 @@ class SkyLearnBillingPro {
         require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/class-user-enrollment.php';
         require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/class-webhook-handler.php';
         
+        // Email system
+        require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/admin/class-email.php';
+        require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/emails/class-email-builder.php';
+        
         // Initialize instances
         skylearn_billing_pro_lms_manager();
         skylearn_billing_pro_course_mapping();
@@ -134,6 +138,10 @@ class SkyLearnBillingPro {
         skylearn_billing_pro_migration_tool();
         skylearn_billing_pro_user_enrollment();
         skylearn_billing_pro_webhook_handler();
+        
+        // Initialize email system
+        skylearn_billing_pro_email();
+        skylearn_billing_pro_email_builder();
         
         // Include admin class if in admin
         if (is_admin()) {
@@ -246,8 +254,28 @@ class SkyLearnBillingPro {
             return;
         }
         
+        // Main admin styles and scripts
         wp_enqueue_style('skylearn-billing-pro-admin', SKYLEARN_BILLING_PRO_PLUGIN_URL . 'assets/css/admin.css', array(), SKYLEARN_BILLING_PRO_VERSION);
         wp_enqueue_script('skylearn-billing-pro-admin', SKYLEARN_BILLING_PRO_PLUGIN_URL . 'assets/js/admin.js', array('jquery'), SKYLEARN_BILLING_PRO_VERSION, true);
+        
+        // Email builder assets
+        wp_enqueue_style('skylearn-email-builder', SKYLEARN_BILLING_PRO_PLUGIN_URL . 'assets/css/email-builder.css', array(), SKYLEARN_BILLING_PRO_VERSION);
+        wp_enqueue_script('skylearn-email-builder', SKYLEARN_BILLING_PRO_PLUGIN_URL . 'assets/js/email-builder.js', array('jquery', 'jquery-ui-sortable'), SKYLEARN_BILLING_PRO_VERSION, true);
+        
+        // WordPress media library for image uploads
+        wp_enqueue_media();
+        
+        // Localize scripts with nonces
+        wp_localize_script('skylearn-email-builder', 'skylearn_email_builder_nonces', array(
+            'skylearn_email_builder' => wp_create_nonce('skylearn_email_builder'),
+            'skylearn_email_preview' => wp_create_nonce('skylearn_email_preview'),
+            'skylearn_email_test' => wp_create_nonce('skylearn_email_test'),
+            'skylearn_email_save' => wp_create_nonce('skylearn_email_save'),
+            'skylearn_email_analytics' => wp_create_nonce('skylearn_email_analytics'),
+            'skylearn_smtp_test' => wp_create_nonce('skylearn_smtp_test'),
+            'skylearn_export_templates' => wp_create_nonce('skylearn_export_templates'),
+            'skylearn_import_templates' => wp_create_nonce('skylearn_import_templates')
+        ));
     }
     
     /**
