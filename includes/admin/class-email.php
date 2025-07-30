@@ -858,59 +858,6 @@ class SkyLearn_Billing_Pro_Email {
 <p>Best regards,<br>The {{site_name}} Team</p>';
     }
     
-    /**
-     * Get sample data for email previews
-     */
-    private function get_sample_data($type) {
-        $base_data = array(
-            'site_name' => get_bloginfo('name'),
-            'site_url' => home_url(),
-            'admin_email' => get_option('admin_email'),
-            'current_date' => current_time('F j, Y'),
-            'current_time' => current_time('g:i A'),
-            'username' => 'johndoe',
-            'user_email' => 'john@example.com',
-            'display_name' => 'John Doe',
-            'login_url' => wp_login_url()
-        );
-        
-        $type_specific_data = array(
-            'welcome' => array(
-                'password' => 'sample-password-123'
-            ),
-            'order_confirmation' => array(
-                'order_id' => 'ORD-12345',
-                'order_total' => '$99.00',
-                'product_name' => 'Sample Course',
-                'customer_name' => 'John Doe'
-            ),
-            'invoice' => array(
-                'invoice_id' => 'INV-12345',
-                'invoice_total' => '$99.00',
-                'due_date' => date('F j, Y', strtotime('+30 days'))
-            ),
-            'payment_confirmation' => array(
-                'order_id' => 'ORD-12345',
-                'amount' => '$99.00',
-                'payment_method' => 'Credit Card',
-                'transaction_id' => 'TXN-67890'
-            ),
-            'course_enrollment' => array(
-                'course_title' => 'Advanced WordPress Development',
-                'course_url' => home_url('/courses/advanced-wordpress/'),
-                'instructor_name' => 'Jane Smith'
-            ),
-            'subscription_created' => array(
-                'subscription_id' => 'SUB-12345',
-                'plan_name' => 'Pro Monthly',
-                'amount' => '$29.00',
-                'billing_cycle' => 'monthly'
-            )
-        );
-        
-        return array_merge($base_data, $type_specific_data[$type] ?? array());
-    }
-    
     private function get_subscription_cancelled_template_content() {
         return '<h2>Subscription Cancelled</h2>
 <p>Hello,</p>
