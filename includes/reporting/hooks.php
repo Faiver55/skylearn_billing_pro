@@ -108,7 +108,7 @@ add_filter('skylearn_billing_report_types', 'skylearn_billing_register_custom_re
  * @param array $config Report configuration
  * @param string $report_type Type of report being generated
  */
-do_action('skylearn_billing_generate_report_data', $report_data, $config, $report_type);
+// do_action('skylearn_billing_generate_report_data', $report_data, $config, $report_type);
 
 /**
  * Filter for custom report data
@@ -156,7 +156,7 @@ add_filter('skylearn_billing_analytics_widgets', 'skylearn_billing_register_cust
  * @param array $widget_config Widget configuration
  * @param array $widget_data Widget data
  */
-do_action('skylearn_billing_render_analytics_widget', $widget_type, $widget_config, $widget_data);
+// do_action('skylearn_billing_render_analytics_widget', $widget_type, $widget_config, $widget_data);
 
 /**
  * Filter for custom export formats
@@ -199,7 +199,7 @@ add_filter('skylearn_billing_export_formats', 'skylearn_billing_register_custom_
  * @param string $format Export format
  * @param array $options Export options
  */
-do_action('skylearn_billing_custom_export', $report_data, $format, $options);
+// do_action('skylearn_billing_custom_export', $report_data, $format, $options);
 
 /**
  * Filter for custom report filters
@@ -251,7 +251,7 @@ add_filter('skylearn_billing_report_filters', 'skylearn_billing_register_custom_
  * @param array $schedule_config Schedule configuration
  * @param array $report_config Report configuration
  */
-do_action('skylearn_billing_schedule_custom_report', $schedule_config, $report_config);
+// do_action('skylearn_billing_schedule_custom_report', $schedule_config, $report_config);
 
 /**
  * Filter for custom chart types
