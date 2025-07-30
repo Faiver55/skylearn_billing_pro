@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SkyLearn Billing Pro - Payment Gateways</title>
+    <style>
+        :root {
+            --skylearn-primary: #183153;
+            --skylearn-accent: #FF3B00;
+            --skylearn-light-gray: #F4F4F4;
+            --skylearn-white: #FFFFFF;
+            --skylearn-dark-gray: #333333;
+            --skylearn-medium-gray: #666666;
+            --skylearn-border: #E1E5E9;
+            --skylearn-success: #28a745;
+            --skylearn-warning: #ffc107;
+            --skylearn-shadow: rgba(24, 49, 83, 0.1);
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: var(--skylearn-light-gray);
+            color: var(--skylearn-dark-gray);
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: var(--skylearn-white);
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px var(--skylearn-shadow);
+        }
+        
+        .header {
+            background: var(--skylearn-white);
+            border-bottom: 2px solid var(--skylearn-primary);
+            padding: 20px 30px;
+        }
+        
+        .header h1 {
+            margin: 0;
+            color: var(--skylearn-primary);
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .header p {
+            margin: 8px 0 0 0;
+            color: var(--skylearn-medium-gray);
+        }
+        
+        .gateway-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            padding: 30px;
+        }
+        
+        .gateway-card {
+            background: var(--skylearn-white);
+            border: 1px solid var(--skylearn-border);
+            border-radius: 8px;
+            padding: 24px;
+            transition: all 0.3s ease;
+        }
+        
+        .gateway-card:hover {
+            box-shadow: 0 4px 12px var(--skylearn-shadow);
+        }
+        
+        .gateway-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        
+        .gateway-header h3 {
+            margin: 0;
+            font-size: 18px;
+            color: var(--skylearn-primary);
+        }
+        
+        .status-badge {
+            font-size: 11px;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .status-active {
+            background: var(--skylearn-success);
+            color: var(--skylearn-white);
+        }
+        
+        .status-warning {
+            background: var(--skylearn-warning);
+            color: #333;
+        }
+        
+        .status-disabled {
+            background: #e74c3c;
+            color: var(--skylearn-white);
+        }
+        
+        .gateway-description {
+            color: var(--skylearn-medium-gray);
+            margin: 0 0 16px 0;
+            line-height: 1.5;
+        }
+        
+        .feature-list {
+            list-style: none;
+            margin: 16px 0;
+            padding: 0;
+        }
+        
+        .feature-list li {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 4px;
+            font-size: 13px;
+            color: var(--skylearn-medium-gray);
+        }
+        
+        .feature-list .check {
+            color: var(--skylearn-success);
+            font-weight: bold;
+        }
+        
+        .warning-notice {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin: 16px 0;
+            font-size: 14px;
+        }
+        
+        .checkout-preview {
+            margin-top: 30px;
+            padding: 30px;
+            background: #f8f9fa;
+            border-top: 1px solid var(--skylearn-border);
+        }
+        
+        .checkout-preview h2 {
+            color: var(--skylearn-primary);
+            margin-bottom: 20px;
+        }
+        
+        .checkout-example {
+            background: var(--skylearn-white);
+            border: 1px solid var(--skylearn-border);
+            border-radius: 8px;
+            padding: 24px;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        
+        .form-field {
+            margin-bottom: 16px;
+        }
+        
+        .form-field label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+            color: var(--skylearn-dark-gray);
+        }
+        
+        .form-field input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--skylearn-border);
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        
+        .checkout-button {
+            width: 100%;
+            padding: 15px;
+            background: var(--skylearn-accent);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .checkout-button:hover {
+            background: #e63600;
+            transform: translateY(-1px);
+        }
+        
+        .security-info {
+            text-align: center;
+            margin-top: 15px;
+            color: var(--skylearn-medium-gray);
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>
+                <span style="font-size: 24px;">💳</span>
+                Payment Gateways
+            </h1>
+            <p>Configure payment processors and customize checkout experience for your courses.</p>
+        </div>
+        
+        <div class="gateway-cards">
+            <div class="gateway-card">
+                <div class="gateway-header">
+                    <h3>Stripe</h3>
+                    <span class="status-badge status-active">Active</span>
+                </div>
+                <p class="gateway-description">Accept payments worldwide with Stripe</p>
+                
+                <h4 style="color: var(--skylearn-primary); margin: 16px 0 8px 0;">Supported Checkout Types:</h4>
+                <ul class="feature-list">
+                    <li><span class="check">✓</span> Inline Checkout</li>
+                    <li><span class="check">✓</span> Overlay Checkout</li>
+                    <li><span class="check">✓</span> Hosted Checkout</li>
+                </ul>
+            </div>
+            
+            <div class="gateway-card">
+                <div class="gateway-header">
+                    <h3>Lemon Squeezy</h3>
+                    <span class="status-badge status-warning">Needs Setup</span>
+                </div>
+                <p class="gateway-description">Simple checkout for digital products</p>
+                
+                <div class="warning-notice">
+                    ⚠️ Lemon Squeezy only supports hosted checkout. Customers will be redirected to Lemon Squeezy to complete their payment.
+                </div>
+                
+                <h4 style="color: var(--skylearn-primary); margin: 16px 0 8px 0;">Supported Checkout Types:</h4>
+                <ul class="feature-list">
+                    <li><span class="check">✓</span> Hosted Checkout</li>
+                    <li><span style="color: #666;">ℹ️</span> Hosted Only</li>
+                </ul>
+            </div>
+            
+            <div class="gateway-card">
+                <div class="gateway-header">
+                    <h3>Paddle</h3>
+                    <span class="status-badge status-disabled">Upgrade Required</span>
+                </div>
+                <p class="gateway-description">Simplified payment processing with Paddle</p>
+                
+                <div class="warning-notice" style="background: #f8d7da; border-color: #f5c6cb; color: #721c24;">
+                    🔒 Paddle requires Pro license tier or higher.
+                </div>
+                
+                <h4 style="color: var(--skylearn-primary); margin: 16px 0 8px 0;">Supported Checkout Types:</h4>
+                <ul class="feature-list">
+                    <li><span class="check">✓</span> Inline Checkout</li>
+                    <li><span class="check">✓</span> Overlay Checkout</li>
+                    <li><span class="check">✓</span> Hosted Checkout</li>
+                </ul>
+            </div>
+            
+            <div class="gateway-card">
+                <div class="gateway-header">
+                    <h3>WooCommerce</h3>
+                    <span class="status-badge status-active">Active</span>
+                </div>
+                <p class="gateway-description">Integrate with WooCommerce checkout</p>
+                
+                <h4 style="color: var(--skylearn-primary); margin: 16px 0 8px 0;">Supported Checkout Types:</h4>
+                <ul class="feature-list">
+                    <li><span class="check">✓</span> Inline Checkout</li>
+                    <li><span class="check">✓</span> Hosted Checkout</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="checkout-preview">
+            <h2>Checkout Example - Stripe Inline</h2>
+            <div class="checkout-example">
+                <h3 style="text-align: center; margin: 0 0 10px 0; color: var(--skylearn-primary);">Complete Your Purchase</h3>
+                <p style="text-align: center; margin: 0 0 30px 0; color: var(--skylearn-medium-gray);">
+                    WordPress Development Course - <strong style="color: var(--skylearn-accent);">USD 97.00</strong>
+                </p>
+                
+                <div class="form-field">
+                    <label>Email Address *</label>
+                    <input type="email" placeholder="your@email.com" value="">
+                </div>
+                
+                <div class="form-field">
+                    <label>Full Name *</label>
+                    <input type="text" placeholder="John Doe" value="">
+                </div>
+                
+                <div class="form-field">
+                    <label>Payment Information</label>
+                    <div style="padding: 12px; border: 1px solid var(--skylearn-border); border-radius: 4px; background: #f8f9fa; text-align: center; color: var(--skylearn-medium-gray);">
+                        [Stripe Elements Card Input]
+                    </div>
+                </div>
+                
+                <button class="checkout-button">Complete Purchase</button>
+                
+                <div class="security-info">
+                    🔒 Secured by Stripe
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
