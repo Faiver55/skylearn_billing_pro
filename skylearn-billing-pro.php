@@ -109,6 +109,9 @@ class SkyLearnBillingPro {
         require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/payment/class-payment-manager.php';
         require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/payment/class-payment-fields.php';
         
+        // Checkout shortcodes
+        require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/class-checkout-shortcodes.php';
+        
         // User enrollment and webhook handler
         require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/class-user-enrollment.php';
         require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/class-webhook-handler.php';
@@ -118,6 +121,7 @@ class SkyLearnBillingPro {
         skylearn_billing_pro_course_mapping();
         skylearn_billing_pro_payment_manager();
         skylearn_billing_pro_payment_fields();
+        skylearn_billing_pro_checkout_shortcodes();
         skylearn_billing_pro_user_enrollment();
         skylearn_billing_pro_webhook_handler();
         

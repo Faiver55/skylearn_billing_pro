@@ -31,6 +31,8 @@ class SkyLearn_Billing_Pro_Stripe_Connector {
     public function __construct() {
         add_action('init', array($this, 'init'));
         add_action('wp_enqueue_scripts', array($this, 'enqueue_scripts'));
+        add_action('wp_ajax_skylearn_create_stripe_payment_intent', array($this, 'ajax_create_payment_intent'));
+        add_action('wp_ajax_nopriv_skylearn_create_stripe_payment_intent', array($this, 'ajax_create_payment_intent'));
     }
     
     /**
@@ -227,6 +229,35 @@ class SkyLearn_Billing_Pro_Stripe_Connector {
     private function verify_webhook_signature($payload, $signature, $secret) {
         // This is a simplified verification - in production you'd use Stripe's official verification method
         return !empty($signature) && !empty($secret);
+    }
+    
+    /**
+     * AJAX handler for creating payment intent
+     */
+    public function ajax_create_payment_intent() {
+        check_ajax_referer('skylearn_stripe_nonce', 'nonce');
+        
+        $customer_email = sanitize_email($_POST['customer_email'] ?? '');
+        $product_id = sanitize_text_field($_POST['product_id'] ?? '');
+        $amount = floatval($_POST['amount'] ?? 0);
+        $currency = sanitize_text_field($_POST['currency'] ?? 'usd');
+        
+        if (empty($customer_email) || empty($product_id) || $amount <= 0) {
+            wp_send_json_error('Invalid payment data');
+        }
+        
+        $result = $this->create_payment_intent(array(
+            'amount' => $amount,
+            'currency' => strtolower($currency),
+            'product_id' => $product_id,
+            'customer_email' => $customer_email
+        ));
+        
+        if ($result['success']) {
+            wp_send_json_success($result);
+        } else {
+            wp_send_json_error($result['message']);
+        }
     }
     
     /**
