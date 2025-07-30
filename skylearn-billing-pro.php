@@ -126,6 +126,16 @@ class SkyLearnBillingPro {
         require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/admin/class-email.php';
         require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/emails/class-email-builder.php';
         
+        // Subscription management
+        require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/subscriptions/class-subscription-manager.php';
+        require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/subscriptions/class-loyalty.php';
+        
+        // Membership management
+        require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/memberships/class-membership-manager.php';
+        
+        // Portal features
+        require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/portal/class-nurture-popup.php';
+        
         // Initialize instances
         skylearn_billing_pro_lms_manager();
         skylearn_billing_pro_course_mapping();
@@ -142,6 +152,12 @@ class SkyLearnBillingPro {
         // Initialize email system
         skylearn_billing_pro_email();
         skylearn_billing_pro_email_builder();
+        
+        // Initialize subscription and membership systems
+        skylearn_billing_pro_subscription_manager();
+        skylearn_billing_pro_membership_manager();
+        skylearn_billing_pro_loyalty();
+        skylearn_billing_pro_nurture_popup();
         
         // Include admin class if in admin
         if (is_admin()) {
