@@ -93,6 +93,10 @@ class SkyLearnBillingPro {
      * Include required files
      */
     private function includes() {
+        // Core classes
+        require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/class-licensing-manager.php';
+        require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/class-feature-flags.php';
+        
         // Include admin class if in admin
         if (is_admin()) {
             require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/class-admin.php';

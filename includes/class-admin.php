@@ -25,6 +25,7 @@ class SkyLearn_Billing_Pro_Admin {
         add_action('admin_menu', array($this, 'add_admin_menu'));
         add_action('admin_init', array($this, 'admin_init'));
         add_action('admin_enqueue_scripts', array($this, 'enqueue_scripts'));
+        add_action('admin_notices', array($this, 'admin_notices'));
     }
     
     /**
@@ -49,6 +50,15 @@ class SkyLearn_Billing_Pro_Admin {
             __('General', 'skylearn-billing-pro'),
             'manage_options',
             'skylearn-billing-pro',
+            array($this, 'admin_page')
+        );
+        
+        add_submenu_page(
+            'skylearn-billing-pro',
+            __('License', 'skylearn-billing-pro'),
+            __('License', 'skylearn-billing-pro'),
+            'manage_options',
+            'skylearn-billing-pro-license',
             array($this, 'admin_page')
         );
     }
@@ -76,14 +86,41 @@ class SkyLearn_Billing_Pro_Admin {
             SKYLEARN_BILLING_PRO_VERSION,
             true
         );
+        
+        // Enqueue licensing scripts on license page
+        if (strpos($hook, 'skylearn-billing-pro-license') !== false) {
+            wp_enqueue_script(
+                'skylearn-billing-pro-licensing',
+                SKYLEARN_BILLING_PRO_PLUGIN_URL . 'assets/js/licensing.js',
+                array('jquery'),
+                SKYLEARN_BILLING_PRO_VERSION,
+                true
+            );
+            
+            wp_localize_script('skylearn-billing-pro-licensing', 'skylernLicensing', array(
+                'ajaxUrl' => admin_url('admin-ajax.php'),
+                'nonce' => wp_create_nonce('skylearn_license_nonce'),
+                'strings' => array(
+                    'validating' => __('Validating license...', 'skylearn-billing-pro'),
+                    'deactivating' => __('Deactivating license...', 'skylearn-billing-pro'),
+                    'confirm_deactivate' => __('Are you sure you want to deactivate your license?', 'skylearn-billing-pro')
+                )
+            ));
+        }
     }
     
     /**
      * Render admin page
      */
     public function admin_page() {
-        $active_tab = isset($_GET['tab']) ? sanitize_text_field($_GET['tab']) : 'general';
-        include SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'templates/admin-page.php';
+        $current_page = sanitize_text_field($_GET['page']);
+        
+        if ($current_page === 'skylearn-billing-pro-license') {
+            include SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'templates/admin-licensing.php';
+        } else {
+            $active_tab = isset($_GET['tab']) ? sanitize_text_field($_GET['tab']) : 'general';
+            include SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'templates/admin-page.php';
+        }
     }
     
     /**
@@ -212,5 +249,40 @@ class SkyLearn_Billing_Pro_Admin {
         echo ' ' . esc_html__('Enable test mode', 'skylearn-billing-pro');
         echo '</label>';
         echo '<p class="description">' . esc_html__('When enabled, all payments will be processed in test mode.', 'skylearn-billing-pro') . '</p>';
+    }
+    
+    /**
+     * Display admin notices
+     */
+    public function admin_notices() {
+        // Only show on our admin pages
+        $screen = get_current_screen();
+        if (!$screen || strpos($screen->id, 'skylearn-billing-pro') === false) {
+            return;
+        }
+        
+        $licensing_manager = skylearn_billing_pro_licensing();
+        
+        // Check if license is expired
+        if ($licensing_manager->is_license_expired()) {
+            echo '<div class="notice notice-error is-dismissible">';
+            echo '<p><strong>' . esc_html__('Skylearn Billing Pro:', 'skylearn-billing-pro') . '</strong> ';
+            echo esc_html__('Your license has expired. Please renew your license to continue using Pro features.', 'skylearn-billing-pro');
+            echo ' <a href="' . esc_url(admin_url('admin.php?page=skylearn-billing-pro-license')) . '">' . esc_html__('Manage License', 'skylearn-billing-pro') . '</a></p>';
+            echo '</div>';
+        }
+        
+        // Check if license expires soon (within 7 days)
+        $days_until_expiry = $licensing_manager->get_days_until_expiry();
+        if ($days_until_expiry !== false && $days_until_expiry > 0 && $days_until_expiry <= 7) {
+            echo '<div class="notice notice-warning is-dismissible">';
+            echo '<p><strong>' . esc_html__('Skylearn Billing Pro:', 'skylearn-billing-pro') . '</strong> ';
+            echo sprintf(
+                esc_html__('Your license expires in %d days. Please renew to avoid service interruption.', 'skylearn-billing-pro'),
+                $days_until_expiry
+            );
+            echo ' <a href="' . esc_url($licensing_manager->get_upgrade_url()) . '" target="_blank">' . esc_html__('Renew License', 'skylearn-billing-pro') . '</a></p>';
+            echo '</div>';
+        }
     }
 }
