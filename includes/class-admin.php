@@ -55,6 +55,15 @@ class SkyLearn_Billing_Pro_Admin {
         
         add_submenu_page(
             'skylearn-billing-pro',
+            __('LMS Integration', 'skylearn-billing-pro'),
+            __('LMS Integration', 'skylearn-billing-pro'),
+            'manage_options',
+            'skylearn-billing-pro-lms',
+            array($this, 'admin_page')
+        );
+        
+        add_submenu_page(
+            'skylearn-billing-pro',
             __('License', 'skylearn-billing-pro'),
             __('License', 'skylearn-billing-pro'),
             'manage_options',
@@ -117,6 +126,8 @@ class SkyLearn_Billing_Pro_Admin {
         
         if ($current_page === 'skylearn-billing-pro-license') {
             include SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'templates/admin-licensing.php';
+        } elseif ($current_page === 'skylearn-billing-pro-lms') {
+            include SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'templates/admin-lms.php';
         } else {
             $active_tab = isset($_GET['tab']) ? sanitize_text_field($_GET['tab']) : 'general';
             include SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'templates/admin-page.php';
@@ -129,6 +140,7 @@ class SkyLearn_Billing_Pro_Admin {
     public function admin_init() {
         // Register settings
         register_setting('skylearn_billing_pro_general', 'skylearn_billing_pro_options', array($this, 'sanitize_options'));
+        register_setting('skylearn_billing_pro_lms', 'skylearn_billing_pro_options', array($this, 'sanitize_options'));
         
         // Add settings sections
         add_settings_section(
@@ -136,6 +148,14 @@ class SkyLearn_Billing_Pro_Admin {
             __('General Settings', 'skylearn-billing-pro'),
             array($this, 'general_section_callback'),
             'skylearn_billing_pro_general'
+        );
+        
+        // Add LMS settings section
+        add_settings_section(
+            'skylearn_billing_pro_lms_section',
+            __('LMS Settings', 'skylearn-billing-pro'),
+            array($this, 'lms_section_callback'),
+            'skylearn_billing_pro_lms'
         );
         
         // Add settings fields
@@ -170,6 +190,23 @@ class SkyLearn_Billing_Pro_Admin {
             'skylearn_billing_pro_general',
             'skylearn_billing_pro_general_section'
         );
+        
+        // LMS settings fields
+        add_settings_field(
+            'active_lms',
+            __('Active LMS', 'skylearn-billing-pro'),
+            array($this, 'active_lms_callback'),
+            'skylearn_billing_pro_lms',
+            'skylearn_billing_pro_lms_section'
+        );
+        
+        add_settings_field(
+            'auto_enroll',
+            __('Auto Enrollment', 'skylearn-billing-pro'),
+            array($this, 'auto_enroll_callback'),
+            'skylearn_billing_pro_lms',
+            'skylearn_billing_pro_lms_section'
+        );
     }
     
     /**
@@ -183,6 +220,11 @@ class SkyLearn_Billing_Pro_Admin {
             $options['general_settings']['company_email'] = sanitize_email($input['general_settings']['company_email']);
             $options['general_settings']['currency'] = sanitize_text_field($input['general_settings']['currency']);
             $options['general_settings']['test_mode'] = isset($input['general_settings']['test_mode']) ? true : false;
+        }
+        
+        if (isset($input['lms_settings'])) {
+            $options['lms_settings']['active_lms'] = sanitize_text_field($input['lms_settings']['active_lms']);
+            $options['lms_settings']['auto_enroll'] = isset($input['lms_settings']['auto_enroll']) ? true : false;
         }
         
         return $options;
@@ -284,5 +326,50 @@ class SkyLearn_Billing_Pro_Admin {
             echo ' <a href="' . esc_url($licensing_manager->get_upgrade_url()) . '" target="_blank">' . esc_html__('Renew License', 'skylearn-billing-pro') . '</a></p>';
             echo '</div>';
         }
+    }
+    
+    /**
+     * LMS section callback
+     */
+    public function lms_section_callback() {
+        echo '<p>' . esc_html__('Configure LMS integration settings for course enrollment.', 'skylearn-billing-pro') . '</p>';
+    }
+    
+    /**
+     * Active LMS field callback
+     */
+    public function active_lms_callback() {
+        $options = get_option('skylearn_billing_pro_options', array());
+        $value = isset($options['lms_settings']['active_lms']) ? $options['lms_settings']['active_lms'] : '';
+        
+        $lms_manager = skylearn_billing_pro_lms_manager();
+        $detected_lms = $lms_manager->get_detected_lms();
+        
+        if (empty($detected_lms)) {
+            echo '<p class="description" style="color: #d63638;">' . esc_html__('No LMS plugins detected. Please install and activate a supported LMS plugin.', 'skylearn-billing-pro') . '</p>';
+            echo '<input type="hidden" name="skylearn_billing_pro_options[lms_settings][active_lms]" value="" />';
+            return;
+        }
+        
+        echo '<select name="skylearn_billing_pro_options[lms_settings][active_lms]">';
+        echo '<option value="">' . esc_html__('Select an LMS...', 'skylearn-billing-pro') . '</option>';
+        foreach ($detected_lms as $lms_key => $lms_data) {
+            echo '<option value="' . esc_attr($lms_key) . '"' . selected($value, $lms_key, false) . '>' . esc_html($lms_data['name']) . '</option>';
+        }
+        echo '</select>';
+        echo '<p class="description">' . esc_html__('Select the LMS to use for course enrollment. Only one LMS can be active at a time.', 'skylearn-billing-pro') . '</p>';
+    }
+    
+    /**
+     * Auto enroll field callback
+     */
+    public function auto_enroll_callback() {
+        $options = get_option('skylearn_billing_pro_options', array());
+        $value = isset($options['lms_settings']['auto_enroll']) ? $options['lms_settings']['auto_enroll'] : true;
+        echo '<label>';
+        echo '<input type="checkbox" name="skylearn_billing_pro_options[lms_settings][auto_enroll]" value="1"' . checked($value, true, false) . ' />';
+        echo ' ' . esc_html__('Enable automatic course enrollment', 'skylearn-billing-pro');
+        echo '</label>';
+        echo '<p class="description">' . esc_html__('When enabled, users will be automatically enrolled in mapped courses after successful payment.', 'skylearn-billing-pro') . '</p>';
     }
 }

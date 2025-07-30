@@ -72,6 +72,10 @@ class SkyLearnBillingPro {
         add_action('plugins_loaded', array($this, 'load_textdomain'));
         add_action('admin_enqueue_scripts', array($this, 'admin_scripts'));
         
+        // Add webhook rewrite rule and query var
+        add_action('init', array($this, 'add_webhook_rewrite_rule'));
+        add_filter('query_vars', array($this, 'add_webhook_query_var'));
+        
         // Activation, deactivation and uninstall hooks
         register_activation_hook(__FILE__, array($this, 'activate'));
         register_deactivation_hook(__FILE__, array($this, 'deactivate'));
@@ -96,6 +100,18 @@ class SkyLearnBillingPro {
         // Core classes
         require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/class-licensing-manager.php';
         require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/class-feature-flags.php';
+        
+        // LMS integration classes
+        require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/lms/class-lms-manager.php';
+        require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/lms/class-course-mapping.php';
+        
+        // Webhook handler
+        require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/class-webhook-handler.php';
+        
+        // Initialize LMS Manager and Course Mapping
+        skylearn_billing_pro_lms_manager();
+        skylearn_billing_pro_course_mapping();
+        skylearn_billing_pro_webhook_handler();
         
         // Include admin class if in admin
         if (is_admin()) {
@@ -123,13 +139,27 @@ class SkyLearnBillingPro {
                 'company_email' => get_option('admin_email'),
                 'currency' => 'USD',
                 'test_mode' => true,
-            )
+            ),
+            'lms_settings' => array(
+                'active_lms' => '',
+                'auto_enroll' => true,
+            ),
+            'webhook_settings' => array(
+                'secret' => wp_generate_password(32, false),
+                'send_welcome_email' => true,
+                'enabled' => true,
+            ),
+            'course_mappings' => array(),
+            'enrollment_log' => array()
         );
         
         add_option('skylearn_billing_pro_options', $default_options);
         
         // Set plugin installation timestamp
         add_option('skylearn_billing_pro_installed', time());
+        
+        // Add webhook rewrite rule
+        add_rewrite_rule('^skylearn-billing/webhook/?$', 'index.php?skylearn_webhook=1', 'top');
         
         // Flush rewrite rules
         flush_rewrite_rules();
@@ -181,6 +211,21 @@ class SkyLearnBillingPro {
         
         wp_enqueue_style('skylearn-billing-pro-admin', SKYLEARN_BILLING_PRO_PLUGIN_URL . 'assets/css/admin.css', array(), SKYLEARN_BILLING_PRO_VERSION);
         wp_enqueue_script('skylearn-billing-pro-admin', SKYLEARN_BILLING_PRO_PLUGIN_URL . 'assets/js/admin.js', array('jquery'), SKYLEARN_BILLING_PRO_VERSION, true);
+    }
+    
+    /**
+     * Add webhook rewrite rule
+     */
+    public function add_webhook_rewrite_rule() {
+        add_rewrite_rule('^skylearn-billing/webhook/?$', 'index.php?skylearn_webhook=1', 'top');
+    }
+    
+    /**
+     * Add webhook query variable
+     */
+    public function add_webhook_query_var($vars) {
+        $vars[] = 'skylearn_webhook';
+        return $vars;
     }
 }
 
