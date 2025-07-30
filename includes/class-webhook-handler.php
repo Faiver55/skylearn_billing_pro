@@ -47,6 +47,7 @@ class SkyLearn_Billing_Pro_Webhook_Handler {
      */
     public function init() {
         add_action('wp_loaded', array($this, 'handle_webhook_request'));
+        add_action('wp_loaded', array($this, 'handle_payment_webhook_request'));
     }
     
     /**
@@ -534,12 +535,76 @@ Best regards,
     }
     
     /**
+     * Handle payment webhook requests
+     */
+    public function handle_payment_webhook_request() {
+        // Check if this is a payment webhook request
+        $request_uri = $_SERVER['REQUEST_URI'] ?? '';
+        
+        // Handle payment gateway specific webhooks
+        if (strpos($request_uri, '/skylearn-billing/webhook/stripe') !== false) {
+            $this->handle_payment_webhook('stripe');
+        } elseif (strpos($request_uri, '/skylearn-billing/webhook/paddle') !== false) {
+            $this->handle_payment_webhook('paddle');
+        } elseif (strpos($request_uri, '/skylearn-billing/webhook/lemonsqueezy') !== false) {
+            $this->handle_payment_webhook('lemonsqueezy');
+        } elseif (strpos($request_uri, '/skylearn-billing/webhook/woocommerce') !== false) {
+            $this->handle_payment_webhook('woocommerce');
+        }
+    }
+    
+    /**
+     * Handle payment gateway webhook
+     *
+     * @param string $gateway_id Gateway ID
+     */
+    private function handle_payment_webhook($gateway_id) {
+        // Only handle POST requests
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            return;
+        }
+        
+        // Get payment manager
+        $payment_manager = skylearn_billing_pro_payment_manager();
+        
+        if (!$payment_manager->is_gateway_enabled($gateway_id)) {
+            http_response_code(400);
+            wp_die('Gateway not enabled');
+        }
+        
+        // Get raw input
+        $input = file_get_contents('php://input');
+        
+        // Process webhook with payment manager
+        $result = $payment_manager->process_payment_webhook($gateway_id, $input);
+        
+        // Return response
+        if ($result['success']) {
+            http_response_code(200);
+            wp_die(json_encode($result), '', array('response' => 200));
+        } else {
+            http_response_code(400);
+            wp_die(json_encode($result), '', array('response' => 400));
+        }
+    }
+    
+    /**
      * Get webhook endpoint URL
      *
      * @return string Webhook URL
      */
     public function get_webhook_url() {
         return home_url('/skylearn-billing/webhook');
+    }
+    
+    /**
+     * Get payment webhook endpoint URL for gateway
+     *
+     * @param string $gateway_id Gateway ID
+     * @return string Webhook URL
+     */
+    public function get_payment_webhook_url($gateway_id) {
+        return home_url('/skylearn-billing/webhook/' . $gateway_id);
     }
     
     /**

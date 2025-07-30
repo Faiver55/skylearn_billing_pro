@@ -64,6 +64,15 @@ class SkyLearn_Billing_Pro_Admin {
         
         add_submenu_page(
             'skylearn-billing-pro',
+            __('Payment Gateways', 'skylearn-billing-pro'),
+            __('Payment Gateways', 'skylearn-billing-pro'),
+            'manage_options',
+            'skylearn-billing-pro-payments',
+            array($this, 'admin_page')
+        );
+        
+        add_submenu_page(
+            'skylearn-billing-pro',
             __('License', 'skylearn-billing-pro'),
             __('License', 'skylearn-billing-pro'),
             'manage_options',
@@ -128,6 +137,8 @@ class SkyLearn_Billing_Pro_Admin {
             include SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'templates/admin-licensing.php';
         } elseif ($current_page === 'skylearn-billing-pro-lms') {
             include SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'templates/admin-lms.php';
+        } elseif ($current_page === 'skylearn-billing-pro-payments') {
+            include SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'templates/admin-payments.php';
         } else {
             $active_tab = isset($_GET['tab']) ? sanitize_text_field($_GET['tab']) : 'general';
             include SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'templates/admin-page.php';

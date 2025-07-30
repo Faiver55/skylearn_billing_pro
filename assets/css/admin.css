@@ -1313,3 +1313,364 @@
         min-width: 600px;
     }
 }
+
+/* Payment Gateway Styles */
+.skylearn-gateway-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 20px;
+    margin: 20px 0;
+}
+
+.skylearn-gateway-card {
+    background: var(--skylearn-white);
+    border: 1px solid var(--skylearn-border);
+    border-radius: 8px;
+    padding: 24px;
+    transition: all 0.3s ease;
+}
+
+.skylearn-gateway-card:hover {
+    box-shadow: 0 4px 12px var(--skylearn-shadow);
+}
+
+.skylearn-gateway-disabled {
+    opacity: 0.6;
+    background: #f9f9f9;
+}
+
+.skylearn-gateway-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.skylearn-gateway-header h3 {
+    margin: 0;
+    font-size: 18px;
+    color: var(--skylearn-primary);
+}
+
+.skylearn-gateway-header label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.skylearn-gateway-header input[type="checkbox"] {
+    margin: 0;
+}
+
+.skylearn-gateway-status {
+    display: flex;
+    align-items: center;
+}
+
+.skylearn-status-badge {
+    font-size: 11px;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.skylearn-status-active {
+    background: var(--skylearn-success);
+    color: var(--skylearn-white);
+}
+
+.skylearn-status-warning {
+    background: var(--skylearn-warning);
+    color: #333;
+}
+
+.skylearn-status-inactive {
+    background: var(--skylearn-medium-gray);
+    color: var(--skylearn-white);
+}
+
+.skylearn-status-disabled {
+    background: #e74c3c;
+    color: var(--skylearn-white);
+}
+
+.skylearn-gateway-description {
+    color: var(--skylearn-medium-gray);
+    margin: 0 0 16px 0;
+    line-height: 1.5;
+}
+
+.skylearn-gateway-notices {
+    margin: 16px 0;
+}
+
+.skylearn-notice {
+    padding: 12px 16px;
+    border-radius: 6px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 14px;
+}
+
+.skylearn-notice-error {
+    background: #f8d7da;
+    border: 1px solid #f5c6cb;
+    color: #721c24;
+}
+
+.skylearn-notice-warning {
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    color: #856404;
+}
+
+.skylearn-notice-info {
+    background: #d1ecf1;
+    border: 1px solid #bee5eb;
+    color: #0c5460;
+}
+
+.skylearn-gateway-features {
+    margin: 16px 0;
+}
+
+.skylearn-gateway-features h4 {
+    margin: 0 0 8px 0;
+    font-size: 14px;
+    color: var(--skylearn-primary);
+}
+
+.skylearn-feature-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.skylearn-feature-list li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+    font-size: 13px;
+    color: var(--skylearn-medium-gray);
+}
+
+.skylearn-feature-list .dashicons {
+    font-size: 16px;
+    color: var(--skylearn-success);
+}
+
+.skylearn-gateway-credentials {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid var(--skylearn-border);
+}
+
+.skylearn-gateway-credentials h4 {
+    margin: 0 0 16px 0;
+    font-size: 14px;
+    color: var(--skylearn-primary);
+}
+
+.skylearn-credentials-fields {
+    display: grid;
+    gap: 16px;
+}
+
+.skylearn-field-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.skylearn-field-group label {
+    font-weight: 600;
+    color: var(--skylearn-dark-gray);
+    margin-bottom: 6px;
+    font-size: 13px;
+}
+
+.skylearn-field-group input {
+    padding: 8px 12px;
+    border: 1px solid var(--skylearn-border);
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.skylearn-field-group input:focus {
+    outline: none;
+    border-color: var(--skylearn-primary);
+    box-shadow: 0 0 0 3px rgba(24, 49, 83, 0.1);
+}
+
+/* Payment Field Builder Styles */
+.skylearn-fields-interface {
+    display: grid;
+    grid-template-columns: 250px 1fr;
+    gap: 30px;
+    margin-top: 20px;
+}
+
+.skylearn-field-types {
+    background: var(--skylearn-light-gray);
+    border-radius: 8px;
+    padding: 20px;
+}
+
+.skylearn-field-types h3 {
+    margin: 0 0 16px 0;
+    font-size: 16px;
+    color: var(--skylearn-primary);
+}
+
+.skylearn-field-type-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.skylearn-field-type {
+    padding: 12px;
+    background: var(--skylearn-white);
+    border: 1px solid var(--skylearn-border);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.skylearn-field-type:hover {
+    border-color: var(--skylearn-primary);
+    box-shadow: 0 2px 8px var(--skylearn-shadow);
+}
+
+.skylearn-field-type .dashicons {
+    color: var(--skylearn-primary);
+    font-size: 18px;
+}
+
+.skylearn-field-type .field-name {
+    font-weight: 600;
+    color: var(--skylearn-dark-gray);
+    font-size: 14px;
+}
+
+.skylearn-field-type .field-description {
+    font-size: 12px;
+    color: var(--skylearn-medium-gray);
+    display: block;
+    margin-top: 2px;
+}
+
+.skylearn-field-builder {
+    background: var(--skylearn-white);
+    border: 1px solid var(--skylearn-border);
+    border-radius: 8px;
+    padding: 20px;
+}
+
+.skylearn-gateway-selector {
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--skylearn-border);
+}
+
+.skylearn-gateway-selector label {
+    font-weight: 600;
+    color: var(--skylearn-primary);
+    margin-bottom: 8px;
+    display: block;
+}
+
+.skylearn-field-list {
+    min-height: 200px;
+    margin-bottom: 20px;
+    padding: 20px;
+    border: 2px dashed var(--skylearn-border);
+    border-radius: 6px;
+    text-align: center;
+    color: var(--skylearn-medium-gray);
+}
+
+/* Template Preview Styles */
+.skylearn-template-previews {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.skylearn-template-card {
+    background: var(--skylearn-white);
+    border: 1px solid var(--skylearn-border);
+    border-radius: 8px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.skylearn-template-card:hover {
+    box-shadow: 0 4px 12px var(--skylearn-shadow);
+}
+
+.skylearn-template-card h3 {
+    margin: 0;
+    padding: 20px 20px 0 20px;
+    font-size: 16px;
+    color: var(--skylearn-primary);
+}
+
+.skylearn-template-preview {
+    padding: 20px;
+    height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.skylearn-preview-placeholder {
+    text-align: center;
+    color: var(--skylearn-medium-gray);
+    padding: 40px 20px;
+    border: 2px dashed var(--skylearn-border);
+    border-radius: 6px;
+    width: 100%;
+}
+
+.skylearn-template-actions {
+    padding: 0 20px 20px 20px;
+}
+
+/* Responsive Adjustments for Payment */
+@media (max-width: 768px) {
+    .skylearn-gateway-cards {
+        grid-template-columns: 1fr;
+    }
+    
+    .skylearn-fields-interface {
+        grid-template-columns: 1fr;
+    }
+    
+    .skylearn-field-types {
+        order: 2;
+    }
+    
+    .skylearn-field-builder {
+        order: 1;
+    }
+    
+    .skylearn-template-previews {
+        grid-template-columns: 1fr;
+    }
+    
+    .skylearn-gateway-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+}
