@@ -73,6 +73,18 @@ $feature_flags = skylearn_billing_pro_features();
                             <?php esc_html_e('LMS Integration', 'skylearn-billing-pro'); ?>
                         </a>
                     </li>
+                    <li class="skylearn-billing-nav-item">
+                        <a href="<?php echo esc_url(admin_url('admin.php?page=skylearn-billing-pro-products')); ?>" class="skylearn-billing-nav-link">
+                            <span class="dashicons dashicons-products"></span>
+                            <?php esc_html_e('Products', 'skylearn-billing-pro'); ?>
+                        </a>
+                    </li>
+                    <li class="skylearn-billing-nav-item">
+                        <a href="<?php echo esc_url(admin_url('admin.php?page=skylearn-billing-pro-bundles')); ?>" class="skylearn-billing-nav-link">
+                            <span class="dashicons dashicons-networking"></span>
+                            <?php esc_html_e('Bundles', 'skylearn-billing-pro'); ?>
+                        </a>
+                    </li>
                     <li class="skylearn-billing-nav-item <?php echo ($active_tab === 'customers') ? 'active' : ''; ?>">
                         <a href="<?php echo esc_url(admin_url('admin.php?page=skylearn-billing-pro&tab=customers')); ?>" class="skylearn-billing-nav-link">
                             <span class="dashicons dashicons-groups"></span>

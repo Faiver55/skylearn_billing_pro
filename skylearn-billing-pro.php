@@ -112,6 +112,12 @@ class SkyLearnBillingPro {
         // Checkout shortcodes
         require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/class-checkout-shortcodes.php';
         
+        // Product management classes
+        require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/product/class-product-manager.php';
+        require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/product/class-product-table.php';
+        require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/product/class-bundle-manager.php';
+        require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/product/class-migration-tool.php';
+        
         // User enrollment and webhook handler
         require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/class-user-enrollment.php';
         require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/class-webhook-handler.php';
@@ -122,6 +128,10 @@ class SkyLearnBillingPro {
         skylearn_billing_pro_payment_manager();
         skylearn_billing_pro_payment_fields();
         skylearn_billing_pro_checkout_shortcodes();
+        skylearn_billing_pro_product_manager();
+        skylearn_billing_pro_product_ui();
+        skylearn_billing_pro_bundle_manager();
+        skylearn_billing_pro_migration_tool();
         skylearn_billing_pro_user_enrollment();
         skylearn_billing_pro_webhook_handler();
         

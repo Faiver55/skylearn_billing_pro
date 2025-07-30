@@ -73,6 +73,24 @@ class SkyLearn_Billing_Pro_Admin {
         
         add_submenu_page(
             'skylearn-billing-pro',
+            __('Products', 'skylearn-billing-pro'),
+            __('Products', 'skylearn-billing-pro'),
+            'manage_options',
+            'skylearn-billing-pro-products',
+            array($this, 'admin_page')
+        );
+        
+        add_submenu_page(
+            'skylearn-billing-pro',
+            __('Bundles', 'skylearn-billing-pro'),
+            __('Bundles', 'skylearn-billing-pro'),
+            'manage_options',
+            'skylearn-billing-pro-bundles',
+            array($this, 'admin_page')
+        );
+        
+        add_submenu_page(
+            'skylearn-billing-pro',
             __('License', 'skylearn-billing-pro'),
             __('License', 'skylearn-billing-pro'),
             'manage_options',
@@ -139,6 +157,10 @@ class SkyLearn_Billing_Pro_Admin {
             include SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'templates/admin-lms.php';
         } elseif ($current_page === 'skylearn-billing-pro-payments') {
             include SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'templates/admin-payments.php';
+        } elseif ($current_page === 'skylearn-billing-pro-products') {
+            $this->render_products_page();
+        } elseif ($current_page === 'skylearn-billing-pro-bundles') {
+            $this->render_bundles_page();
         } else {
             $active_tab = isset($_GET['tab']) ? sanitize_text_field($_GET['tab']) : 'general';
             include SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'templates/admin-page.php';
@@ -382,5 +404,36 @@ class SkyLearn_Billing_Pro_Admin {
         echo ' ' . esc_html__('Enable automatic course enrollment', 'skylearn-billing-pro');
         echo '</label>';
         echo '<p class="description">' . esc_html__('When enabled, users will be automatically enrolled in mapped courses after successful payment.', 'skylearn-billing-pro') . '</p>';
+    }
+    
+    /**
+     * Render products page
+     */
+    public function render_products_page() {
+        $action = isset($_GET['action']) ? sanitize_text_field($_GET['action']) : '';
+        $tab = isset($_GET['tab']) ? sanitize_text_field($_GET['tab']) : 'list';
+        
+        if ($action === 'edit' || $action === 'add') {
+            $product_ui = skylearn_billing_pro_product_ui();
+            $product_ui->render_product_edit();
+        } elseif ($tab === 'import-export') {
+            include SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'templates/admin/products-import-export.php';
+        } else {
+            $product_ui = skylearn_billing_pro_product_ui();
+            $product_ui->render_products_list();
+        }
+    }
+    
+    /**
+     * Render bundles page
+     */
+    public function render_bundles_page() {
+        $action = isset($_GET['action']) ? sanitize_text_field($_GET['action']) : '';
+        
+        if ($action === 'edit' || $action === 'add') {
+            include SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'templates/admin/bundle-edit.php';
+        } else {
+            include SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'templates/admin/bundles-list.php';
+        }
     }
 }
