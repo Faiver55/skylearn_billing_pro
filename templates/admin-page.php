@@ -104,6 +104,12 @@ $feature_flags = skylearn_billing_pro_features();
                             <?php esc_html_e('Addons', 'skylearn-billing-pro'); ?>
                         </a>
                     </li>
+                    <li class="skylearn-billing-nav-item <?php echo ($active_tab === 'status') ? 'active' : ''; ?>">
+                        <a href="<?php echo esc_url(admin_url('admin.php?page=skylearn-billing-pro&tab=status')); ?>" class="skylearn-billing-nav-link">
+                            <span class="dashicons dashicons-admin-tools"></span>
+                            <?php esc_html_e('Status', 'skylearn-billing-pro'); ?>
+                        </a>
+                    </li>
                     <li class="skylearn-billing-nav-item <?php echo ($active_tab === 'reports') ? 'active' : ''; ?>">
                         <a href="<?php echo esc_url(admin_url('admin.php?page=skylearn-billing-pro&tab=reports')); ?>" class="skylearn-billing-nav-link">
                             <span class="dashicons dashicons-chart-line"></span>
@@ -113,6 +119,12 @@ $feature_flags = skylearn_billing_pro_features();
                             <?php else: ?>
                                 <span class="skylearn-billing-badge"><?php esc_html_e('Coming Soon', 'skylearn-billing-pro'); ?></span>
                             <?php endif; ?>
+                        </a>
+                    </li>
+                    <li class="skylearn-billing-nav-item <?php echo ($active_tab === 'help') ? 'active' : ''; ?>">
+                        <a href="<?php echo esc_url(admin_url('admin.php?page=skylearn-billing-pro&tab=help')); ?>" class="skylearn-billing-nav-link">
+                            <span class="dashicons dashicons-editor-help"></span>
+                            <?php esc_html_e('Help', 'skylearn-billing-pro'); ?>
                         </a>
                     </li>
                 </ul>
@@ -161,8 +173,14 @@ $feature_flags = skylearn_billing_pro_features();
                 case 'addons':
                     render_addons_tab();
                     break;
+                case 'status':
+                    render_status_tab();
+                    break;
                 case 'reports':
                     render_reports_tab();
+                    break;
+                case 'help':
+                    render_help_tab();
                     break;
                 default:
                     render_general_tab();
@@ -517,172 +535,130 @@ function render_reports_tab() {
 }
 
 /**
- * Render Addons tab with free/paid differentiation
+ * Render Addons tab with dynamic addon management
  */
 function render_addons_tab() {
-    $feature_flags = skylearn_billing_pro_features();
-    $licensing_manager = skylearn_billing_pro_licensing();
+    require_once SKYLEARN_BILLING_TEMPLATES_DIR . 'admin/addons.php';
+}
+
+/**
+ * Render Status tab
+ */
+function render_status_tab() {
+    require_once SKYLEARN_BILLING_TEMPLATES_DIR . 'admin/status.php';
+}
+
+/**
+ * Render Help tab
+ */
+function render_help_tab() {
+    $help_section = isset($_GET['section']) ? sanitize_text_field($_GET['section']) : 'addon-development';
     ?>
-    <div class="skylearn-billing-tab-content">
-        <div class="skylearn-billing-card">
-            <div class="skylearn-billing-card-header">
-                <h2><?php esc_html_e('Addons & Integrations', 'skylearn-billing-pro'); ?></h2>
-                <p><?php esc_html_e('Extend Skylearn Billing Pro with powerful addons and integrations.', 'skylearn-billing-pro'); ?></p>
-            </div>
-            
-            <div class="skylearn-billing-card-body">
-                <!-- Free Addons Section -->
-                <div class="skylearn-billing-addons-section">
-                    <h3><?php esc_html_e('Free Addons', 'skylearn-billing-pro'); ?></h3>
-                    <div class="skylearn-billing-addons-grid">
-                        <div class="skylearn-billing-addon-item">
-                            <div class="skylearn-billing-addon-header">
-                                <h4><?php esc_html_e('Basic Email Notifications', 'skylearn-billing-pro'); ?></h4>
-                                <span class="skylearn-billing-addon-badge skylearn-billing-addon-free"><?php esc_html_e('Free', 'skylearn-billing-pro'); ?></span>
-                            </div>
-                            <p><?php esc_html_e('Send basic email notifications for orders and payments.', 'skylearn-billing-pro'); ?></p>
-                            <div class="skylearn-billing-addon-status">
-                                <span class="skylearn-billing-status-active"><?php esc_html_e('Included', 'skylearn-billing-pro'); ?></span>
-                            </div>
-                        </div>
-                        
-                        <div class="skylearn-billing-addon-item">
-                            <div class="skylearn-billing-addon-header">
-                                <h4><?php esc_html_e('Basic Reporting', 'skylearn-billing-pro'); ?></h4>
-                                <span class="skylearn-billing-addon-badge skylearn-billing-addon-free"><?php esc_html_e('Free', 'skylearn-billing-pro'); ?></span>
-                            </div>
-                            <p><?php esc_html_e('View basic sales and customer reports.', 'skylearn-billing-pro'); ?></p>
-                            <div class="skylearn-billing-addon-status">
-                                <span class="skylearn-billing-status-active"><?php esc_html_e('Included', 'skylearn-billing-pro'); ?></span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Pro Addons Section -->
-                <div class="skylearn-billing-addons-section">
-                    <h3><?php esc_html_e('Pro Addons', 'skylearn-billing-pro'); ?></h3>
-                    <?php if (!$feature_flags->is_feature_available('premium_addons')): ?>
-                        <div class="skylearn-billing-upgrade-notice">
-                            <span class="dashicons dashicons-lock"></span>
-                            <div>
-                                <strong><?php esc_html_e('Premium addons require Pro or higher', 'skylearn-billing-pro'); ?></strong><br>
-                                <?php echo $feature_flags->get_upgrade_message('premium_addons'); ?>
-                            </div>
-                        </div>
-                    <?php endif; ?>
-                    
-                    <div class="skylearn-billing-addons-grid <?php echo !$feature_flags->is_feature_available('premium_addons') ? 'skylearn-billing-feature-locked' : ''; ?>">
-                        <div class="skylearn-billing-addon-item">
-                            <div class="skylearn-billing-addon-header">
-                                <h4><?php esc_html_e('Advanced Email Templates', 'skylearn-billing-pro'); ?></h4>
-                                <span class="skylearn-billing-addon-badge skylearn-billing-addon-pro"><?php esc_html_e('Pro', 'skylearn-billing-pro'); ?></span>
-                            </div>
-                            <p><?php esc_html_e('Customizable email templates with drag-and-drop builder.', 'skylearn-billing-pro'); ?></p>
-                            <div class="skylearn-billing-addon-status">
-                                <?php if ($feature_flags->is_feature_available('premium_addons')): ?>
-                                    <span class="skylearn-billing-status-inactive"><?php esc_html_e('Available', 'skylearn-billing-pro'); ?></span>
-                                <?php else: ?>
-                                    <span class="skylearn-billing-status-locked"><?php esc_html_e('Locked', 'skylearn-billing-pro'); ?></span>
-                                <?php endif; ?>
-                            </div>
-                        </div>
-                        
-                        <div class="skylearn-billing-addon-item">
-                            <div class="skylearn-billing-addon-header">
-                                <h4><?php esc_html_e('Customer Portal', 'skylearn-billing-pro'); ?></h4>
-                                <span class="skylearn-billing-addon-badge skylearn-billing-addon-pro"><?php esc_html_e('Pro', 'skylearn-billing-pro'); ?></span>
-                            </div>
-                            <p><?php esc_html_e('Self-service customer portal for managing subscriptions.', 'skylearn-billing-pro'); ?></p>
-                            <div class="skylearn-billing-addon-status">
-                                <?php if ($feature_flags->is_feature_available('premium_addons')): ?>
-                                    <span class="skylearn-billing-status-inactive"><?php esc_html_e('Available', 'skylearn-billing-pro'); ?></span>
-                                <?php else: ?>
-                                    <span class="skylearn-billing-status-locked"><?php esc_html_e('Locked', 'skylearn-billing-pro'); ?></span>
-                                <?php endif; ?>
-                            </div>
-                        </div>
-                        
-                        <div class="skylearn-billing-addon-item">
-                            <div class="skylearn-billing-addon-header">
-                                <h4><?php esc_html_e('LearnDash Integration', 'skylearn-billing-pro'); ?></h4>
-                                <span class="skylearn-billing-addon-badge skylearn-billing-addon-pro"><?php esc_html_e('Pro', 'skylearn-billing-pro'); ?></span>
-                            </div>
-                            <p><?php esc_html_e('Seamless integration with LearnDash LMS.', 'skylearn-billing-pro'); ?></p>
-                            <div class="skylearn-billing-addon-status">
-                                <?php if ($feature_flags->is_feature_available('premium_addons')): ?>
-                                    <span class="skylearn-billing-status-inactive"><?php esc_html_e('Available', 'skylearn-billing-pro'); ?></span>
-                                <?php else: ?>
-                                    <span class="skylearn-billing-status-locked"><?php esc_html_e('Locked', 'skylearn-billing-pro'); ?></span>
-                                <?php endif; ?>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Pro Plus Addons Section -->
-                <div class="skylearn-billing-addons-section">
-                    <h3><?php esc_html_e('Pro Plus Addons', 'skylearn-billing-pro'); ?></h3>
-                    <?php if (!$feature_flags->is_feature_available('white_label')): ?>
-                        <div class="skylearn-billing-upgrade-notice">
-                            <span class="dashicons dashicons-lock"></span>
-                            <div>
-                                <strong><?php esc_html_e('Pro Plus addons require Pro Plus plan', 'skylearn-billing-pro'); ?></strong><br>
-                                <?php echo $feature_flags->get_upgrade_message('white_label'); ?>
-                            </div>
-                        </div>
-                    <?php endif; ?>
-                    
-                    <div class="skylearn-billing-addons-grid <?php echo !$feature_flags->is_feature_available('white_label') ? 'skylearn-billing-feature-locked' : ''; ?>">
-                        <div class="skylearn-billing-addon-item">
-                            <div class="skylearn-billing-addon-header">
-                                <h4><?php esc_html_e('White Label', 'skylearn-billing-pro'); ?></h4>
-                                <span class="skylearn-billing-addon-badge skylearn-billing-addon-plus"><?php esc_html_e('Pro+', 'skylearn-billing-pro'); ?></span>
-                            </div>
-                            <p><?php esc_html_e('Remove all Skylearn branding and white label the plugin.', 'skylearn-billing-pro'); ?></p>
-                            <div class="skylearn-billing-addon-status">
-                                <?php if ($feature_flags->is_feature_available('white_label')): ?>
-                                    <span class="skylearn-billing-status-inactive"><?php esc_html_e('Available', 'skylearn-billing-pro'); ?></span>
-                                <?php else: ?>
-                                    <span class="skylearn-billing-status-locked"><?php esc_html_e('Locked', 'skylearn-billing-pro'); ?></span>
-                                <?php endif; ?>
-                            </div>
-                        </div>
-                        
-                        <div class="skylearn-billing-addon-item">
-                            <div class="skylearn-billing-addon-header">
-                                <h4><?php esc_html_e('Advanced Analytics', 'skylearn-billing-pro'); ?></h4>
-                                <span class="skylearn-billing-addon-badge skylearn-billing-addon-plus"><?php esc_html_e('Pro+', 'skylearn-billing-pro'); ?></span>
-                            </div>
-                            <p><?php esc_html_e('Advanced reporting, conversion tracking, and insights.', 'skylearn-billing-pro'); ?></p>
-                            <div class="skylearn-billing-addon-status">
-                                <?php if ($feature_flags->is_feature_available('white_label')): ?>
-                                    <span class="skylearn-billing-status-inactive"><?php esc_html_e('Available', 'skylearn-billing-pro'); ?></span>
-                                <?php else: ?>
-                                    <span class="skylearn-billing-status-locked"><?php esc_html_e('Locked', 'skylearn-billing-pro'); ?></span>
-                                <?php endif; ?>
-                            </div>
-                        </div>
-                        
-                        <div class="skylearn-billing-addon-item">
-                            <div class="skylearn-billing-addon-header">
-                                <h4><?php esc_html_e('Priority Support', 'skylearn-billing-pro'); ?></h4>
-                                <span class="skylearn-billing-addon-badge skylearn-billing-addon-plus"><?php esc_html_e('Pro+', 'skylearn-billing-pro'); ?></span>
-                            </div>
-                            <p><?php esc_html_e('Priority email, chat, and phone support.', 'skylearn-billing-pro'); ?></p>
-                            <div class="skylearn-billing-addon-status">
-                                <?php if ($feature_flags->is_feature_available('white_label')): ?>
-                                    <span class="skylearn-billing-status-active"><?php esc_html_e('Active', 'skylearn-billing-pro'); ?></span>
-                                <?php else: ?>
-                                    <span class="skylearn-billing-status-locked"><?php esc_html_e('Locked', 'skylearn-billing-pro'); ?></span>
-                                <?php endif; ?>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+    <div class="skylearn-billing-help-page">
+        <div class="skylearn-billing-help-nav">
+            <h2><?php esc_html_e('Help & Documentation', 'skylearn-billing-pro'); ?></h2>
+            <nav class="skylearn-billing-help-sections">
+                <a href="<?php echo esc_url(admin_url('admin.php?page=skylearn-billing-pro&tab=help&section=addon-development')); ?>" 
+                   class="<?php echo $help_section === 'addon-development' ? 'active' : ''; ?>">
+                    <?php esc_html_e('Addon Development', 'skylearn-billing-pro'); ?>
+                </a>
+                <a href="<?php echo esc_url(admin_url('admin.php?page=skylearn-billing-pro&tab=help&section=getting-started')); ?>" 
+                   class="<?php echo $help_section === 'getting-started' ? 'active' : ''; ?>">
+                    <?php esc_html_e('Getting Started', 'skylearn-billing-pro'); ?>
+                </a>
+                <a href="<?php echo esc_url(admin_url('admin.php?page=skylearn-billing-pro&tab=help&section=troubleshooting')); ?>" 
+                   class="<?php echo $help_section === 'troubleshooting' ? 'active' : ''; ?>">
+                    <?php esc_html_e('Troubleshooting', 'skylearn-billing-pro'); ?>
+                </a>
+            </nav>
+        </div>
+        
+        <div class="skylearn-billing-help-content">
+            <?php
+            switch ($help_section) {
+                case 'addon-development':
+                    require_once SKYLEARN_BILLING_TEMPLATES_DIR . 'admin/help/addon-development.php';
+                    break;
+                case 'getting-started':
+                    echo '<div class="skylearn-billing-help-placeholder">';
+                    echo '<h3>' . esc_html__('Getting Started', 'skylearn-billing-pro') . '</h3>';
+                    echo '<p>' . esc_html__('Getting started documentation will be available soon.', 'skylearn-billing-pro') . '</p>';
+                    echo '</div>';
+                    break;
+                case 'troubleshooting':
+                    echo '<div class="skylearn-billing-help-placeholder">';
+                    echo '<h3>' . esc_html__('Troubleshooting', 'skylearn-billing-pro') . '</h3>';
+                    echo '<p>' . esc_html__('Troubleshooting guide will be available soon.', 'skylearn-billing-pro') . '</p>';
+                    echo '</div>';
+                    break;
+                default:
+                    require_once SKYLEARN_BILLING_TEMPLATES_DIR . 'admin/help/addon-development.php';
+                    break;
+            }
+            ?>
         </div>
     </div>
+    
+    <style>
+    .skylearn-billing-help-page {
+        max-width: 1200px;
+    }
+    
+    .skylearn-billing-help-nav {
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 2px solid #e1e1e1;
+    }
+    
+    .skylearn-billing-help-nav h2 {
+        margin: 0 0 15px 0;
+        color: #23282d;
+    }
+    
+    .skylearn-billing-help-sections {
+        display: flex;
+        gap: 20px;
+    }
+    
+    .skylearn-billing-help-sections a {
+        padding: 8px 16px;
+        background: #f1f1f1;
+        color: #555;
+        text-decoration: none;
+        border-radius: 4px;
+        transition: background-color 0.2s ease;
+    }
+    
+    .skylearn-billing-help-sections a:hover {
+        background: #e1e1e1;
+    }
+    
+    .skylearn-billing-help-sections a.active {
+        background: #0073aa;
+        color: white;
+    }
+    
+    .skylearn-billing-help-content {
+        background: #fff;
+        border: 1px solid #e1e1e1;
+        border-radius: 6px;
+        padding: 30px;
+    }
+    
+    .skylearn-billing-help-placeholder {
+        text-align: center;
+        padding: 40px 20px;
+    }
+    
+    .skylearn-billing-help-placeholder h3 {
+        color: #23282d;
+        margin-bottom: 10px;
+    }
+    
+    .skylearn-billing-help-placeholder p {
+        color: #666;
+    }
+    </style>
     <?php
 }
 ?>
