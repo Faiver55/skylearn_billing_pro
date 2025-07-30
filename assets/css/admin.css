@@ -1674,3 +1674,53 @@
         gap: 12px;
     }
 }
+
+/* Automation Status Badges */
+.status-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    line-height: 1;
+}
+
+.status-badge.status-active,
+.skylearn-billing-status-badge.success {
+    background-color: var(--skylearn-success);
+    color: white;
+}
+
+.status-badge.status-inactive,
+.skylearn-billing-status-badge.failure {
+    background-color: #dc3545;
+    color: white;
+}
+
+.status-badge.status-draft,
+.skylearn-billing-status-badge.partial {
+    background-color: var(--skylearn-warning);
+    color: #333;
+}
+
+/* Automation Status Section */
+.skylearn-billing-automation-recent-logs {
+    margin-top: 20px;
+}
+
+.skylearn-billing-automation-recent-logs h4 {
+    margin: 0 0 15px 0;
+    color: var(--skylearn-dark-gray);
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.skylearn-billing-status-actions {
+    margin-top: 15px;
+    text-align: right;
+}
+
+.skylearn-billing-status-actions .button {
+    margin-left: 10px;
+}
