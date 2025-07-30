@@ -146,9 +146,11 @@ class SkyLearnBillingPro {
         // Include admin class if in admin
         if (is_admin()) {
             require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/admin/class-welcome-email.php';
+            require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/admin/class-reporting.php';
             require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/class-admin.php';
             new SkyLearn_Billing_Pro_Admin();
             skylearn_billing_pro_welcome_email_admin();
+            skylearn_billing_pro_reporting();
         }
     }
     

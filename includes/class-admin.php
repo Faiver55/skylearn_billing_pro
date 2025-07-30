@@ -100,6 +100,15 @@ class SkyLearn_Billing_Pro_Admin {
         
         add_submenu_page(
             'skylearn-billing-pro',
+            __('Reports & Analytics', 'skylearn-billing-pro'),
+            __('Reports', 'skylearn-billing-pro'),
+            'manage_options',
+            'skylearn-billing-pro-reports',
+            array($this, 'admin_page')
+        );
+        
+        add_submenu_page(
+            'skylearn-billing-pro',
             __('License', 'skylearn-billing-pro'),
             __('License', 'skylearn-billing-pro'),
             'manage_options',
@@ -123,6 +132,40 @@ class SkyLearn_Billing_Pro_Admin {
             array(),
             SKYLEARN_BILLING_PRO_VERSION
         );
+        
+        // Enqueue reports styles and scripts if on reports page
+        if (strpos($hook, 'skylearn-billing-pro-reports') !== false) {
+            wp_enqueue_style(
+                'skylearn-billing-pro-reports',
+                SKYLEARN_BILLING_PRO_PLUGIN_URL . 'assets/css/reports.css',
+                array('skylearn-billing-pro-admin'),
+                SKYLEARN_BILLING_PRO_VERSION
+            );
+            
+            // Enqueue Chart.js from CDN
+            wp_enqueue_script(
+                'chart-js',
+                'https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js',
+                array(),
+                '3.9.1',
+                true
+            );
+            
+            wp_enqueue_script(
+                'skylearn-billing-pro-reports',
+                SKYLEARN_BILLING_PRO_PLUGIN_URL . 'assets/js/reports.js',
+                array('jquery', 'chart-js'),
+                SKYLEARN_BILLING_PRO_VERSION,
+                true
+            );
+            
+            // Localize script with nonces
+            wp_localize_script('skylearn-billing-pro-reports', 'skylearn_admin_nonces', array(
+                'skylearn_reporting_data' => wp_create_nonce('skylearn_reporting_nonce'),
+                'skylearn_export_report' => wp_create_nonce('skylearn_export_nonce'),
+                'ajaxurl' => admin_url('admin-ajax.php')
+            ));
+        }
         
         wp_enqueue_script(
             'skylearn-billing-pro-admin',
@@ -172,6 +215,8 @@ class SkyLearn_Billing_Pro_Admin {
             $this->render_bundles_page();
         } elseif ($current_page === 'skylearn-billing-pro-email') {
             include SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'templates/admin/email-settings.php';
+        } elseif ($current_page === 'skylearn-billing-pro-reports') {
+            include SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'templates/admin-reports.php';
         } else {
             $active_tab = isset($_GET['tab']) ? sanitize_text_field($_GET['tab']) : 'general';
             include SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'templates/admin-page.php';
