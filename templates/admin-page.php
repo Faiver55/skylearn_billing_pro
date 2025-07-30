@@ -121,6 +121,12 @@ $feature_flags = skylearn_billing_pro_features();
                             <?php endif; ?>
                         </a>
                     </li>
+                    <li class="skylearn-billing-nav-item <?php echo ($active_tab === 'help') ? 'active' : ''; ?>">
+                        <a href="<?php echo esc_url(admin_url('admin.php?page=skylearn-billing-pro&tab=help')); ?>" class="skylearn-billing-nav-link">
+                            <span class="dashicons dashicons-editor-help"></span>
+                            <?php esc_html_e('Help', 'skylearn-billing-pro'); ?>
+                        </a>
+                    </li>
                 </ul>
             </nav>
             
@@ -172,6 +178,9 @@ $feature_flags = skylearn_billing_pro_features();
                     break;
                 case 'reports':
                     render_reports_tab();
+                    break;
+                case 'help':
+                    render_help_tab();
                     break;
                 default:
                     render_general_tab();
@@ -537,5 +546,119 @@ function render_addons_tab() {
  */
 function render_status_tab() {
     require_once SKYLEARN_BILLING_TEMPLATES_DIR . 'admin/status.php';
+}
+
+/**
+ * Render Help tab
+ */
+function render_help_tab() {
+    $help_section = isset($_GET['section']) ? sanitize_text_field($_GET['section']) : 'addon-development';
+    ?>
+    <div class="skylearn-billing-help-page">
+        <div class="skylearn-billing-help-nav">
+            <h2><?php esc_html_e('Help & Documentation', 'skylearn-billing-pro'); ?></h2>
+            <nav class="skylearn-billing-help-sections">
+                <a href="<?php echo esc_url(admin_url('admin.php?page=skylearn-billing-pro&tab=help&section=addon-development')); ?>" 
+                   class="<?php echo $help_section === 'addon-development' ? 'active' : ''; ?>">
+                    <?php esc_html_e('Addon Development', 'skylearn-billing-pro'); ?>
+                </a>
+                <a href="<?php echo esc_url(admin_url('admin.php?page=skylearn-billing-pro&tab=help&section=getting-started')); ?>" 
+                   class="<?php echo $help_section === 'getting-started' ? 'active' : ''; ?>">
+                    <?php esc_html_e('Getting Started', 'skylearn-billing-pro'); ?>
+                </a>
+                <a href="<?php echo esc_url(admin_url('admin.php?page=skylearn-billing-pro&tab=help&section=troubleshooting')); ?>" 
+                   class="<?php echo $help_section === 'troubleshooting' ? 'active' : ''; ?>">
+                    <?php esc_html_e('Troubleshooting', 'skylearn-billing-pro'); ?>
+                </a>
+            </nav>
+        </div>
+        
+        <div class="skylearn-billing-help-content">
+            <?php
+            switch ($help_section) {
+                case 'addon-development':
+                    require_once SKYLEARN_BILLING_TEMPLATES_DIR . 'admin/help/addon-development.php';
+                    break;
+                case 'getting-started':
+                    echo '<div class="skylearn-billing-help-placeholder">';
+                    echo '<h3>' . esc_html__('Getting Started', 'skylearn-billing-pro') . '</h3>';
+                    echo '<p>' . esc_html__('Getting started documentation will be available soon.', 'skylearn-billing-pro') . '</p>';
+                    echo '</div>';
+                    break;
+                case 'troubleshooting':
+                    echo '<div class="skylearn-billing-help-placeholder">';
+                    echo '<h3>' . esc_html__('Troubleshooting', 'skylearn-billing-pro') . '</h3>';
+                    echo '<p>' . esc_html__('Troubleshooting guide will be available soon.', 'skylearn-billing-pro') . '</p>';
+                    echo '</div>';
+                    break;
+                default:
+                    require_once SKYLEARN_BILLING_TEMPLATES_DIR . 'admin/help/addon-development.php';
+                    break;
+            }
+            ?>
+        </div>
+    </div>
+    
+    <style>
+    .skylearn-billing-help-page {
+        max-width: 1200px;
+    }
+    
+    .skylearn-billing-help-nav {
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 2px solid #e1e1e1;
+    }
+    
+    .skylearn-billing-help-nav h2 {
+        margin: 0 0 15px 0;
+        color: #23282d;
+    }
+    
+    .skylearn-billing-help-sections {
+        display: flex;
+        gap: 20px;
+    }
+    
+    .skylearn-billing-help-sections a {
+        padding: 8px 16px;
+        background: #f1f1f1;
+        color: #555;
+        text-decoration: none;
+        border-radius: 4px;
+        transition: background-color 0.2s ease;
+    }
+    
+    .skylearn-billing-help-sections a:hover {
+        background: #e1e1e1;
+    }
+    
+    .skylearn-billing-help-sections a.active {
+        background: #0073aa;
+        color: white;
+    }
+    
+    .skylearn-billing-help-content {
+        background: #fff;
+        border: 1px solid #e1e1e1;
+        border-radius: 6px;
+        padding: 30px;
+    }
+    
+    .skylearn-billing-help-placeholder {
+        text-align: center;
+        padding: 40px 20px;
+    }
+    
+    .skylearn-billing-help-placeholder h3 {
+        color: #23282d;
+        margin-bottom: 10px;
+    }
+    
+    .skylearn-billing-help-placeholder p {
+        color: #666;
+    }
+    </style>
+    <?php
 }
 ?>
