@@ -182,6 +182,17 @@ class SkyLearnBillingPro {
         skylearn_billing_pro_performance();
         skylearn_billing_pro_role_access();
         
+        // Initialize Phase 15 Frontend Features
+        require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/frontend/page-generator.php';
+        require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/frontend/shortcodes.php';
+        require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/frontend/block-editor/blocks.php';
+        require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/page-setup.php';
+        
+        skylearn_billing_pro_page_generator();
+        skylearn_billing_pro_frontend_shortcodes();
+        skylearn_billing_pro_block_editor();
+        skylearn_billing_pro_page_setup();
+        
         // Include admin class if in admin
         if (is_admin()) {
             require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/admin/class-welcome-email.php';
@@ -246,6 +257,9 @@ class SkyLearnBillingPro {
         
         // Add webhook rewrite rule
         add_rewrite_rule('^skylearn-billing/webhook/?$', 'index.php?skylearn_webhook=1', 'top');
+        
+        // Trigger page creation
+        do_action('skylearn_billing_pro_activate');
         
         // Flush rewrite rules
         flush_rewrite_rules();
