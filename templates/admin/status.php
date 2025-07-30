@@ -183,6 +183,86 @@ $system_checks = array(
         </div>
     </div>
 
+    <!-- Automation Status Section -->
+    <div class="skylearn-billing-status-section">
+        <h3><?php esc_html_e('Automation Status', 'skylearn-billing-pro'); ?></h3>
+        
+        <?php
+        $automation_manager = skylearn_billing_pro_automation_manager();
+        $total_automations = count($automation_manager->get_automations());
+        $active_automations = count($automation_manager->get_automations('active'));
+        $recent_logs = $automation_manager->get_automation_logs(null, 10, 0);
+        
+        // Calculate success rate from recent logs
+        $success_count = 0;
+        foreach ($recent_logs as $log) {
+            if ($log['status'] === 'success') {
+                $success_count++;
+            }
+        }
+        $success_rate = count($recent_logs) > 0 ? round(($success_count / count($recent_logs)) * 100, 1) : 0;
+        ?>
+        
+        <div class="skylearn-billing-status-card">
+            <div class="skylearn-billing-status-summary">
+                <div class="skylearn-billing-status-stat">
+                    <span class="skylearn-billing-stat-number"><?php echo $total_automations; ?></span>
+                    <span class="skylearn-billing-stat-label"><?php esc_html_e('Total Automations', 'skylearn-billing-pro'); ?></span>
+                </div>
+                <div class="skylearn-billing-status-stat">
+                    <span class="skylearn-billing-stat-number"><?php echo $active_automations; ?></span>
+                    <span class="skylearn-billing-stat-label"><?php esc_html_e('Active', 'skylearn-billing-pro'); ?></span>
+                </div>
+                <div class="skylearn-billing-status-stat">
+                    <span class="skylearn-billing-stat-number"><?php echo $success_rate; ?>%</span>
+                    <span class="skylearn-billing-stat-label"><?php esc_html_e('Success Rate', 'skylearn-billing-pro'); ?></span>
+                </div>
+            </div>
+            
+            <div class="skylearn-billing-automation-recent-logs">
+                <h4><?php esc_html_e('Recent Automation Logs', 'skylearn-billing-pro'); ?></h4>
+                
+                <?php if (empty($recent_logs)): ?>
+                    <p class="skylearn-billing-status-empty"><?php esc_html_e('No automation logs found.', 'skylearn-billing-pro'); ?></p>
+                <?php else: ?>
+                    <table class="skylearn-billing-status-table">
+                        <thead>
+                            <tr>
+                                <th><?php esc_html_e('Automation', 'skylearn-billing-pro'); ?></th>
+                                <th><?php esc_html_e('Status', 'skylearn-billing-pro'); ?></th>
+                                <th><?php esc_html_e('Execution Time', 'skylearn-billing-pro'); ?></th>
+                                <th><?php esc_html_e('Triggered At', 'skylearn-billing-pro'); ?></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($recent_logs as $log): ?>
+                                <tr>
+                                    <td><?php echo esc_html($log['automation_name'] ?? 'Unknown'); ?></td>
+                                    <td>
+                                        <span class="skylearn-billing-status-badge <?php echo esc_attr($log['status']); ?>">
+                                            <?php echo esc_html(ucfirst($log['status'])); ?>
+                                        </span>
+                                    </td>
+                                    <td><?php echo esc_html($log['execution_time_ms']); ?>ms</td>
+                                    <td><?php echo esc_html(date_i18n(get_option('time_format'), strtotime($log['triggered_at']))); ?></td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                    
+                    <p class="skylearn-billing-status-actions">
+                        <a href="<?php echo esc_url(admin_url('admin.php?page=skylearn-billing-pro-automation&action=logs')); ?>" class="button button-secondary">
+                            <?php esc_html_e('View All Logs', 'skylearn-billing-pro'); ?>
+                        </a>
+                        <a href="<?php echo esc_url(admin_url('admin.php?page=skylearn-billing-pro-automation')); ?>" class="button button-primary">
+                            <?php esc_html_e('Manage Automations', 'skylearn-billing-pro'); ?>
+                        </a>
+                    </p>
+                <?php endif; ?>
+            </div>
+        </div>
+    </div>
+
     <!-- System Requirements Section -->
     <div class="skylearn-billing-status-section">
         <h3><?php esc_html_e('System Requirements', 'skylearn-billing-pro'); ?></h3>

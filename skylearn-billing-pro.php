@@ -122,6 +122,13 @@ class SkyLearnBillingPro {
         require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/class-user-enrollment.php';
         require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/class-webhook-handler.php';
         
+        // Automation system
+        require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/automation/class-automation-manager.php';
+        require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/automation/integrations/crm.php';
+        require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/automation/integrations/email.php';
+        require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/automation/integrations/sms.php';
+        require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/automation/integrations/marketing.php';
+        
         // Email system
         require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/admin/class-email.php';
         require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/emails/class-email-builder.php';
@@ -148,6 +155,9 @@ class SkyLearnBillingPro {
         skylearn_billing_pro_migration_tool();
         skylearn_billing_pro_user_enrollment();
         skylearn_billing_pro_webhook_handler();
+        
+        // Initialize automation system
+        skylearn_billing_pro_automation_manager();
         
         // Initialize email system
         skylearn_billing_pro_email();

@@ -136,6 +136,33 @@ class SkyLearn_Billing_Pro_Admin {
         
         add_submenu_page(
             'skylearn-billing-pro',
+            __('Automation & Integrations', 'skylearn-billing-pro'),
+            __('Automation', 'skylearn-billing-pro'),
+            'manage_options',
+            'skylearn-billing-pro-automation',
+            array($this, 'admin_page')
+        );
+        
+        add_submenu_page(
+            'skylearn-billing-pro',
+            __('Addons & Extensions', 'skylearn-billing-pro'),
+            __('Addons', 'skylearn-billing-pro'),
+            'manage_options',
+            'skylearn-billing-pro-addons',
+            array($this, 'admin_page')
+        );
+        
+        add_submenu_page(
+            'skylearn-billing-pro',
+            __('Status & Logs', 'skylearn-billing-pro'),
+            __('Status', 'skylearn-billing-pro'),
+            'manage_options',
+            'skylearn-billing-pro-status',
+            array($this, 'admin_page')
+        );
+        
+        add_submenu_page(
+            'skylearn-billing-pro',
             __('License', 'skylearn-billing-pro'),
             __('License', 'skylearn-billing-pro'),
             'manage_options',
@@ -246,6 +273,12 @@ class SkyLearn_Billing_Pro_Admin {
             $this->render_memberships_page();
         } elseif ($current_page === 'skylearn-billing-pro-loyalty') {
             $this->render_loyalty_page();
+        } elseif ($current_page === 'skylearn-billing-pro-automation') {
+            $this->render_automation_page();
+        } elseif ($current_page === 'skylearn-billing-pro-addons') {
+            include SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'templates/admin/addons.php';
+        } elseif ($current_page === 'skylearn-billing-pro-status') {
+            include SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'templates/admin/status.php';
         } elseif ($current_page === 'skylearn-billing-pro-email') {
             include SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'templates/admin/email-settings.php';
         } elseif ($current_page === 'skylearn-billing-pro-reports') {
@@ -969,6 +1002,132 @@ class SkyLearn_Billing_Pro_Admin {
         echo '<h1>' . esc_html__('Membership Settings', 'skylearn-billing-pro') . '</h1>';
         echo '<p>' . esc_html__('Configure membership-related settings.', 'skylearn-billing-pro') . '</p>';
         echo '<div class="notice notice-info"><p>' . esc_html__('Membership settings management is coming soon.', 'skylearn-billing-pro') . '</p></div>';
+        echo '</div>';
+    }
+    
+    /**
+     * Render automation page
+     */
+    public function render_automation_page() {
+        $action = isset($_GET['action']) ? sanitize_text_field($_GET['action']) : 'list';
+        
+        if ($action === 'new' || $action === 'edit') {
+            include SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'templates/admin/automation.php';
+        } elseif ($action === 'logs') {
+            $this->render_automation_logs();
+        } else {
+            $this->render_automation_list();
+        }
+    }
+    
+    /**
+     * Render automation list
+     */
+    private function render_automation_list() {
+        $automation_manager = skylearn_billing_pro_automation_manager();
+        $automations = $automation_manager->get_automations();
+        
+        echo '<div class="wrap">';
+        echo '<h1>' . esc_html__('Automation & Integrations', 'skylearn-billing-pro');
+        echo ' <a href="' . esc_url(add_query_arg('action', 'new')) . '" class="page-title-action">' . esc_html__('Add New', 'skylearn-billing-pro') . '</a>';
+        echo '</h1>';
+        
+        echo '<nav class="nav-tab-wrapper">';
+        echo '<a href="?page=skylearn-billing-pro-automation" class="nav-tab nav-tab-active">' . esc_html__('Automations', 'skylearn-billing-pro') . '</a>';
+        echo '<a href="?page=skylearn-billing-pro-automation&action=logs" class="nav-tab">' . esc_html__('Logs', 'skylearn-billing-pro') . '</a>';
+        echo '</nav>';
+        
+        if (empty($automations)) {
+            echo '<div class="notice notice-info">';
+            echo '<p>' . esc_html__('No automations found. Create your first automation to get started!', 'skylearn-billing-pro') . '</p>';
+            echo '</div>';
+        } else {
+            echo '<table class="wp-list-table widefat fixed striped">';
+            echo '<thead>';
+            echo '<tr>';
+            echo '<th>' . esc_html__('Name', 'skylearn-billing-pro') . '</th>';
+            echo '<th>' . esc_html__('Trigger', 'skylearn-billing-pro') . '</th>';
+            echo '<th>' . esc_html__('Actions', 'skylearn-billing-pro') . '</th>';
+            echo '<th>' . esc_html__('Status', 'skylearn-billing-pro') . '</th>';
+            echo '<th>' . esc_html__('Created', 'skylearn-billing-pro') . '</th>';
+            echo '<th>' . esc_html__('Actions', 'skylearn-billing-pro') . '</th>';
+            echo '</tr>';
+            echo '</thead>';
+            echo '<tbody>';
+            
+            $available_triggers = $automation_manager->get_available_trigger_types();
+            
+            foreach ($automations as $automation) {
+                echo '<tr>';
+                echo '<td><strong>' . esc_html($automation['name']) . '</strong>';
+                if (!empty($automation['description'])) {
+                    echo '<br><small>' . esc_html($automation['description']) . '</small>';
+                }
+                echo '</td>';
+                echo '<td>' . esc_html($available_triggers[$automation['trigger_type']] ?? $automation['trigger_type']) . '</td>';
+                echo '<td>' . count($automation['actions']) . ' ' . esc_html__('actions', 'skylearn-billing-pro') . '</td>';
+                echo '<td><span class="status-badge status-' . esc_attr($automation['status']) . '">' . esc_html(ucfirst($automation['status'])) . '</span></td>';
+                echo '<td>' . esc_html(date_i18n(get_option('date_format'), strtotime($automation['created_at']))) . '</td>';
+                echo '<td>';
+                echo '<a href="' . esc_url(add_query_arg(array('action' => 'edit', 'edit' => $automation['id']))) . '">' . esc_html__('Edit', 'skylearn-billing-pro') . '</a> | ';
+                echo '<a href="#" onclick="return confirm(\'' . esc_js__('Are you sure you want to delete this automation?', 'skylearn-billing-pro') . '\');">' . esc_html__('Delete', 'skylearn-billing-pro') . '</a>';
+                echo '</td>';
+                echo '</tr>';
+            }
+            
+            echo '</tbody>';
+            echo '</table>';
+        }
+        
+        echo '</div>';
+    }
+    
+    /**
+     * Render automation logs
+     */
+    private function render_automation_logs() {
+        $automation_manager = skylearn_billing_pro_automation_manager();
+        $logs = $automation_manager->get_automation_logs();
+        
+        echo '<div class="wrap">';
+        echo '<h1>' . esc_html__('Automation Logs', 'skylearn-billing-pro') . '</h1>';
+        
+        echo '<nav class="nav-tab-wrapper">';
+        echo '<a href="?page=skylearn-billing-pro-automation" class="nav-tab">' . esc_html__('Automations', 'skylearn-billing-pro') . '</a>';
+        echo '<a href="?page=skylearn-billing-pro-automation&action=logs" class="nav-tab nav-tab-active">' . esc_html__('Logs', 'skylearn-billing-pro') . '</a>';
+        echo '</nav>';
+        
+        if (empty($logs)) {
+            echo '<div class="notice notice-info">';
+            echo '<p>' . esc_html__('No automation logs found.', 'skylearn-billing-pro') . '</p>';
+            echo '</div>';
+        } else {
+            echo '<table class="wp-list-table widefat fixed striped">';
+            echo '<thead>';
+            echo '<tr>';
+            echo '<th>' . esc_html__('Automation', 'skylearn-billing-pro') . '</th>';
+            echo '<th>' . esc_html__('Status', 'skylearn-billing-pro') . '</th>';
+            echo '<th>' . esc_html__('Execution Time', 'skylearn-billing-pro') . '</th>';
+            echo '<th>' . esc_html__('Triggered At', 'skylearn-billing-pro') . '</th>';
+            echo '<th>' . esc_html__('Error Message', 'skylearn-billing-pro') . '</th>';
+            echo '</tr>';
+            echo '</thead>';
+            echo '<tbody>';
+            
+            foreach ($logs as $log) {
+                echo '<tr>';
+                echo '<td>' . esc_html($log['automation_name'] ?? 'Unknown') . '</td>';
+                echo '<td><span class="status-badge status-' . esc_attr($log['status']) . '">' . esc_html(ucfirst($log['status'])) . '</span></td>';
+                echo '<td>' . esc_html($log['execution_time_ms']) . 'ms</td>';
+                echo '<td>' . esc_html(date_i18n(get_option('date_format') . ' ' . get_option('time_format'), strtotime($log['triggered_at']))) . '</td>';
+                echo '<td>' . ($log['error_message'] ? esc_html($log['error_message']) : '—') . '</td>';
+                echo '</tr>';
+            }
+            
+            echo '</tbody>';
+            echo '</table>';
+        }
+        
         echo '</div>';
     }
 }
