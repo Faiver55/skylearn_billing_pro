@@ -88,9 +88,13 @@ class SkyLearn_Billing_Pro_Webhook_Handler {
      * @return bool
      */
     private function is_webhook_request() {
-        $request_uri = $_SERVER['REQUEST_URI'];
+        // Check for webhook query variable first
+        if (get_query_var('skylearn_webhook')) {
+            return true;
+        }
         
-        // Check for webhook endpoint
+        // Fallback: Check URL pattern
+        $request_uri = $_SERVER['REQUEST_URI'];
         return strpos($request_uri, '/skylearn-billing/webhook') !== false;
     }
     

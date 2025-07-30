@@ -105,12 +105,14 @@ class SkyLearnBillingPro {
         require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/lms/class-lms-manager.php';
         require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/lms/class-course-mapping.php';
         
-        // Webhook handler
+        // User enrollment and webhook handler
+        require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/class-user-enrollment.php';
         require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/class-webhook-handler.php';
         
-        // Initialize LMS Manager and Course Mapping
+        // Initialize instances
         skylearn_billing_pro_lms_manager();
         skylearn_billing_pro_course_mapping();
+        skylearn_billing_pro_user_enrollment();
         skylearn_billing_pro_webhook_handler();
         
         // Include admin class if in admin
