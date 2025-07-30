@@ -188,6 +188,15 @@ class SkyLearn_Billing_Pro_Admin {
             'skylearn-billing-pro-license',
             array($this, 'admin_page')
         );
+        
+        add_submenu_page(
+            'skylearn-billing-pro',
+            __('Help & Support', 'skylearn-billing-pro'),
+            __('Help', 'skylearn-billing-pro'),
+            'manage_options',
+            'skylearn-billing-pro-help',
+            array($this, 'admin_page')
+        );
     }
     
     /**
@@ -275,6 +284,18 @@ class SkyLearn_Billing_Pro_Admin {
      */
     public function admin_page() {
         $current_page = sanitize_text_field($_GET['page']);
+        
+        // Check if onboarding should be shown
+        if (isset($_GET['onboarding']) && $_GET['onboarding'] === '1') {
+            include SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'templates/admin/onboarding.php';
+            return;
+        }
+        
+        // Check if help page is requested
+        if ($current_page === 'skylearn-billing-pro-help') {
+            include SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'templates/admin/help.php';
+            return;
+        }
         
         if ($current_page === 'skylearn-billing-pro-license') {
             include SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'templates/admin-licensing.php';

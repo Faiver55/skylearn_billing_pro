@@ -198,6 +198,11 @@ class SkyLearnBillingPro {
             require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/admin/class-welcome-email.php';
             require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/admin/class-reporting.php';
             require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/class-admin.php';
+            
+            // Include onboarding and admin UI enhancements
+            require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/class-onboarding.php';
+            require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/admin/class-admin-ui.php';
+            
             new SkyLearn_Billing_Pro_Admin();
             skylearn_billing_pro_welcome_email_admin();
             skylearn_billing_pro_reporting();
