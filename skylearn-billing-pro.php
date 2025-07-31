@@ -207,6 +207,11 @@ class SkyLearnBillingPro {
             skylearn_billing_pro_welcome_email_admin();
             skylearn_billing_pro_reporting();
         }
+        
+        // Include CLI commands if WP-CLI is available
+        if (defined('WP_CLI') && WP_CLI) {
+            require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'cli/cli-commands.php';
+        }
     }
     
     /**
