@@ -3,7 +3,7 @@
  * Plugin Name: Skylearn Billing Pro
  * Plugin URI: https://github.com/Faiver55/skylearn_billing_pro
  * Description: Professional billing and subscription management system for WordPress with multi-gateway support, advanced reporting, and comprehensive customer management.
- * Version: 1.0.0-dev
+ * Version: 1.0.0
  * Author: Skylearn Team
  * License: GPL v3 or later
  * License URI: https://www.gnu.org/licenses/gpl-3.0.html
@@ -21,7 +21,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('SKYLEARN_BILLING_VERSION', '1.0.0-dev');
+define('SKYLEARN_BILLING_VERSION', '1.0.0');
 define('SKYLEARN_BILLING_PLUGIN_FILE', __FILE__);
 define('SKYLEARN_BILLING_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('SKYLEARN_BILLING_PLUGIN_URL', plugin_dir_url(__FILE__));
@@ -97,8 +97,26 @@ class Skylearn_Billing_Pro {
         // Load text domain for translations
         load_plugin_textdomain('skylearn-billing', false, dirname(plugin_basename(__FILE__)) . '/languages');
         
+        // Initialize core components
+        $this->load_core_classes();
+        
         // Initialize plugin components (placeholder for future development)
         do_action('skylearn_billing_init');
+    }
+    
+    /**
+     * Load core plugin classes
+     */
+    private function load_core_classes() {
+        // Load update manager
+        if (file_exists(SKYLEARN_BILLING_INCLUDES_DIR . 'class-update-manager.php')) {
+            require_once SKYLEARN_BILLING_INCLUDES_DIR . 'class-update-manager.php';
+        }
+        
+        // Load error reporter
+        if (file_exists(SKYLEARN_BILLING_INCLUDES_DIR . 'class-error-reporter.php')) {
+            require_once SKYLEARN_BILLING_INCLUDES_DIR . 'class-error-reporter.php';
+        }
     }
     
     /**
