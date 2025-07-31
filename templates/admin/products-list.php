@@ -90,7 +90,7 @@ $licensing_manager = skylearn_billing_pro_licensing();
                     <span class="skylearn-stat-label"><?php esc_html_e('Subscriptions', 'skylearn-billing-pro'); ?></span>
                 </div>
                 
-                <?php if ($licensing_manager->get_tier() === 'free'): ?>
+                <?php if ($licensing_manager->get_current_tier() === 'free'): ?>
                     <div class="skylearn-tier-limit">
                         <p><strong><?php esc_html_e('Free Tier Limit:', 'skylearn-billing-pro'); ?></strong></p>
                         <p><?php echo count($all_products); ?>/5 <?php esc_html_e('products used', 'skylearn-billing-pro'); ?></p>
