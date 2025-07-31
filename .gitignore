@@ -25,3 +25,9 @@ node_modules/
 # Build artifacts
 /dist/
 /build/
+
+# Test artifacts and coverage reports
+tests/coverage/
+tests/results.xml
+tests/coverage.txt
+.phpunit.result.cache
