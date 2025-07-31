@@ -486,7 +486,7 @@ class SkyLearn_Billing_Pro_Product_Manager {
     public function check_product_limit() {
         $licensing_manager = skylearn_billing_pro_licensing();
         
-        if ($licensing_manager->get_tier() === 'free') {
+        if ($licensing_manager->get_current_tier() === 'free') {
             $product_count = wp_count_posts(self::POST_TYPE);
             $total_products = $product_count->publish + $product_count->draft + $product_count->private;
             
