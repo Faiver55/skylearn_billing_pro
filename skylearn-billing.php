@@ -1,18 +1,12 @@
 <?php
 /**
- * Plugin Name: Skylearn Billing Pro
- * Plugin URI: https://github.com/Faiver55/skylearn_billing_pro
- * Description: Professional billing and subscription management system for WordPress with multi-gateway support, advanced reporting, and comprehensive customer management.
- * Version: 1.0.0
- * Author: Skylearn Team
- * License: GPL v3 or later
- * License URI: https://www.gnu.org/licenses/gpl-3.0.html
- * Text Domain: skylearn-billing
- * Domain Path: /languages
- * Requires at least: 5.0
- * Tested up to: 6.4
- * Requires PHP: 7.4
- * Network: false
+ * Skylearn Billing Pro - Legacy Bootstrap File
+ * 
+ * This file contains legacy functionality and should not be used as a plugin entry point.
+ * The main plugin entry point is skylearn-billing-pro.php
+ * 
+ * @package SkyLearnBillingPro
+ * @deprecated Use skylearn-billing-pro.php instead
  */
 
 // Prevent direct access
