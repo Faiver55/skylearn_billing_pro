@@ -134,8 +134,8 @@ class SkyLearn_Billing_Pro_Page_Generator {
      */
     public function init() {
         try {
-            // Hook into plugin activation
-            add_action('skylearn_billing_pro_activate', array($this, 'create_pages'));
+            // Don't automatically create pages on activation - let onboarding handle it
+            // add_action('skylearn_billing_pro_activate', array($this, 'create_pages'));
             
             // Add admin action for manual page creation
             add_action('wp_ajax_skylearn_create_pages', array($this, 'ajax_create_pages'));

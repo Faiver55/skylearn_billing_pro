@@ -36,8 +36,8 @@ class SkyLearn_Billing_Pro_Page_Setup {
      * Initialize
      */
     public function init() {
-        // Register activation hook for automatic page creation
-        add_action('skylearn_billing_pro_activate', array($this, 'maybe_create_pages'));
+        // Don't automatically create pages on activation - let onboarding handle it
+        // add_action('skylearn_billing_pro_activate', array($this, 'maybe_create_pages'));
         
         // Add body classes for our pages
         add_filter('body_class', array($this, 'add_body_classes'));

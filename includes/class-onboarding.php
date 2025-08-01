@@ -135,6 +135,46 @@ class SkyLearn_Billing_Pro_Onboarding {
         $options['onboarding_completed_at'] = current_time('mysql');
         unset($options['onboarding_step']);
         update_option('skylearn_billing_pro_options', $options);
+        
+        // Create required pages after onboarding completion
+        $this->create_initial_pages();
+    }
+    
+    /**
+     * Create initial pages after onboarding completion
+     */
+    private function create_initial_pages() {
+        try {
+            // Check if page generator is available
+            if (!function_exists('skylearn_billing_pro_page_generator')) {
+                error_log('SkyLearn Billing Pro: Page generator not available during onboarding completion');
+                return false;
+            }
+            
+            $page_generator = skylearn_billing_pro_page_generator();
+            if (!$page_generator) {
+                error_log('SkyLearn Billing Pro: Could not get page generator instance during onboarding completion');
+                return false;
+            }
+            
+            // Create pages
+            $results = $page_generator->create_pages();
+            
+            // Store page creation status
+            update_option('skylearn_billing_pro_pages_created', true);
+            update_option('skylearn_billing_pro_setup_completed', time());
+            
+            // Log success
+            if ($results && isset($results['created']) && $results['created'] > 0) {
+                error_log('SkyLearn Billing Pro: Successfully created ' . $results['created'] . ' pages during onboarding completion');
+            }
+            
+            return $results;
+            
+        } catch (Exception $e) {
+            error_log('SkyLearn Billing Pro: Failed to create pages during onboarding completion - ' . $e->getMessage());
+            return false;
+        }
     }
     
     /**
@@ -363,6 +403,7 @@ class SkyLearn_Billing_Pro_Onboarding {
         
         wp_send_json(array(
             'success' => true,
+            'message' => __('Onboarding skipped and initial pages created successfully!', 'skylearn-billing-pro'),
             'redirect' => admin_url('admin.php?page=skylearn-billing-pro')
         ));
     }
