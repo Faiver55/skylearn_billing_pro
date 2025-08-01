@@ -347,6 +347,9 @@ class SkyLearn_Billing_Pro_Admin {
      * Initialize admin settings
      */
     public function admin_init() {
+        // Handle settings form submission
+        $this->handle_settings_submission();
+        
         // Register settings
         register_setting('skylearn_billing_pro_general', 'skylearn_billing_pro_options', array($this, 'sanitize_options'));
         register_setting('skylearn_billing_pro_lms', 'skylearn_billing_pro_options', array($this, 'sanitize_options'));
@@ -419,21 +422,168 @@ class SkyLearn_Billing_Pro_Admin {
     }
     
     /**
+     * Handle settings form submission
+     */
+    private function handle_settings_submission() {
+        // Check if this is a settings form submission
+        if (!isset($_POST['submit']) || !isset($_POST['option_page'])) {
+            return;
+        }
+        
+        // Verify this is our settings page
+        $valid_option_pages = array('skylearn_billing_pro_general', 'skylearn_billing_pro_lms');
+        if (!in_array($_POST['option_page'], $valid_option_pages)) {
+            return;
+        }
+        
+        // Verify nonce
+        $nonce_field = $_POST['option_page'] . '-options';
+        if (!wp_verify_nonce($_POST['_wpnonce'], $nonce_field)) {
+            add_settings_error(
+                'skylearn_billing_pro_options',
+                'nonce_failed',
+                __('Security verification failed. Please try again.', 'skylearn-billing-pro'),
+                'error'
+            );
+            return;
+        }
+        
+        // Check user permissions
+        if (!current_user_can('manage_options')) {
+            add_settings_error(
+                'skylearn_billing_pro_options',
+                'permission_denied',
+                __('You do not have permission to modify these settings.', 'skylearn-billing-pro'),
+                'error'
+            );
+            return;
+        }
+        
+        try {
+            // Process and save settings
+            $input = $_POST['skylearn_billing_pro_options'] ?? array();
+            $sanitized_options = $this->sanitize_options($input);
+            
+            // Update the options
+            $result = update_option('skylearn_billing_pro_options', $sanitized_options);
+            
+            if ($result !== false) {
+                add_settings_error(
+                    'skylearn_billing_pro_options',
+                    'settings_saved',
+                    __('Settings have been saved successfully.', 'skylearn-billing-pro'),
+                    'success'
+                );
+                
+                // Log successful settings update
+                error_log('SkyLearn Billing Pro: Settings updated successfully by user ' . get_current_user_id());
+            } else {
+                add_settings_error(
+                    'skylearn_billing_pro_options',
+                    'settings_save_failed',
+                    __('Settings could not be saved. Please try again.', 'skylearn-billing-pro'),
+                    'error'
+                );
+                
+                // Log failed settings update
+                error_log('SkyLearn Billing Pro: Settings update failed for user ' . get_current_user_id());
+            }
+        } catch (Exception $e) {
+            add_settings_error(
+                'skylearn_billing_pro_options',
+                'settings_exception',
+                sprintf(__('An error occurred while saving settings: %s', 'skylearn-billing-pro'), $e->getMessage()),
+                'error'
+            );
+            
+            // Log the exception
+            error_log('SkyLearn Billing Pro: Settings save exception - ' . $e->getMessage());
+        }
+    }
+    
+    /**
      * Sanitize options
      */
     public function sanitize_options($input) {
+        // Get existing options as base
         $options = get_option('skylearn_billing_pro_options', array());
         
-        if (isset($input['general_settings'])) {
-            $options['general_settings']['company_name'] = sanitize_text_field($input['general_settings']['company_name']);
-            $options['general_settings']['company_email'] = sanitize_email($input['general_settings']['company_email']);
-            $options['general_settings']['currency'] = sanitize_text_field($input['general_settings']['currency']);
-            $options['general_settings']['test_mode'] = isset($input['general_settings']['test_mode']) ? true : false;
+        // Ensure we have the proper structure
+        if (!is_array($options)) {
+            $options = array();
         }
         
-        if (isset($input['lms_settings'])) {
-            $options['lms_settings']['active_lms'] = sanitize_text_field($input['lms_settings']['active_lms']);
-            $options['lms_settings']['auto_enroll'] = isset($input['lms_settings']['auto_enroll']) ? true : false;
+        // Initialize default structure if not present
+        if (!isset($options['general_settings'])) {
+            $options['general_settings'] = array();
+        }
+        if (!isset($options['lms_settings'])) {
+            $options['lms_settings'] = array();
+        }
+        
+        try {
+            // Sanitize general settings
+            if (isset($input['general_settings']) && is_array($input['general_settings'])) {
+                if (isset($input['general_settings']['company_name'])) {
+                    $options['general_settings']['company_name'] = sanitize_text_field($input['general_settings']['company_name']);
+                }
+                
+                if (isset($input['general_settings']['company_email'])) {
+                    $email = sanitize_email($input['general_settings']['company_email']);
+                    if (!is_email($email)) {
+                        add_settings_error(
+                            'skylearn_billing_pro_options',
+                            'invalid_email',
+                            __('Please enter a valid email address.', 'skylearn-billing-pro'),
+                            'error'
+                        );
+                        // Keep the old value
+                    } else {
+                        $options['general_settings']['company_email'] = $email;
+                    }
+                }
+                
+                if (isset($input['general_settings']['currency'])) {
+                    $allowed_currencies = array('USD', 'EUR', 'GBP', 'CAD', 'AUD');
+                    $currency = sanitize_text_field($input['general_settings']['currency']);
+                    if (in_array($currency, $allowed_currencies)) {
+                        $options['general_settings']['currency'] = $currency;
+                    } else {
+                        add_settings_error(
+                            'skylearn_billing_pro_options',
+                            'invalid_currency',
+                            __('Please select a valid currency.', 'skylearn-billing-pro'),
+                            'error'
+                        );
+                    }
+                }
+                
+                // Test mode checkbox
+                $options['general_settings']['test_mode'] = isset($input['general_settings']['test_mode']) ? true : false;
+            }
+            
+            // Sanitize LMS settings
+            if (isset($input['lms_settings']) && is_array($input['lms_settings'])) {
+                if (isset($input['lms_settings']['active_lms'])) {
+                    $options['lms_settings']['active_lms'] = sanitize_text_field($input['lms_settings']['active_lms']);
+                }
+                
+                // Auto enroll checkbox
+                $options['lms_settings']['auto_enroll'] = isset($input['lms_settings']['auto_enroll']) ? true : false;
+            }
+            
+            // Log successful sanitization
+            error_log('SkyLearn Billing Pro: Options sanitized successfully');
+            
+        } catch (Exception $e) {
+            add_settings_error(
+                'skylearn_billing_pro_options',
+                'sanitization_error',
+                sprintf(__('Error processing settings: %s', 'skylearn-billing-pro'), $e->getMessage()),
+                'error'
+            );
+            
+            error_log('SkyLearn Billing Pro: Options sanitization failed - ' . $e->getMessage());
         }
         
         return $options;
@@ -512,28 +662,45 @@ class SkyLearn_Billing_Pro_Admin {
             return;
         }
         
-        $licensing_manager = skylearn_billing_pro_licensing();
+        // Display settings errors/success messages
+        settings_errors('skylearn_billing_pro_options');
         
-        // Check if license is expired
-        if ($licensing_manager->is_license_expired()) {
-            echo '<div class="notice notice-error is-dismissible">';
-            echo '<p><strong>' . esc_html__('Skylearn Billing Pro:', 'skylearn-billing-pro') . '</strong> ';
-            echo esc_html__('Your license has expired. Please renew your license to continue using Pro features.', 'skylearn-billing-pro');
-            echo ' <a href="' . esc_url(admin_url('admin.php?page=skylearn-billing-pro-license')) . '">' . esc_html__('Manage License', 'skylearn-billing-pro') . '</a></p>';
-            echo '</div>';
+        // Skip license notices if licensing manager is not available
+        if (!function_exists('skylearn_billing_pro_licensing')) {
+            return;
         }
         
-        // Check if license expires soon (within 7 days)
-        $days_until_expiry = $licensing_manager->get_days_until_expiry();
-        if ($days_until_expiry !== false && $days_until_expiry > 0 && $days_until_expiry <= 7) {
-            echo '<div class="notice notice-warning is-dismissible">';
-            echo '<p><strong>' . esc_html__('Skylearn Billing Pro:', 'skylearn-billing-pro') . '</strong> ';
-            echo sprintf(
-                esc_html__('Your license expires in %d days. Please renew to avoid service interruption.', 'skylearn-billing-pro'),
-                $days_until_expiry
-            );
-            echo ' <a href="' . esc_url($licensing_manager->get_upgrade_url()) . '" target="_blank">' . esc_html__('Renew License', 'skylearn-billing-pro') . '</a></p>';
-            echo '</div>';
+        try {
+            $licensing_manager = skylearn_billing_pro_licensing();
+            
+            // Check if license is expired
+            if (method_exists($licensing_manager, 'is_license_expired') && $licensing_manager->is_license_expired()) {
+                echo '<div class="notice notice-error is-dismissible">';
+                echo '<p><strong>' . esc_html__('Skylearn Billing Pro:', 'skylearn-billing-pro') . '</strong> ';
+                echo esc_html__('Your license has expired. Please renew your license to continue using Pro features.', 'skylearn-billing-pro');
+                echo ' <a href="' . esc_url(admin_url('admin.php?page=skylearn-billing-pro-license')) . '">' . esc_html__('Manage License', 'skylearn-billing-pro') . '</a></p>';
+                echo '</div>';
+            }
+            
+            // Check if license expires soon (within 7 days)
+            if (method_exists($licensing_manager, 'get_days_until_expiry')) {
+                $days_until_expiry = $licensing_manager->get_days_until_expiry();
+                if ($days_until_expiry !== false && $days_until_expiry > 0 && $days_until_expiry <= 7) {
+                    echo '<div class="notice notice-warning is-dismissible">';
+                    echo '<p><strong>' . esc_html__('Skylearn Billing Pro:', 'skylearn-billing-pro') . '</strong> ';
+                    echo sprintf(
+                        esc_html__('Your license expires in %d days. Please renew to avoid service interruption.', 'skylearn-billing-pro'),
+                        $days_until_expiry
+                    );
+                    if (method_exists($licensing_manager, 'get_upgrade_url')) {
+                        echo ' <a href="' . esc_url($licensing_manager->get_upgrade_url()) . '" target="_blank">' . esc_html__('Renew License', 'skylearn-billing-pro') . '</a>';
+                    }
+                    echo '</p>';
+                    echo '</div>';
+                }
+            }
+        } catch (Exception $e) {
+            error_log('SkyLearn Billing Pro: License manager error in admin notices - ' . $e->getMessage());
         }
     }
     
@@ -551,22 +718,44 @@ class SkyLearn_Billing_Pro_Admin {
         $options = get_option('skylearn_billing_pro_options', array());
         $value = isset($options['lms_settings']['active_lms']) ? $options['lms_settings']['active_lms'] : '';
         
-        $lms_manager = skylearn_billing_pro_lms_manager();
-        $detected_lms = $lms_manager->get_detected_lms();
-        
-        if (empty($detected_lms)) {
-            echo '<p class="description" style="color: #d63638;">' . esc_html__('No LMS plugins detected. Please install and activate a supported LMS plugin.', 'skylearn-billing-pro') . '</p>';
+        // Check if LMS manager function exists
+        if (!function_exists('skylearn_billing_pro_lms_manager')) {
+            echo '<p class="description" style="color: #d63638;">' . esc_html__('LMS Manager is not available. Please check plugin configuration.', 'skylearn-billing-pro') . '</p>';
             echo '<input type="hidden" name="skylearn_billing_pro_options[lms_settings][active_lms]" value="" />';
             return;
         }
         
-        echo '<select name="skylearn_billing_pro_options[lms_settings][active_lms]">';
-        echo '<option value="">' . esc_html__('Select an LMS...', 'skylearn-billing-pro') . '</option>';
-        foreach ($detected_lms as $lms_key => $lms_data) {
-            echo '<option value="' . esc_attr($lms_key) . '"' . selected($value, $lms_key, false) . '>' . esc_html($lms_data['name']) . '</option>';
+        try {
+            $lms_manager = skylearn_billing_pro_lms_manager();
+            
+            if (!method_exists($lms_manager, 'get_detected_lms')) {
+                echo '<p class="description" style="color: #d63638;">' . esc_html__('LMS detection not available. Please check plugin configuration.', 'skylearn-billing-pro') . '</p>';
+                echo '<input type="hidden" name="skylearn_billing_pro_options[lms_settings][active_lms]" value="' . esc_attr($value) . '" />';
+                return;
+            }
+            
+            $detected_lms = $lms_manager->get_detected_lms();
+            
+            if (empty($detected_lms)) {
+                echo '<p class="description" style="color: #d63638;">' . esc_html__('No LMS plugins detected. Please install and activate a supported LMS plugin.', 'skylearn-billing-pro') . '</p>';
+                echo '<input type="hidden" name="skylearn_billing_pro_options[lms_settings][active_lms]" value="" />';
+                return;
+            }
+            
+            echo '<select name="skylearn_billing_pro_options[lms_settings][active_lms]">';
+            echo '<option value="">' . esc_html__('Select an LMS...', 'skylearn-billing-pro') . '</option>';
+            foreach ($detected_lms as $lms_key => $lms_data) {
+                echo '<option value="' . esc_attr($lms_key) . '"' . selected($value, $lms_key, false) . '>' . esc_html($lms_data['name']) . '</option>';
+            }
+            echo '</select>';
+            echo '<p class="description">' . esc_html__('Select the LMS to use for course enrollment. Only one LMS can be active at a time.', 'skylearn-billing-pro') . '</p>';
+            
+        } catch (Exception $e) {
+            error_log('SkyLearn Billing Pro: LMS manager error in active_lms_callback - ' . $e->getMessage());
+            echo '<p class="description" style="color: #d63638;">' . esc_html__('Error loading LMS options. Please check error logs.', 'skylearn-billing-pro') . '</p>';
+            echo '<input type="text" name="skylearn_billing_pro_options[lms_settings][active_lms]" value="' . esc_attr($value) . '" class="regular-text" />';
+            echo '<p class="description">' . esc_html__('Manual LMS selection (enter LMS key).', 'skylearn-billing-pro') . '</p>';
         }
-        echo '</select>';
-        echo '<p class="description">' . esc_html__('Select the LMS to use for course enrollment. Only one LMS can be active at a time.', 'skylearn-billing-pro') . '</p>';
     }
     
     /**

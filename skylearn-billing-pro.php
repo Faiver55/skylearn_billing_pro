@@ -143,31 +143,78 @@ class SkyLearnBillingPro {
         // Portal features
         require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/portal/class-nurture-popup.php';
         
-        // Initialize instances
-        skylearn_billing_pro_lms_manager();
-        skylearn_billing_pro_course_mapping();
-        skylearn_billing_pro_payment_manager();
-        skylearn_billing_pro_payment_fields();
-        skylearn_billing_pro_checkout_shortcodes();
-        skylearn_billing_pro_product_manager();
-        skylearn_billing_pro_product_ui();
-        skylearn_billing_pro_bundle_manager();
-        skylearn_billing_pro_migration_tool();
-        skylearn_billing_pro_user_enrollment();
-        skylearn_billing_pro_webhook_handler();
+        // Initialize instances with error handling
+        $functions_to_init = array(
+            'skylearn_billing_pro_lms_manager',
+            'skylearn_billing_pro_course_mapping',
+            'skylearn_billing_pro_payment_manager',
+            'skylearn_billing_pro_payment_fields',
+            'skylearn_billing_pro_checkout_shortcodes',
+            'skylearn_billing_pro_product_manager',
+            'skylearn_billing_pro_product_ui',
+            'skylearn_billing_pro_bundle_manager',
+            'skylearn_billing_pro_migration_tool',
+            'skylearn_billing_pro_user_enrollment',
+            'skylearn_billing_pro_webhook_handler'
+        );
         
-        // Initialize automation system
-        skylearn_billing_pro_automation_manager();
+        foreach ($functions_to_init as $function_name) {
+            if (function_exists($function_name)) {
+                try {
+                    call_user_func($function_name);
+                } catch (Exception $e) {
+                    error_log('SkyLearn Billing Pro: Failed to initialize ' . $function_name . ' - ' . $e->getMessage());
+                }
+            } else {
+                error_log('SkyLearn Billing Pro: Function ' . $function_name . ' does not exist');
+            }
+        }
         
-        // Initialize email system
-        skylearn_billing_pro_email();
-        skylearn_billing_pro_email_builder();
+        // Initialize automation system with error handling
+        if (function_exists('skylearn_billing_pro_automation_manager')) {
+            try {
+                skylearn_billing_pro_automation_manager();
+            } catch (Exception $e) {
+                error_log('SkyLearn Billing Pro: Automation manager initialization failed - ' . $e->getMessage());
+            }
+        }
         
-        // Initialize subscription and membership systems
-        skylearn_billing_pro_subscription_manager();
-        skylearn_billing_pro_membership_manager();
-        skylearn_billing_pro_loyalty();
-        skylearn_billing_pro_nurture_popup();
+        // Initialize email system with error handling
+        if (function_exists('skylearn_billing_pro_email')) {
+            try {
+                skylearn_billing_pro_email();
+            } catch (Exception $e) {
+                error_log('SkyLearn Billing Pro: Email system initialization failed - ' . $e->getMessage());
+            }
+        }
+        
+        if (function_exists('skylearn_billing_pro_email_builder')) {
+            try {
+                skylearn_billing_pro_email_builder();
+            } catch (Exception $e) {
+                error_log('SkyLearn Billing Pro: Email builder initialization failed - ' . $e->getMessage());
+            }
+        }
+        
+        // Initialize subscription and membership systems with error handling
+        $subscription_functions = array(
+            'skylearn_billing_pro_subscription_manager',
+            'skylearn_billing_pro_membership_manager',
+            'skylearn_billing_pro_loyalty',
+            'skylearn_billing_pro_nurture_popup'
+        );
+        
+        foreach ($subscription_functions as $function_name) {
+            if (function_exists($function_name)) {
+                try {
+                    call_user_func($function_name);
+                } catch (Exception $e) {
+                    error_log('SkyLearn Billing Pro: Failed to initialize ' . $function_name . ' - ' . $e->getMessage());
+                }
+            } else {
+                error_log('SkyLearn Billing Pro: Function ' . $function_name . ' does not exist');
+            }
+        }
         
         // Initialize security and compliance features
         require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/security/class-security.php';
@@ -176,11 +223,26 @@ class SkyLearnBillingPro {
         require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/security/class-performance.php';
         require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/security/class-role-access.php';
         
-        skylearn_billing_pro_security();
-        skylearn_billing_pro_audit_logger();
-        skylearn_billing_pro_gdpr_tools();
-        skylearn_billing_pro_performance();
-        skylearn_billing_pro_role_access();
+        // Initialize security and compliance features with error handling
+        $security_functions = array(
+            'skylearn_billing_pro_security',
+            'skylearn_billing_pro_audit_logger',
+            'skylearn_billing_pro_gdpr_tools',
+            'skylearn_billing_pro_performance',
+            'skylearn_billing_pro_role_access'
+        );
+        
+        foreach ($security_functions as $function_name) {
+            if (function_exists($function_name)) {
+                try {
+                    call_user_func($function_name);
+                } catch (Exception $e) {
+                    error_log('SkyLearn Billing Pro: Failed to initialize ' . $function_name . ' - ' . $e->getMessage());
+                }
+            } else {
+                error_log('SkyLearn Billing Pro: Function ' . $function_name . ' does not exist');
+            }
+        }
         
         // Initialize Phase 15 Frontend Features
         require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/frontend/page-generator.php';
@@ -188,10 +250,38 @@ class SkyLearnBillingPro {
         require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/frontend/block-editor/blocks.php';
         require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/page-setup.php';
         
-        skylearn_billing_pro_page_generator();
-        skylearn_billing_pro_frontend_shortcodes();
-        skylearn_billing_pro_block_editor();
-        skylearn_billing_pro_page_setup();
+        // Initialize frontend features with proper error handling
+        if (function_exists('skylearn_billing_pro_page_generator')) {
+            try {
+                skylearn_billing_pro_page_generator();
+            } catch (Exception $e) {
+                error_log('SkyLearn Billing Pro: Page generator initialization failed - ' . $e->getMessage());
+            }
+        }
+        
+        if (function_exists('skylearn_billing_pro_frontend_shortcodes')) {
+            try {
+                skylearn_billing_pro_frontend_shortcodes();
+            } catch (Exception $e) {
+                error_log('SkyLearn Billing Pro: Frontend shortcodes initialization failed - ' . $e->getMessage());
+            }
+        }
+        
+        if (function_exists('skylearn_billing_pro_block_editor')) {
+            try {
+                skylearn_billing_pro_block_editor();
+            } catch (Exception $e) {
+                error_log('SkyLearn Billing Pro: Block editor initialization failed - ' . $e->getMessage());
+            }
+        }
+        
+        if (function_exists('skylearn_billing_pro_page_setup')) {
+            try {
+                skylearn_billing_pro_page_setup();
+            } catch (Exception $e) {
+                error_log('SkyLearn Billing Pro: Page setup initialization failed - ' . $e->getMessage());
+            }
+        }
         
         // Include admin class if in admin
         if (is_admin()) {
@@ -203,9 +293,33 @@ class SkyLearnBillingPro {
             require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/class-onboarding.php';
             require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/admin/class-admin-ui.php';
             
-            new SkyLearn_Billing_Pro_Admin();
-            skylearn_billing_pro_welcome_email_admin();
-            skylearn_billing_pro_reporting();
+            // Initialize admin components with error handling
+            try {
+                new SkyLearn_Billing_Pro_Admin();
+            } catch (Exception $e) {
+                error_log('SkyLearn Billing Pro: Admin class initialization failed - ' . $e->getMessage());
+                // Add admin notice for the error
+                add_action('admin_notices', function() use ($e) {
+                    echo '<div class="notice notice-error"><p><strong>SkyLearn Billing Pro:</strong> Admin initialization failed. Please check error logs for details.</p></div>';
+                });
+            }
+            
+            // Initialize admin email functions with error handling
+            if (function_exists('skylearn_billing_pro_welcome_email_admin')) {
+                try {
+                    skylearn_billing_pro_welcome_email_admin();
+                } catch (Exception $e) {
+                    error_log('SkyLearn Billing Pro: Welcome email admin initialization failed - ' . $e->getMessage());
+                }
+            }
+            
+            if (function_exists('skylearn_billing_pro_reporting')) {
+                try {
+                    skylearn_billing_pro_reporting();
+                } catch (Exception $e) {
+                    error_log('SkyLearn Billing Pro: Reporting initialization failed - ' . $e->getMessage());
+                }
+            }
         }
         
         // Include CLI commands if WP-CLI is available
@@ -225,56 +339,77 @@ class SkyLearnBillingPro {
      * Plugin activation
      */
     public function activate() {
-        // Load the welcome email admin class for default template
-        if (!class_exists('SkyLearn_Billing_Pro_Welcome_Email_Admin')) {
-            require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/admin/class-welcome-email.php';
+        try {
+            // Load the welcome email admin class for default template
+            if (!class_exists('SkyLearn_Billing_Pro_Welcome_Email_Admin')) {
+                require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/admin/class-welcome-email.php';
+            }
+            
+            // Create plugin options with default values
+            $default_options = array(
+                'version' => SKYLEARN_BILLING_PRO_VERSION,
+                'general_settings' => array(
+                    'company_name' => '',
+                    'company_email' => get_option('admin_email'),
+                    'currency' => 'USD',
+                    'test_mode' => true,
+                ),
+                'lms_settings' => array(
+                    'active_lms' => '',
+                    'auto_enroll' => true,
+                ),
+                'email_settings' => array(
+                    'welcome_email_enabled' => true,
+                    'welcome_email_subject' => __('Welcome to {{site_name}}', 'skylearn-billing-pro'),
+                    'welcome_email_template' => class_exists('SkyLearn_Billing_Pro_Welcome_Email_Admin') ? 
+                        SkyLearn_Billing_Pro_Welcome_Email_Admin::get_default_email_template() : '',
+                    'welcome_email_format' => 'html',
+                ),
+                'webhook_settings' => array(
+                    'secret' => wp_generate_password(32, false),
+                    'send_welcome_email' => true,
+                    'enabled' => true,
+                ),
+                'course_mappings' => array(),
+                'enrollment_log' => array(),
+                'email_log' => array(),
+                'user_activity_log' => array()
+            );
+            
+            add_option('skylearn_billing_pro_options', $default_options);
+            
+            // Set plugin installation timestamp
+            add_option('skylearn_billing_pro_installed', time());
+            
+            // Add webhook rewrite rule
+            add_rewrite_rule('^skylearn-billing/webhook/?$', 'index.php?skylearn_webhook=1', 'top');
+            
+            // Flush rewrite rules
+            flush_rewrite_rules();
+            
+            // Trigger page creation (with error handling)
+            do_action('skylearn_billing_pro_activate');
+            
+            // Log successful activation
+            error_log('SkyLearn Billing Pro: Plugin activated successfully');
+            
+        } catch (Exception $e) {
+            // Log activation error
+            error_log('SkyLearn Billing Pro: Plugin activation failed - ' . $e->getMessage());
+            
+            // Deactivate plugin if activation fails
+            deactivate_plugins(plugin_basename(__FILE__));
+            
+            // Show error message to user
+            wp_die(
+                sprintf(
+                    __('SkyLearn Billing Pro activation failed: %s', 'skylearn-billing-pro'),
+                    $e->getMessage()
+                ),
+                __('Plugin Activation Error', 'skylearn-billing-pro'),
+                array('back_link' => true)
+            );
         }
-        
-        // Create plugin options with default values
-        $default_options = array(
-            'version' => SKYLEARN_BILLING_PRO_VERSION,
-            'general_settings' => array(
-                'company_name' => '',
-                'company_email' => get_option('admin_email'),
-                'currency' => 'USD',
-                'test_mode' => true,
-            ),
-            'lms_settings' => array(
-                'active_lms' => '',
-                'auto_enroll' => true,
-            ),
-            'email_settings' => array(
-                'welcome_email_enabled' => true,
-                'welcome_email_subject' => __('Welcome to {{site_name}}', 'skylearn-billing-pro'),
-                'welcome_email_template' => SkyLearn_Billing_Pro_Welcome_Email_Admin::get_default_email_template(),
-                'welcome_email_format' => 'html',
-            ),
-            'webhook_settings' => array(
-                'secret' => wp_generate_password(32, false),
-                'send_welcome_email' => true,
-                'enabled' => true,
-            ),
-            'course_mappings' => array(),
-            'enrollment_log' => array(),
-            'email_log' => array(),
-            'user_activity_log' => array()
-        );
-        
-        add_option('skylearn_billing_pro_options', $default_options);
-        
-        // Set plugin installation timestamp
-        add_option('skylearn_billing_pro_installed', time());
-        
-        // Add webhook rewrite rule
-        add_rewrite_rule('^skylearn-billing/webhook/?$', 'index.php?skylearn_webhook=1', 'top');
-        
-        // Trigger page creation
-        do_action('skylearn_billing_pro_activate');
-        
-        // Flush rewrite rules
-        flush_rewrite_rules();
-        
-        do_action('skylearn_billing_pro_activate');
     }
     
     /**
