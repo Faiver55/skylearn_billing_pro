@@ -133,11 +133,15 @@ class SkyLearn_Billing_Pro_Page_Generator {
      * Initialize
      */
     public function init() {
-        // Hook into plugin activation
-        add_action('skylearn_billing_pro_activate', array($this, 'create_pages'));
-        
-        // Add admin action for manual page creation
-        add_action('wp_ajax_skylearn_create_pages', array($this, 'ajax_create_pages'));
+        try {
+            // Hook into plugin activation
+            add_action('skylearn_billing_pro_activate', array($this, 'create_pages'));
+            
+            // Add admin action for manual page creation
+            add_action('wp_ajax_skylearn_create_pages', array($this, 'ajax_create_pages'));
+        } catch (Exception $e) {
+            error_log('SkyLearn Billing Pro: Page generator init failed - ' . $e->getMessage());
+        }
     }
     
     /**
@@ -154,26 +158,45 @@ class SkyLearn_Billing_Pro_Page_Generator {
             'pages' => array()
         );
         
-        foreach ($this->required_pages as $page_key => $page_config) {
-            $result = $this->create_page($page_key, $page_config, $force);
-            
-            if ($result['success']) {
-                $results['created']++;
-                $results['pages'][$page_key] = $result['page_id'];
-            } else {
-                if ($result['skipped']) {
-                    $results['skipped']++;
-                } else {
-                    $results['errors'][] = $result['error'];
+        try {
+            foreach ($this->required_pages as $page_key => $page_config) {
+                try {
+                    $result = $this->create_page($page_key, $page_config, $force);
+                    
+                    if ($result['success']) {
+                        $results['created']++;
+                        $results['pages'][$page_key] = $result['page_id'];
+                    } else {
+                        if ($result['skipped']) {
+                            $results['skipped']++;
+                        } else {
+                            $results['errors'][] = $result['error'];
+                        }
+                    }
+                } catch (Exception $e) {
+                    $error_msg = sprintf(__('Failed to create page %s: %s', 'skylearn-billing-pro'), $page_key, $e->getMessage());
+                    $results['errors'][] = $error_msg;
+                    error_log('SkyLearn Billing Pro: ' . $error_msg);
                 }
             }
-        }
-        
-        // Store page IDs in options
-        if (!empty($results['pages'])) {
-            $existing_pages = get_option('skylearn_billing_pro_pages', array());
-            $updated_pages = array_merge($existing_pages, $results['pages']);
-            update_option('skylearn_billing_pro_pages', $updated_pages);
+            
+            // Store page IDs in options
+            if (!empty($results['pages'])) {
+                $existing_pages = get_option('skylearn_billing_pro_pages', array());
+                $updated_pages = array_merge($existing_pages, $results['pages']);
+                update_option('skylearn_billing_pro_pages', $updated_pages);
+            }
+            
+            // Log results
+            if (!empty($results['errors'])) {
+                error_log('SkyLearn Billing Pro: Page creation completed with errors - ' . implode(', ', $results['errors']));
+            } else {
+                error_log('SkyLearn Billing Pro: Page creation completed successfully - Created: ' . $results['created'] . ', Skipped: ' . $results['skipped']);
+            }
+            
+        } catch (Exception $e) {
+            error_log('SkyLearn Billing Pro: Page creation failed completely - ' . $e->getMessage());
+            $results['errors'][] = sprintf(__('Page creation failed: %s', 'skylearn-billing-pro'), $e->getMessage());
         }
         
         return $results;
