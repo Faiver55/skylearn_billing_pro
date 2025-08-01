@@ -113,6 +113,15 @@ class SkyLearn_Billing_Pro_Onboarding {
      * Get current onboarding step
      */
     public function get_current_step() {
+        // Allow URL parameter to override current step for navigation
+        if (isset($_GET['step'])) {
+            $url_step = sanitize_text_field($_GET['step']);
+            $available_steps = array_keys($this->get_onboarding_steps());
+            if (in_array($url_step, $available_steps)) {
+                return $url_step;
+            }
+        }
+        
         $options = get_option('skylearn_billing_pro_options', array());
         return isset($options['onboarding_step']) ? $options['onboarding_step'] : 'welcome';
     }
