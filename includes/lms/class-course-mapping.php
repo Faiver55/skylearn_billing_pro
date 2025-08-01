@@ -29,10 +29,20 @@ class SkyLearn_Billing_Pro_Course_Mapping {
      * Constructor
      */
     public function __construct() {
-        $this->lms_manager = skylearn_billing_pro_lms_manager();
-        add_action('wp_ajax_skylearn_billing_save_course_mapping', array($this, 'ajax_save_course_mapping'));
-        add_action('wp_ajax_skylearn_billing_delete_course_mapping', array($this, 'ajax_delete_course_mapping'));
-        add_action('wp_ajax_skylearn_billing_search_courses', array($this, 'ajax_search_courses'));
+        // Initialize LMS manager with error handling
+        try {
+            $this->lms_manager = skylearn_billing_pro_lms_manager();
+        } catch (Exception $e) {
+            error_log('SkyLearn Billing Pro: Failed to initialize LMS Manager in Course Mapping - ' . $e->getMessage());
+            $this->lms_manager = null;
+        }
+        
+        // Only add AJAX handlers if LMS manager is available
+        if ($this->lms_manager) {
+            add_action('wp_ajax_skylearn_billing_save_course_mapping', array($this, 'ajax_save_course_mapping'));
+            add_action('wp_ajax_skylearn_billing_delete_course_mapping', array($this, 'ajax_delete_course_mapping'));
+            add_action('wp_ajax_skylearn_billing_search_courses', array($this, 'ajax_search_courses'));
+        }
     }
     
     /**
@@ -144,37 +154,54 @@ class SkyLearn_Billing_Pro_Course_Mapping {
      * @return bool Success status
      */
     public function process_enrollment($product_id, $user_id, $trigger = 'payment') {
-        $mapping = $this->get_course_mapping($product_id);
-        
-        if (!$mapping) {
+        if (!$this->lms_manager) {
+            error_log('SkyLearn Billing Pro: LMS Manager not available for enrollment processing');
             return false;
         }
         
-        // Check if trigger matches
-        if ($mapping['trigger_type'] !== $trigger && $mapping['trigger_type'] !== 'any') {
-            return false;
-        }
-        
-        // Check if mapping is active
-        if (isset($mapping['status']) && $mapping['status'] !== 'active') {
-            return false;
-        }
-        
-        // Enroll user in course
-        $result = $this->lms_manager->enroll_user($user_id, $mapping['course_id']);
-        
-        if ($result) {
-            // Log successful enrollment
-            $this->log_enrollment($product_id, $user_id, $mapping['course_id'], $trigger, 'success');
+        try {
+            $mapping = $this->get_course_mapping($product_id);
             
-            // Fire action hook
-            do_action('skylearn_billing_pro_course_mapping_enrolled', $user_id, $mapping['course_id'], $product_id, $trigger);
-        } else {
-            // Log failed enrollment
-            $this->log_enrollment($product_id, $user_id, $mapping['course_id'], $trigger, 'failed');
+            if (!$mapping) {
+                return false;
+            }
+            
+            // Check if trigger matches
+            if ($mapping['trigger_type'] !== $trigger && $mapping['trigger_type'] !== 'any') {
+                return false;
+            }
+            
+            // Check if mapping is active
+            if (isset($mapping['status']) && $mapping['status'] !== 'active') {
+                return false;
+            }
+            
+            // Enroll user in course
+            $result = $this->lms_manager->enroll_user($user_id, $mapping['course_id']);
+            
+            if ($result) {
+                // Log successful enrollment
+                $this->log_enrollment($product_id, $user_id, $mapping['course_id'], $trigger, 'success');
+                
+                // Fire action hook
+                do_action('skylearn_billing_pro_course_mapping_enrolled', $user_id, $mapping['course_id'], $product_id, $trigger);
+            } else {
+                // Log failed enrollment
+                $this->log_enrollment($product_id, $user_id, $mapping['course_id'], $trigger, 'failed');
+            }
+            
+            return $result;
+            
+        } catch (Exception $e) {
+            error_log('SkyLearn Billing Pro: Error processing enrollment - ' . $e->getMessage());
+            
+            // Still try to log this failure if we have the required data
+            if (isset($mapping) && isset($mapping['course_id'])) {
+                $this->log_enrollment($product_id, $user_id, $mapping['course_id'], $trigger, 'failed');
+            }
+            
+            return false;
         }
-        
-        return $result;
     }
     
     /**
@@ -184,12 +211,17 @@ class SkyLearn_Billing_Pro_Course_Mapping {
      * @return bool
      */
     private function validate_course_exists($course_id) {
-        if (!$this->lms_manager->has_active_lms()) {
+        if (!$this->lms_manager || !$this->lms_manager->has_active_lms()) {
             return false;
         }
         
-        $course_details = $this->lms_manager->get_course_details($course_id);
-        return $course_details !== false;
+        try {
+            $course_details = $this->lms_manager->get_course_details($course_id);
+            return $course_details !== false;
+        } catch (Exception $e) {
+            error_log('SkyLearn Billing Pro: Error validating course existence - ' . $e->getMessage());
+            return false;
+        }
     }
     
     /**
@@ -202,54 +234,65 @@ class SkyLearn_Billing_Pro_Course_Mapping {
      * @param string $status Status (success/failed)
      */
     private function log_enrollment($product_id, $user_id, $course_id, $trigger, $status) {
-        $log_entry = array(
-            'timestamp' => current_time('mysql'),
-            'product_id' => $product_id,
-            'user_id' => $user_id,
-            'course_id' => $course_id,
-            'trigger' => $trigger,
-            'status' => $status,
-            'user_email' => '',
-            'course_title' => ''
-        );
-        
-        // Get user email
-        $user = get_user_by('id', $user_id);
-        if ($user) {
-            $log_entry['user_email'] = $user->user_email;
-        }
-        
-        // Get course title
-        $course_details = $this->lms_manager->get_course_details($course_id);
-        if ($course_details) {
-            $log_entry['course_title'] = $course_details['title'];
-        }
-        
-        // Save to enrollment log
-        $options = get_option('skylearn_billing_pro_options', array());
-        if (!isset($options['enrollment_log'])) {
-            $options['enrollment_log'] = array();
-        }
-        
-        $options['enrollment_log'][] = $log_entry;
-        
-        // Keep only last 1000 entries to prevent database bloat
-        if (count($options['enrollment_log']) > 1000) {
-            $options['enrollment_log'] = array_slice($options['enrollment_log'], -1000);
-        }
-        
-        update_option('skylearn_billing_pro_options', $options);
-        
-        // Also log to error log if debug is enabled
-        if (defined('WP_DEBUG') && WP_DEBUG) {
-            error_log(sprintf(
-                'Skylearn Billing Pro - Course Mapping: Product %s, User %d, Course %d, Trigger %s, Status %s',
-                $product_id,
-                $user_id,
-                $course_id,
-                $trigger,
-                $status
-            ));
+        try {
+            $log_entry = array(
+                'timestamp' => current_time('mysql'),
+                'product_id' => $product_id,
+                'user_id' => $user_id,
+                'course_id' => $course_id,
+                'trigger' => $trigger,
+                'status' => $status,
+                'user_email' => '',
+                'course_title' => ''
+            );
+            
+            // Get user email
+            $user = get_user_by('id', $user_id);
+            if ($user) {
+                $log_entry['user_email'] = $user->user_email;
+            }
+            
+            // Get course title
+            if ($this->lms_manager && $this->lms_manager->has_active_lms()) {
+                try {
+                    $course_details = $this->lms_manager->get_course_details($course_id);
+                    if ($course_details) {
+                        $log_entry['course_title'] = $course_details['title'];
+                    }
+                } catch (Exception $e) {
+                    error_log('SkyLearn Billing Pro: Error getting course title for log - ' . $e->getMessage());
+                }
+            }
+            
+            // Save to enrollment log
+            $options = get_option('skylearn_billing_pro_options', array());
+            if (!isset($options['enrollment_log'])) {
+                $options['enrollment_log'] = array();
+            }
+            
+            $options['enrollment_log'][] = $log_entry;
+            
+            // Keep only last 1000 entries to prevent database bloat
+            if (count($options['enrollment_log']) > 1000) {
+                $options['enrollment_log'] = array_slice($options['enrollment_log'], -1000);
+            }
+            
+            update_option('skylearn_billing_pro_options', $options);
+            
+            // Also log to error log if debug is enabled
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log(sprintf(
+                    'Skylearn Billing Pro - Course Mapping: Product %s, User %d, Course %d, Trigger %s, Status %s',
+                    $product_id,
+                    $user_id,
+                    $course_id,
+                    $trigger,
+                    $status
+                ));
+            }
+            
+        } catch (Exception $e) {
+            error_log('SkyLearn Billing Pro: Error logging enrollment activity - ' . $e->getMessage());
         }
     }
     
@@ -277,9 +320,89 @@ class SkyLearn_Billing_Pro_Course_Mapping {
      * Render course mapping UI
      */
     public function render_mapping_ui() {
-        $mappings = $this->get_course_mappings();
-        $courses = $this->lms_manager->get_courses();
-        $lms_status = $this->lms_manager->get_integration_status();
+        // Check if LMS manager is available
+        if (!$this->lms_manager) {
+            $this->render_error_notice(__('LMS Manager could not be initialized. Please check your plugin configuration.', 'skylearn-billing-pro'));
+            return;
+        }
+        
+        try {
+            $mappings = $this->get_course_mappings();
+            $courses = array();
+            $lms_status = array();
+            
+            // Get courses with error handling
+            try {
+                $courses = $this->lms_manager->get_courses();
+            } catch (Exception $e) {
+                error_log('SkyLearn Billing Pro: Error getting courses - ' . $e->getMessage());
+                $courses = array();
+            }
+            
+            // Get LMS status with error handling
+            try {
+                $lms_status = $this->lms_manager->get_integration_status();
+            } catch (Exception $e) {
+                error_log('SkyLearn Billing Pro: Error getting LMS status - ' . $e->getMessage());
+                $lms_status = array(
+                    'detected_count' => 0,
+                    'detected_lms' => array(),
+                    'active_lms' => false,
+                    'active_lms_name' => false,
+                    'has_active_connector' => false,
+                    'course_count' => 0
+                );
+            }
+            
+            $this->render_mapping_ui_content($mappings, $courses, $lms_status);
+            
+        } catch (Exception $e) {
+            error_log('SkyLearn Billing Pro: Critical error in render_mapping_ui - ' . $e->getMessage());
+            $this->render_error_notice(__('An error occurred while loading the course mapping interface. Please check the error logs for more details.', 'skylearn-billing-pro'));
+        }
+    }
+    
+    /**
+     * Render error notice
+     *
+     * @param string $message Error message to display
+     */
+    private function render_error_notice($message) {
+        ?>
+        <div class="skylearn-billing-course-mapping">
+            <div class="skylearn-billing-card">
+                <div class="skylearn-billing-card-header">
+                    <h3><?php esc_html_e('Course Mapping Error', 'skylearn-billing-pro'); ?></h3>
+                </div>
+                <div class="skylearn-billing-card-body">
+                    <div class="skylearn-billing-notice skylearn-billing-notice-error">
+                        <span class="dashicons dashicons-warning"></span>
+                        <div>
+                            <strong><?php esc_html_e('Error:', 'skylearn-billing-pro'); ?></strong>
+                            <?php echo esc_html($message); ?>
+                        </div>
+                    </div>
+                    <p><?php esc_html_e('Please try the following:', 'skylearn-billing-pro'); ?></p>
+                    <ul>
+                        <li><?php esc_html_e('Ensure you have a supported LMS plugin installed and activated', 'skylearn-billing-pro'); ?></li>
+                        <li><?php esc_html_e('Check that your LMS is properly configured in the LMS Settings tab', 'skylearn-billing-pro'); ?></li>
+                        <li><?php esc_html_e('Contact support if the problem persists', 'skylearn-billing-pro'); ?></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <?php
+    }
+    
+    /**
+     * Render the main course mapping UI content
+     *
+     * @param array $mappings Current course mappings
+     * @param array $courses Available courses
+     * @param array $lms_status LMS status information
+     */
+    private function render_mapping_ui_content($mappings, $courses, $lms_status) {
+        
         
         ?>
         <div class="skylearn-billing-course-mapping">
@@ -416,8 +539,20 @@ class SkyLearn_Billing_Pro_Course_Mapping {
                                     <tbody>
                                         <?php foreach ($mappings as $product_id => $mapping): ?>
                                             <?php
-                                            $course_details = $this->lms_manager->get_course_details($mapping['course_id']);
-                                            $course_title = $course_details ? $course_details['title'] : __('Course not found', 'skylearn-billing-pro');
+                                            $course_details = null;
+                                            $course_title = __('Course not found', 'skylearn-billing-pro');
+                                            
+                                            // Get course details with error handling
+                                            try {
+                                                if ($this->lms_manager && $this->lms_manager->has_active_lms()) {
+                                                    $course_details = $this->lms_manager->get_course_details($mapping['course_id']);
+                                                    if ($course_details) {
+                                                        $course_title = $course_details['title'];
+                                                    }
+                                                }
+                                            } catch (Exception $e) {
+                                                error_log('SkyLearn Billing Pro: Error getting course details for mapping - ' . $e->getMessage());
+                                            }
                                             ?>
                                             <tr data-product-id="<?php echo esc_attr($product_id); ?>">
                                                 <td>
@@ -521,26 +656,31 @@ class SkyLearn_Billing_Pro_Course_Mapping {
      * AJAX handler for saving course mapping
      */
     public function ajax_save_course_mapping() {
-        check_ajax_referer('skylearn_course_mapping_nonce', 'nonce');
-        
-        if (!current_user_can('manage_options')) {
-            wp_die(__('Unauthorized', 'skylearn-billing-pro'));
-        }
-        
-        $product_id = sanitize_text_field($_POST['product_id']);
-        $course_id = intval($_POST['course_id']);
-        $trigger_type = sanitize_text_field($_POST['trigger_type']);
-        
-        if (empty($product_id) || empty($course_id)) {
-            wp_send_json_error(array('message' => __('Product ID and Course are required.', 'skylearn-billing-pro')));
-        }
-        
-        $result = $this->save_course_mapping($product_id, $course_id, $trigger_type);
-        
-        if ($result) {
-            wp_send_json_success(array('message' => __('Mapping saved successfully.', 'skylearn-billing-pro')));
-        } else {
-            wp_send_json_error(array('message' => __('Failed to save mapping.', 'skylearn-billing-pro')));
+        try {
+            check_ajax_referer('skylearn_course_mapping_nonce', 'nonce');
+            
+            if (!current_user_can('manage_options')) {
+                wp_die(__('Unauthorized', 'skylearn-billing-pro'));
+            }
+            
+            $product_id = sanitize_text_field($_POST['product_id']);
+            $course_id = intval($_POST['course_id']);
+            $trigger_type = sanitize_text_field($_POST['trigger_type']);
+            
+            if (empty($product_id) || empty($course_id)) {
+                wp_send_json_error(array('message' => __('Product ID and Course are required.', 'skylearn-billing-pro')));
+            }
+            
+            $result = $this->save_course_mapping($product_id, $course_id, $trigger_type);
+            
+            if ($result) {
+                wp_send_json_success(array('message' => __('Mapping saved successfully.', 'skylearn-billing-pro')));
+            } else {
+                wp_send_json_error(array('message' => __('Failed to save mapping.', 'skylearn-billing-pro')));
+            }
+        } catch (Exception $e) {
+            error_log('SkyLearn Billing Pro: Error in ajax_save_course_mapping - ' . $e->getMessage());
+            wp_send_json_error(array('message' => __('An error occurred while saving the mapping.', 'skylearn-billing-pro')));
         }
     }
     
@@ -548,24 +688,29 @@ class SkyLearn_Billing_Pro_Course_Mapping {
      * AJAX handler for deleting course mapping
      */
     public function ajax_delete_course_mapping() {
-        check_ajax_referer('skylearn_course_mapping_nonce', 'nonce');
-        
-        if (!current_user_can('manage_options')) {
-            wp_die(__('Unauthorized', 'skylearn-billing-pro'));
-        }
-        
-        $product_id = sanitize_text_field($_POST['product_id']);
-        
-        if (empty($product_id)) {
-            wp_send_json_error(array('message' => __('Product ID is required.', 'skylearn-billing-pro')));
-        }
-        
-        $result = $this->delete_course_mapping($product_id);
-        
-        if ($result) {
-            wp_send_json_success(array('message' => __('Mapping deleted successfully.', 'skylearn-billing-pro')));
-        } else {
-            wp_send_json_error(array('message' => __('Failed to delete mapping.', 'skylearn-billing-pro')));
+        try {
+            check_ajax_referer('skylearn_course_mapping_nonce', 'nonce');
+            
+            if (!current_user_can('manage_options')) {
+                wp_die(__('Unauthorized', 'skylearn-billing-pro'));
+            }
+            
+            $product_id = sanitize_text_field($_POST['product_id']);
+            
+            if (empty($product_id)) {
+                wp_send_json_error(array('message' => __('Product ID is required.', 'skylearn-billing-pro')));
+            }
+            
+            $result = $this->delete_course_mapping($product_id);
+            
+            if ($result) {
+                wp_send_json_success(array('message' => __('Mapping deleted successfully.', 'skylearn-billing-pro')));
+            } else {
+                wp_send_json_error(array('message' => __('Failed to delete mapping.', 'skylearn-billing-pro')));
+            }
+        } catch (Exception $e) {
+            error_log('SkyLearn Billing Pro: Error in ajax_delete_course_mapping - ' . $e->getMessage());
+            wp_send_json_error(array('message' => __('An error occurred while deleting the mapping.', 'skylearn-billing-pro')));
         }
     }
     
@@ -573,24 +718,35 @@ class SkyLearn_Billing_Pro_Course_Mapping {
      * AJAX handler for searching courses
      */
     public function ajax_search_courses() {
-        check_ajax_referer('skylearn_course_mapping_nonce', 'nonce');
-        
-        if (!current_user_can('manage_options')) {
-            wp_die(__('Unauthorized', 'skylearn-billing-pro'));
-        }
-        
-        $search = sanitize_text_field($_POST['search']);
-        $courses = $this->lms_manager->get_courses();
-        
-        $filtered_courses = array();
-        
-        foreach ($courses as $course) {
-            if (empty($search) || stripos($course['title'], $search) !== false) {
-                $filtered_courses[] = $course;
+        try {
+            check_ajax_referer('skylearn_course_mapping_nonce', 'nonce');
+            
+            if (!current_user_can('manage_options')) {
+                wp_die(__('Unauthorized', 'skylearn-billing-pro'));
             }
+            
+            $search = sanitize_text_field($_POST['search']);
+            
+            if (!$this->lms_manager || !$this->lms_manager->has_active_lms()) {
+                wp_send_json_error(array('message' => __('No active LMS available.', 'skylearn-billing-pro')));
+                return;
+            }
+            
+            $courses = $this->lms_manager->get_courses();
+            
+            $filtered_courses = array();
+            
+            foreach ($courses as $course) {
+                if (empty($search) || stripos($course['title'], $search) !== false) {
+                    $filtered_courses[] = $course;
+                }
+            }
+            
+            wp_send_json_success($filtered_courses);
+        } catch (Exception $e) {
+            error_log('SkyLearn Billing Pro: Error in ajax_search_courses - ' . $e->getMessage());
+            wp_send_json_error(array('message' => __('An error occurred while searching courses.', 'skylearn-billing-pro')));
         }
-        
-        wp_send_json_success($filtered_courses);
     }
 }
 
