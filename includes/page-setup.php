@@ -25,7 +25,8 @@ class SkyLearn_Billing_Pro_Page_Setup {
      */
     public function __construct() {
         add_action('init', array($this, 'init'));
-        add_action('admin_menu', array($this, 'add_admin_menu'));
+        // Use priority 20 to ensure main admin menu is created first (priority 10)
+        add_action('admin_menu', array($this, 'add_admin_menu'), 20);
         
         // Register AJAX handlers early to ensure they're available
         add_action('wp_ajax_skylearn_page_setup_action', array($this, 'handle_ajax_actions'));
@@ -53,7 +54,26 @@ class SkyLearn_Billing_Pro_Page_Setup {
      * Add admin menu for page setup
      */
     public function add_admin_menu() {
-        add_submenu_page(
+        // Verify that the parent menu exists
+        global $menu, $submenu;
+        
+        $parent_exists = false;
+        if (isset($menu)) {
+            foreach ($menu as $menu_item) {
+                if (isset($menu_item[2]) && $menu_item[2] === 'skylearn-billing-pro') {
+                    $parent_exists = true;
+                    break;
+                }
+            }
+        }
+        
+        if (!$parent_exists) {
+            error_log('SkyLearn Billing Pro: Parent admin menu "skylearn-billing-pro" not found when trying to add Page Setup submenu');
+            return;
+        }
+        
+        // Add the submenu page
+        $hook_suffix = add_submenu_page(
             'skylearn-billing-pro',
             __('Page Setup', 'skylearn-billing-pro'),
             __('Page Setup', 'skylearn-billing-pro'),
@@ -61,6 +81,19 @@ class SkyLearn_Billing_Pro_Page_Setup {
             'skylearn-page-setup',
             array($this, 'render_admin_page')
         );
+        
+        if ($hook_suffix) {
+            error_log('SkyLearn Billing Pro: Page Setup admin menu added successfully with hook suffix: ' . $hook_suffix);
+            
+            // Verify that the callback method exists
+            if (!method_exists($this, 'render_admin_page')) {
+                error_log('SkyLearn Billing Pro: ERROR - render_admin_page method does not exist');
+            } else {
+                error_log('SkyLearn Billing Pro: render_admin_page callback method verified');
+            }
+        } else {
+            error_log('SkyLearn Billing Pro: Failed to add Page Setup admin menu');
+        }
     }
     
     /**
@@ -107,9 +140,41 @@ class SkyLearn_Billing_Pro_Page_Setup {
      * Render admin page
      */
     public function render_admin_page() {
-        $page_generator = skylearn_billing_pro_page_generator();
-        $pages_status = $page_generator->check_pages_status();
-        $created_pages = $page_generator->get_created_pages();
+        // Add debug logging
+        error_log('SkyLearn Billing Pro: render_admin_page method called');
+        
+        // Check current user capabilities
+        if (!current_user_can('manage_options')) {
+            error_log('SkyLearn Billing Pro: User lacks manage_options capability for Page Setup');
+            wp_die(__('You do not have sufficient permissions to access this page.', 'skylearn-billing-pro'));
+        }
+        
+        // Check if page generator function exists
+        if (!function_exists('skylearn_billing_pro_page_generator')) {
+            error_log('SkyLearn Billing Pro: skylearn_billing_pro_page_generator function not found in render_admin_page');
+            echo '<div class="wrap"><h1>' . esc_html__('Page Setup', 'skylearn-billing-pro') . '</h1>';
+            echo '<div class="notice notice-error"><p>' . esc_html__('Page generator is not available. Please check plugin configuration.', 'skylearn-billing-pro') . '</p></div>';
+            echo '</div>';
+            return;
+        }
+        
+        try {
+            $page_generator = skylearn_billing_pro_page_generator();
+            if (!$page_generator) {
+                throw new Exception('Page generator instance is null');
+            }
+            
+            $pages_status = $page_generator->check_pages_status();
+            $created_pages = $page_generator->get_created_pages();
+            
+            error_log('SkyLearn Billing Pro: Page generator loaded successfully, rendering admin page');
+        } catch (Exception $e) {
+            error_log('SkyLearn Billing Pro: Error getting page generator in render_admin_page: ' . $e->getMessage());
+            echo '<div class="wrap"><h1>' . esc_html__('Page Setup', 'skylearn-billing-pro') . '</h1>';
+            echo '<div class="notice notice-error"><p>' . sprintf(esc_html__('Error loading page data: %s', 'skylearn-billing-pro'), esc_html($e->getMessage())) . '</p></div>';
+            echo '</div>';
+            return;
+        }
         
         ?>
         <div class="wrap">
