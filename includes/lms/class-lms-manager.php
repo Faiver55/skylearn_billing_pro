@@ -358,16 +358,40 @@ class SkyLearn_Billing_Pro_LMS_Manager {
             $active = $this->get_active_lms();
             
             $course_count = 0;
+            $course_error = null;
+            
             if ($this->has_active_lms()) {
                 try {
                     $courses = $this->get_courses();
                     $course_count = count($courses);
+                    
+                    // Add additional debugging for zero courses
+                    if ($course_count === 0) {
+                        error_log('SkyLearn Billing Pro: get_courses() returned 0 courses - checking active connector');
+                        if ($this->active_connector) {
+                            error_log('SkyLearn Billing Pro: Active connector exists, class: ' . get_class($this->active_connector));
+                            
+                            // Test LearnDash detection directly
+                            if (method_exists($this->active_connector, 'is_learndash_active')) {
+                                $reflection = new ReflectionClass($this->active_connector);
+                                $method = $reflection->getMethod('is_learndash_active');
+                                $method->setAccessible(true);
+                                $is_ld_active = $method->invoke($this->active_connector);
+                                error_log('SkyLearn Billing Pro: LearnDash active status: ' . ($is_ld_active ? 'YES' : 'NO'));
+                            }
+                        } else {
+                            error_log('SkyLearn Billing Pro: No active connector found');
+                        }
+                    }
                 } catch (Exception $e) {
+                    $course_error = $e->getMessage();
                     error_log('SkyLearn Billing Pro: Error getting course count for integration status - ' . $e->getMessage());
                 }
+            } else {
+                error_log('SkyLearn Billing Pro: No active LMS connector available');
             }
             
-            return array(
+            $status = array(
                 'detected_count' => count($detected),
                 'detected_lms' => $detected,
                 'active_lms' => $active,
@@ -375,6 +399,14 @@ class SkyLearn_Billing_Pro_LMS_Manager {
                 'has_active_connector' => $this->has_active_lms(),
                 'course_count' => $course_count
             );
+            
+            // Add error info for debugging
+            if ($course_error) {
+                $status['course_error'] = $course_error;
+            }
+            
+            return $status;
+            
         } catch (Exception $e) {
             error_log('SkyLearn Billing Pro: Error getting integration status - ' . $e->getMessage());
             
@@ -385,7 +417,8 @@ class SkyLearn_Billing_Pro_LMS_Manager {
                 'active_lms' => false,
                 'active_lms_name' => false,
                 'has_active_connector' => false,
-                'course_count' => 0
+                'course_count' => 0,
+                'error' => $e->getMessage()
             );
         }
     }

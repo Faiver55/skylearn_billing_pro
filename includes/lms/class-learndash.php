@@ -54,35 +54,51 @@ class SkyLearn_Billing_Pro_LearnDash_Connector {
      */
     public function get_courses() {
         if (!$this->is_learndash_active()) {
+            error_log('SkyLearn Billing Pro: LearnDash not active when get_courses() called');
             return array();
         }
         
         $courses = array();
         
-        // Get LearnDash courses
-        $course_query = new WP_Query(array(
-            'post_type' => 'sfwd-courses',
-            'post_status' => 'publish',
-            'posts_per_page' => -1,
-            'orderby' => 'title',
-            'order' => 'ASC'
-        ));
-        
-        if ($course_query->have_posts()) {
-            while ($course_query->have_posts()) {
-                $course_query->the_post();
-                $course_id = get_the_ID();
-                
-                $courses[] = array(
-                    'id' => $course_id,
-                    'title' => get_the_title(),
-                    'permalink' => get_permalink(),
-                    'status' => get_post_status(),
-                    'enrolled_count' => $this->get_enrolled_count($course_id),
-                    'price' => $this->get_course_price($course_id)
-                );
+        try {
+            // Get LearnDash courses
+            $course_query = new WP_Query(array(
+                'post_type' => 'sfwd-courses',
+                'post_status' => 'publish',
+                'posts_per_page' => -1,
+                'orderby' => 'title',
+                'order' => 'ASC'
+            ));
+            
+            if ($course_query->have_posts()) {
+                while ($course_query->have_posts()) {
+                    $course_query->the_post();
+                    $course_id = get_the_ID();
+                    
+                    try {
+                        $courses[] = array(
+                            'id' => $course_id,
+                            'title' => get_the_title(),
+                            'permalink' => get_permalink(),
+                            'status' => get_post_status(),
+                            'enrolled_count' => $this->get_enrolled_count($course_id),
+                            'price' => $this->get_course_price($course_id)
+                        );
+                    } catch (Exception $e) {
+                        error_log('SkyLearn Billing Pro: Error processing course ' . $course_id . ': ' . $e->getMessage());
+                        // Continue processing other courses
+                    }
+                }
+                wp_reset_postdata();
+            } else {
+                error_log('SkyLearn Billing Pro: No LearnDash courses found in database');
             }
-            wp_reset_postdata();
+            
+            error_log('SkyLearn Billing Pro: Found ' . count($courses) . ' LearnDash courses');
+            
+        } catch (Exception $e) {
+            error_log('SkyLearn Billing Pro: Error in get_courses(): ' . $e->getMessage());
+            return array();
         }
         
         return $courses;
@@ -265,15 +281,27 @@ class SkyLearn_Billing_Pro_LearnDash_Connector {
             return is_array($enrolled_users) ? count($enrolled_users) : 0;
         }
         
-        // Fallback method
+        // Fallback method - with error handling
         global $wpdb;
-        $count = $wpdb->get_var($wpdb->prepare(
-            "SELECT COUNT(*) FROM {$wpdb->usermeta} WHERE meta_key = %s AND meta_value LIKE %s",
-            '_sfwd-course_access_from',
-            '%' . $wpdb->esc_like($course_id) . '%'
-        ));
         
-        return intval($count);
+        // Check if $wpdb is available
+        if (!isset($wpdb) || !is_object($wpdb)) {
+            error_log('SkyLearn Billing Pro: $wpdb not available for enrolled count query');
+            return 0;
+        }
+        
+        try {
+            $count = $wpdb->get_var($wpdb->prepare(
+                "SELECT COUNT(*) FROM {$wpdb->usermeta} WHERE meta_key = %s AND meta_value LIKE %s",
+                '_sfwd-course_access_from',
+                '%' . $wpdb->esc_like($course_id) . '%'
+            ));
+            
+            return intval($count);
+        } catch (Exception $e) {
+            error_log('SkyLearn Billing Pro: Error getting enrolled count for course ' . $course_id . ': ' . $e->getMessage());
+            return 0;
+        }
     }
     
     /**
@@ -288,13 +316,13 @@ class SkyLearn_Billing_Pro_LearnDash_Connector {
             $price = learndash_get_setting($course_id, 'course_price');
             
             if ($price_type === 'free' || empty($price)) {
-                return __('Free', 'skylearn-billing-pro');
+                return function_exists('__') ? __('Free', 'skylearn-billing-pro') : 'Free';
             }
             
             return $price;
         }
         
-        return __('N/A', 'skylearn-billing-pro');
+        return function_exists('__') ? __('N/A', 'skylearn-billing-pro') : 'N/A';
     }
     
     /**
