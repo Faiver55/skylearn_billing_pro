@@ -43,8 +43,18 @@ class SkyLearn_Billing_Pro_LearnDash_Connector {
      *
      * @return bool
      */
-    private function is_learndash_active() {
-        return function_exists('learndash_get_course_id') || class_exists('SFWD_LMS');
+    public function is_learndash_active() {
+        $is_active = function_exists('learndash_get_course_id') || class_exists('SFWD_LMS');
+        
+        // Add debugging information
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            error_log('SkyLearn Billing Pro: LearnDash active check - ' . 
+                'learndash_get_course_id exists: ' . (function_exists('learndash_get_course_id') ? 'YES' : 'NO') . 
+                ', SFWD_LMS class exists: ' . (class_exists('SFWD_LMS') ? 'YES' : 'NO') . 
+                ', Result: ' . ($is_active ? 'ACTIVE' : 'INACTIVE'));
+        }
+        
+        return $is_active;
     }
     
     /**
