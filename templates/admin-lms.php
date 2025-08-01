@@ -194,7 +194,12 @@ function render_lms_settings_tab($lms_manager) {
                                 </div>
                                 <div class="skylearn-billing-stat-content">
                                     <div class="skylearn-billing-stat-label"><?php esc_html_e('Available Courses', 'skylearn-billing-pro'); ?></div>
-                                    <div class="skylearn-billing-stat-number"><?php echo intval($lms_status['course_count']); ?></div>
+                                    <div class="skylearn-billing-stat-number">
+                                        <?php echo intval($lms_status['course_count']); ?>
+                                        <?php if (isset($lms_status['course_error']) && $lms_status['course_count'] === 0): ?>
+                                            <br><small style="color: #d63638;">Error: <?php echo esc_html($lms_status['course_error']); ?></small>
+                                        <?php endif; ?>
+                                    </div>
                                 </div>
                             </div>
                             <div class="skylearn-billing-stat-item">
@@ -207,6 +212,22 @@ function render_lms_settings_tab($lms_manager) {
                                 </div>
                             </div>
                         </div>
+                        
+                        <?php if (isset($lms_status['error']) || (isset($lms_status['course_error']) && $lms_status['course_count'] === 0)): ?>
+                            <div class="skylearn-billing-notice skylearn-billing-notice-warning" style="margin-top: 15px;">
+                                <span class="dashicons dashicons-warning"></span>
+                                <div>
+                                    <strong><?php esc_html_e('LMS Integration Issues Detected', 'skylearn-billing-pro'); ?></strong><br>
+                                    <?php if (isset($lms_status['error'])): ?>
+                                        <?php esc_html_e('General error: ', 'skylearn-billing-pro'); ?><?php echo esc_html($lms_status['error']); ?><br>
+                                    <?php endif; ?>
+                                    <?php if (isset($lms_status['course_error']) && $lms_status['course_count'] === 0): ?>
+                                        <?php esc_html_e('Course detection error: ', 'skylearn-billing-pro'); ?><?php echo esc_html($lms_status['course_error']); ?><br>
+                                    <?php endif; ?>
+                                    <?php esc_html_e('Check the error logs for more details. If issues persist, the problem may be with LearnDash installation or database connectivity.', 'skylearn-billing-pro'); ?>
+                                </div>
+                            </div>
+                        <?php endif; ?>
                     </div>
                 </div>
             <?php endif; ?>
