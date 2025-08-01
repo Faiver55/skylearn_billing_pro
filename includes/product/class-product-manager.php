@@ -488,7 +488,10 @@ class SkyLearn_Billing_Pro_Product_Manager {
         
         if ($licensing_manager->get_current_tier() === 'free') {
             $product_count = wp_count_posts(self::POST_TYPE);
-            $total_products = $product_count->publish + $product_count->draft + $product_count->private;
+            $publish = isset($product_count->publish) ? (int)$product_count->publish : 0;
+            $draft = isset($product_count->draft) ? (int)$product_count->draft : 0;
+            $private = isset($product_count->private) ? (int)$product_count->private : 0;
+            $total_products = $publish + $draft + $private;
             
             return $total_products >= 5; // Free tier limit
         }
