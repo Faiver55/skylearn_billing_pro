@@ -119,10 +119,15 @@ class SkyLearn_Billing_Pro_LMS_Manager {
         
         // Check if plugin is active by plugin path
         if (!function_exists('is_plugin_active')) {
-            include_once(ABSPATH . 'wp-admin/includes/plugin.php');
+            // Use proper WordPress path if available
+            $plugin_file = defined('ABSPATH') ? ABSPATH . 'wp-admin/includes/plugin.php' : '';
+            if ($plugin_file && file_exists($plugin_file)) {
+                include_once($plugin_file);
+            }
         }
         
-        if (is_plugin_active($lms_data['plugin_path'])) {
+        // Check if plugin is active (only if function is available)
+        if (function_exists('is_plugin_active') && is_plugin_active($lms_data['plugin_path'])) {
             return true;
         }
         
@@ -196,25 +201,34 @@ class SkyLearn_Billing_Pro_LMS_Manager {
      * Load the active LMS connector
      */
     private function load_active_connector() {
-        $active_lms = $this->get_active_lms();
-        
-        if (!$active_lms || !isset($this->supported_lms[$active_lms])) {
-            return;
-        }
-        
-        if (!$this->is_lms_active($active_lms)) {
-            return;
-        }
-        
-        $connector_class = $this->supported_lms[$active_lms]['connector_class'];
-        $connector_file = SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/lms/class-' . $active_lms . '.php';
-        
-        if (file_exists($connector_file)) {
-            require_once $connector_file;
+        try {
+            $active_lms = $this->get_active_lms();
             
-            if (class_exists($connector_class)) {
-                $this->active_connector = new $connector_class();
+            if (!$active_lms || !isset($this->supported_lms[$active_lms])) {
+                return;
             }
+            
+            if (!$this->is_lms_active($active_lms)) {
+                return;
+            }
+            
+            $connector_class = $this->supported_lms[$active_lms]['connector_class'];
+            $connector_file = SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/lms/class-' . $active_lms . '.php';
+            
+            if (file_exists($connector_file)) {
+                require_once $connector_file;
+                
+                if (class_exists($connector_class)) {
+                    $this->active_connector = new $connector_class();
+                } else {
+                    error_log('SkyLearn Billing Pro: Connector class ' . $connector_class . ' not found');
+                }
+            } else {
+                error_log('SkyLearn Billing Pro: Connector file not found: ' . $connector_file);
+            }
+        } catch (Exception $e) {
+            error_log('SkyLearn Billing Pro: Error loading active connector - ' . $e->getMessage());
+            $this->active_connector = null;
         }
     }
     
@@ -246,7 +260,12 @@ class SkyLearn_Billing_Pro_LMS_Manager {
             return array();
         }
         
-        return $this->active_connector->get_courses();
+        try {
+            return $this->active_connector->get_courses();
+        } catch (Exception $e) {
+            error_log('SkyLearn Billing Pro: Error getting courses from LMS - ' . $e->getMessage());
+            return array();
+        }
     }
     
     /**
@@ -261,7 +280,12 @@ class SkyLearn_Billing_Pro_LMS_Manager {
             return false;
         }
         
-        return $this->active_connector->enroll_user($user_id, $course_id);
+        try {
+            return $this->active_connector->enroll_user($user_id, $course_id);
+        } catch (Exception $e) {
+            error_log('SkyLearn Billing Pro: Error enrolling user in course - ' . $e->getMessage());
+            return false;
+        }
     }
     
     /**
@@ -276,7 +300,12 @@ class SkyLearn_Billing_Pro_LMS_Manager {
             return false;
         }
         
-        return $this->active_connector->unenroll_user($user_id, $course_id);
+        try {
+            return $this->active_connector->unenroll_user($user_id, $course_id);
+        } catch (Exception $e) {
+            error_log('SkyLearn Billing Pro: Error unenrolling user from course - ' . $e->getMessage());
+            return false;
+        }
     }
     
     /**
@@ -291,7 +320,12 @@ class SkyLearn_Billing_Pro_LMS_Manager {
             return false;
         }
         
-        return $this->active_connector->is_user_enrolled($user_id, $course_id);
+        try {
+            return $this->active_connector->is_user_enrolled($user_id, $course_id);
+        } catch (Exception $e) {
+            error_log('SkyLearn Billing Pro: Error checking user enrollment - ' . $e->getMessage());
+            return false;
+        }
     }
     
     /**
@@ -305,7 +339,12 @@ class SkyLearn_Billing_Pro_LMS_Manager {
             return false;
         }
         
-        return $this->active_connector->get_course_details($course_id);
+        try {
+            return $this->active_connector->get_course_details($course_id);
+        } catch (Exception $e) {
+            error_log('SkyLearn Billing Pro: Error getting course details - ' . $e->getMessage());
+            return false;
+        }
     }
     
     /**
@@ -314,16 +353,147 @@ class SkyLearn_Billing_Pro_LMS_Manager {
      * @return array
      */
     public function get_integration_status() {
+        try {
+            $detected = $this->get_detected_lms();
+            $active = $this->get_active_lms();
+            
+            $course_count = 0;
+            if ($this->has_active_lms()) {
+                try {
+                    $courses = $this->get_courses();
+                    $course_count = count($courses);
+                } catch (Exception $e) {
+                    error_log('SkyLearn Billing Pro: Error getting course count for integration status - ' . $e->getMessage());
+                }
+            }
+            
+            return array(
+                'detected_count' => count($detected),
+                'detected_lms' => $detected,
+                'active_lms' => $active,
+                'active_lms_name' => $active && isset($this->supported_lms[$active]) ? $this->supported_lms[$active]['name'] : false,
+                'has_active_connector' => $this->has_active_lms(),
+                'course_count' => $course_count
+            );
+        } catch (Exception $e) {
+            error_log('SkyLearn Billing Pro: Error getting integration status - ' . $e->getMessage());
+            
+            // Return safe default status
+            return array(
+                'detected_count' => 0,
+                'detected_lms' => array(),
+                'active_lms' => false,
+                'active_lms_name' => false,
+                'has_active_connector' => false,
+                'course_count' => 0
+            );
+        }
+    }
+    
+    /**
+     * Check if a specific LMS is available (alias for is_lms_active for backward compatibility)
+     *
+     * @param string $lms_key LMS key to check
+     * @return bool
+     */
+    public function is_lms_available($lms_key) {
+        return $this->is_lms_active($lms_key);
+    }
+    
+    /**
+     * Get the active LMS connector (alias for get_active_connector for backward compatibility)
+     *
+     * @return object|null
+     */
+    public function get_lms_connector() {
+        return $this->get_active_connector();
+    }
+    
+    /**
+     * Enroll user in course (wrapper method)
+     *
+     * @param int $user_id User ID
+     * @param int $course_id Course ID
+     * @return bool Success status
+     */
+    public function enroll_user_in_course($user_id, $course_id) {
+        return $this->enroll_user($user_id, $course_id);
+    }
+    
+    /**
+     * Validate course ID
+     *
+     * @param int|string $course_id Course ID to validate
+     * @return bool
+     */
+    public function validate_course_id($course_id) {
+        // Basic validation
+        if (empty($course_id) || !is_numeric($course_id) || intval($course_id) <= 0) {
+            return false;
+        }
+        
+        // If no active LMS, can't validate further
+        if (!$this->has_active_lms()) {
+            return false;
+        }
+        
+        // Try to get course details to validate existence
+        $course_details = $this->get_course_details(intval($course_id));
+        return $course_details !== false;
+    }
+    
+    /**
+     * Get course information (wrapper for get_course_details)
+     *
+     * @param int $course_id Course ID
+     * @return array|null Course details or null
+     */
+    public function get_course_info($course_id) {
+        $details = $this->get_course_details($course_id);
+        return $details !== false ? $details : null;
+    }
+    
+    /**
+     * Get LMS status
+     *
+     * @return array LMS status information
+     */
+    public function get_lms_status() {
         $detected = $this->get_detected_lms();
         $active = $this->get_active_lms();
         
         return array(
-            'detected_count' => count($detected),
-            'detected_lms' => $detected,
             'active_lms' => $active,
-            'active_lms_name' => $active && isset($this->supported_lms[$active]) ? $this->supported_lms[$active]['name'] : false,
-            'has_active_connector' => $this->has_active_lms(),
-            'course_count' => $this->has_active_lms() ? count($this->get_courses()) : 0
+            'detected_lms' => array_keys($detected),
+            'available_lms' => array_keys($this->supported_lms)
+        );
+    }
+    
+    /**
+     * Check LMS compatibility
+     *
+     * @return array Compatibility status
+     */
+    public function check_lms_compatibility() {
+        $issues = array();
+        $detected = $this->get_detected_lms();
+        
+        if (empty($detected)) {
+            $issues[] = __('No compatible LMS plugins detected', 'skylearn-billing-pro');
+        }
+        
+        $active = $this->get_active_lms();
+        if ($active && !$this->is_lms_active($active)) {
+            $issues[] = sprintf(__('Active LMS "%s" is not properly installed or activated', 'skylearn-billing-pro'), $active);
+        }
+        
+        if ($active && !$this->has_active_lms()) {
+            $issues[] = __('LMS connector could not be loaded', 'skylearn-billing-pro');
+        }
+        
+        return array(
+            'compatible' => empty($issues),
+            'issues' => $issues
         );
     }
 }
