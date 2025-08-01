@@ -72,6 +72,7 @@ class SkyLearnBillingPro {
         add_action('plugins_loaded', array($this, 'load_textdomain'));
         add_action('plugins_loaded', array($this, 'early_ajax_init'));
         add_action('admin_enqueue_scripts', array($this, 'admin_scripts'));
+        add_action('admin_init', array($this, 'handle_activation_redirect'));
         
         // Add webhook rewrite rule and query var
         add_action('init', array($this, 'add_webhook_rewrite_rule'));
@@ -377,6 +378,33 @@ class SkyLearnBillingPro {
     }
     
     /**
+     * Handle activation redirect to onboarding
+     */
+    public function handle_activation_redirect() {
+        // Only run in admin and if redirect flag is set
+        if (!is_admin() || !get_transient('skylearn_billing_pro_activation_redirect')) {
+            return;
+        }
+        
+        // Clear the redirect flag
+        delete_transient('skylearn_billing_pro_activation_redirect');
+        
+        // Don't redirect if doing AJAX or if already on our pages
+        if (wp_doing_ajax() || (isset($_GET['page']) && strpos($_GET['page'], 'skylearn-billing-pro') !== false)) {
+            return;
+        }
+        
+        // Don't redirect if user can't manage options
+        if (!current_user_can('manage_options')) {
+            return;
+        }
+        
+        // Redirect to onboarding
+        wp_redirect(admin_url('admin.php?page=skylearn-billing-pro&onboarding=1'));
+        exit;
+    }
+    
+    /**
      * Plugin activation
      */
     public function activate() {
@@ -428,11 +456,14 @@ class SkyLearnBillingPro {
             // Flush rewrite rules
             flush_rewrite_rules();
             
-            // Trigger page creation (with error handling)
+            // Set activation redirect flag for onboarding
+            set_transient('skylearn_billing_pro_activation_redirect', true, 30);
+            
+            // Trigger activation hooks (but not page creation)
             do_action('skylearn_billing_pro_activate');
             
             // Log successful activation
-            error_log('SkyLearn Billing Pro: Plugin activated successfully');
+            error_log('SkyLearn Billing Pro: Plugin activated successfully - will redirect to onboarding');
             
         } catch (Exception $e) {
             // Log activation error
