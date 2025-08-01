@@ -26,7 +26,10 @@ class SkyLearn_Billing_Pro_Page_Setup {
     public function __construct() {
         add_action('init', array($this, 'init'));
         add_action('admin_menu', array($this, 'add_admin_menu'));
+        
+        // Register AJAX handlers early to ensure they're available
         add_action('wp_ajax_skylearn_page_setup_action', array($this, 'handle_ajax_actions'));
+        add_action('wp_ajax_nopriv_skylearn_page_setup_action', array($this, 'handle_ajax_actions'));
     }
     
     /**
@@ -397,20 +400,43 @@ class SkyLearn_Billing_Pro_Page_Setup {
             });
             
             function performPageAction(action, data = {}) {
+                console.log('SkyLearn Page Setup: Performing action', action, data);
+                
                 $.post(ajaxurl, {
                     action: 'skylearn_page_setup_action',
                     nonce: '<?php echo wp_create_nonce('skylearn_page_setup_nonce'); ?>',
                     page_action: action,
                     ...data
                 }, function(response) {
+                    console.log('SkyLearn Page Setup: AJAX response', response);
+                    
                     if (response.success) {
+                        // Show success message before reload
+                        if (response.data && response.data.created) {
+                            alert('<?php esc_js(_e('Success!', 'skylearn-billing-pro')); ?> ' + response.data.created + ' <?php esc_js(_e('pages processed.', 'skylearn-billing-pro')); ?>');
+                        }
                         location.reload();
                     } else {
+                        console.error('SkyLearn Page Setup: Action failed', response);
                         alert(response.data.message || '<?php esc_js(_e('An error occurred', 'skylearn-billing-pro')); ?>');
                         location.reload();
                     }
-                }).fail(function() {
-                    alert('<?php esc_js(_e('Network error occurred', 'skylearn-billing-pro')); ?>');
+                }).fail(function(jqXHR, textStatus, errorThrown) {
+                    console.error('SkyLearn Page Setup: AJAX failed', {
+                        status: jqXHR.status,
+                        statusText: jqXHR.statusText,
+                        textStatus: textStatus,
+                        errorThrown: errorThrown,
+                        responseText: jqXHR.responseText
+                    });
+                    
+                    if (jqXHR.status === 404) {
+                        alert('<?php esc_js(_e('Error: AJAX handler not found (404). Please check that the plugin is properly activated.', 'skylearn-billing-pro')); ?>');
+                    } else if (jqXHR.status === 500) {
+                        alert('<?php esc_js(_e('Server error (500). Please check the error logs for details.', 'skylearn-billing-pro')); ?>');
+                    } else {
+                        alert('<?php esc_js(_e('Network error occurred', 'skylearn-billing-pro')); ?>' + ' (Status: ' + jqXHR.status + ')');
+                    }
                     location.reload();
                 });
             }
@@ -423,49 +449,95 @@ class SkyLearn_Billing_Pro_Page_Setup {
      * Handle AJAX actions
      */
     public function handle_ajax_actions() {
+        // Add debugging log entry
+        error_log('SkyLearn Billing Pro: AJAX handler called for skylearn_page_setup_action');
+        
+        // Check if this is an admin request
+        if (!is_admin() && !wp_doing_ajax()) {
+            error_log('SkyLearn Billing Pro: AJAX handler called outside admin context');
+            wp_send_json_error(array('message' => __('Invalid request context', 'skylearn-billing-pro')));
+        }
+        
         // Check permissions
         if (!current_user_can('manage_options')) {
+            error_log('SkyLearn Billing Pro: AJAX handler - insufficient permissions for user ' . get_current_user_id());
             wp_send_json_error(array('message' => __('Insufficient permissions', 'skylearn-billing-pro')));
         }
         
         // Verify nonce
-        if (!wp_verify_nonce($_POST['nonce'] ?? '', 'skylearn_page_setup_nonce')) {
+        $nonce = sanitize_text_field($_POST['nonce'] ?? '');
+        if (!wp_verify_nonce($nonce, 'skylearn_page_setup_nonce')) {
+            error_log('SkyLearn Billing Pro: AJAX handler - nonce verification failed. Provided: ' . $nonce);
             wp_send_json_error(array('message' => __('Invalid nonce', 'skylearn-billing-pro')));
         }
         
         $action = sanitize_text_field($_POST['page_action'] ?? '');
-        $page_generator = skylearn_billing_pro_page_generator();
+        error_log('SkyLearn Billing Pro: AJAX handler - processing action: ' . $action);
         
-        switch ($action) {
-            case 'create_all':
-                $results = $page_generator->create_pages(false);
-                wp_send_json_success($results);
-                break;
-                
-            case 'recreate_all':
-                $results = $page_generator->create_pages(true);
-                wp_send_json_success($results);
-                break;
-                
-            case 'create_page':
-            case 'recreate_page':
-                $page_key = sanitize_text_field($_POST['page'] ?? '');
-                if (empty($page_key)) {
-                    wp_send_json_error(array('message' => __('Page key is required', 'skylearn-billing-pro')));
-                }
-                
-                $force = ($action === 'recreate_page');
-                $results = $page_generator->create_pages($force);
-                wp_send_json_success($results);
-                break;
-                
-            case 'delete_all':
-                $results = $page_generator->delete_pages();
-                wp_send_json_success($results);
-                break;
-                
-            default:
-                wp_send_json_error(array('message' => __('Invalid action', 'skylearn-billing-pro')));
+        // Check if page generator function exists
+        if (!function_exists('skylearn_billing_pro_page_generator')) {
+            error_log('SkyLearn Billing Pro: AJAX handler - page generator function not found');
+            wp_send_json_error(array('message' => __('Page generator not available', 'skylearn-billing-pro')));
+        }
+        
+        // Get page generator instance
+        try {
+            $page_generator = skylearn_billing_pro_page_generator();
+            if (!$page_generator) {
+                throw new Exception('Page generator instance is null');
+            }
+        } catch (Exception $e) {
+            error_log('SkyLearn Billing Pro: AJAX handler - failed to get page generator: ' . $e->getMessage());
+            wp_send_json_error(array('message' => __('Failed to initialize page generator', 'skylearn-billing-pro')));
+        }
+        
+        // Process the action
+        try {
+            switch ($action) {
+                case 'create_all':
+                    error_log('SkyLearn Billing Pro: Creating all pages');
+                    $results = $page_generator->create_pages(false);
+                    error_log('SkyLearn Billing Pro: Create all pages result: ' . json_encode($results));
+                    wp_send_json_success($results);
+                    break;
+                    
+                case 'recreate_all':
+                    error_log('SkyLearn Billing Pro: Recreating all pages');
+                    $results = $page_generator->create_pages(true);
+                    error_log('SkyLearn Billing Pro: Recreate all pages result: ' . json_encode($results));
+                    wp_send_json_success($results);
+                    break;
+                    
+                case 'create_page':
+                case 'recreate_page':
+                    $page_key = sanitize_text_field($_POST['page'] ?? '');
+                    if (empty($page_key)) {
+                        error_log('SkyLearn Billing Pro: AJAX handler - page key is required for action: ' . $action);
+                        wp_send_json_error(array('message' => __('Page key is required', 'skylearn-billing-pro')));
+                    }
+                    
+                    error_log('SkyLearn Billing Pro: Processing ' . $action . ' for page: ' . $page_key);
+                    $force = ($action === 'recreate_page');
+                    $results = $page_generator->create_pages($force);
+                    error_log('SkyLearn Billing Pro: ' . ucfirst($action) . ' result: ' . json_encode($results));
+                    wp_send_json_success($results);
+                    break;
+                    
+                case 'delete_all':
+                    error_log('SkyLearn Billing Pro: Deleting all pages');
+                    $results = $page_generator->delete_pages();
+                    error_log('SkyLearn Billing Pro: Delete all pages result: ' . json_encode($results));
+                    wp_send_json_success($results);
+                    break;
+                    
+                default:
+                    error_log('SkyLearn Billing Pro: AJAX handler - invalid action: ' . $action);
+                    wp_send_json_error(array('message' => __('Invalid action', 'skylearn-billing-pro')));
+            }
+        } catch (Exception $e) {
+            error_log('SkyLearn Billing Pro: AJAX handler - exception during action processing: ' . $e->getMessage());
+            error_log('SkyLearn Billing Pro: AJAX handler - exception stack trace: ' . $e->getTraceAsString());
+            wp_send_json_error(array('message' => __('An error occurred while processing the request', 'skylearn-billing-pro')));
         }
     }
     
