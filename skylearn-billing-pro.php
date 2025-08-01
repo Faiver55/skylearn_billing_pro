@@ -70,6 +70,7 @@ class SkyLearnBillingPro {
     private function init_hooks() {
         add_action('init', array($this, 'init'));
         add_action('plugins_loaded', array($this, 'load_textdomain'));
+        add_action('plugins_loaded', array($this, 'early_ajax_init'));
         add_action('admin_enqueue_scripts', array($this, 'admin_scripts'));
         
         // Add webhook rewrite rule and query var
@@ -293,6 +294,9 @@ class SkyLearnBillingPro {
             require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/class-onboarding.php';
             require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/admin/class-admin-ui.php';
             
+            // Include page setup diagnostics for debugging
+            require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/page-setup-diagnostics.php';
+            
             // Initialize admin components with error handling
             try {
                 new SkyLearn_Billing_Pro_Admin();
@@ -333,6 +337,43 @@ class SkyLearnBillingPro {
      */
     public function load_textdomain() {
         load_plugin_textdomain('skylearn-billing-pro', false, dirname(plugin_basename(__FILE__)) . '/languages');
+    }
+    
+    /**
+     * Early initialization for AJAX handlers
+     * This ensures AJAX handlers are available before the init hook
+     */
+    public function early_ajax_init() {
+        // Only load AJAX handlers if we're in an AJAX context or admin area
+        if (wp_doing_ajax() || is_admin()) {
+            // Load required files for AJAX functionality
+            if (file_exists(SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/frontend/page-generator.php')) {
+                require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/frontend/page-generator.php';
+            }
+            
+            if (file_exists(SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/page-setup.php')) {
+                require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/page-setup.php';
+                
+                // Initialize page setup early for AJAX
+                if (function_exists('skylearn_billing_pro_page_setup')) {
+                    try {
+                        skylearn_billing_pro_page_setup();
+                        error_log('SkyLearn Billing Pro: Page setup initialized early for AJAX');
+                    } catch (Exception $e) {
+                        error_log('SkyLearn Billing Pro: Early page setup initialization failed - ' . $e->getMessage());
+                    }
+                }
+            }
+            
+            // Also ensure page generator is available
+            if (function_exists('skylearn_billing_pro_page_generator')) {
+                try {
+                    skylearn_billing_pro_page_generator();
+                } catch (Exception $e) {
+                    error_log('SkyLearn Billing Pro: Early page generator initialization failed - ' . $e->getMessage());
+                }
+            }
+        }
     }
     
     /**
