@@ -178,7 +178,7 @@ class Test_LearnDash_Course_Detection_Fix extends SkyLearn_Billing_Pro_Test_Case
         // Check if error was logged
         if (file_exists($test_log_file)) {
             $log_content = file_get_contents($test_log_file);
-            $this->assertContains('$wpdb not available', $log_content, 'Error should be logged when $wpdb is not available');
+            $this->assertStringContainsString('$wpdb not available', $log_content, 'Error should be logged when $wpdb is not available');
             unlink($test_log_file);
         }
         

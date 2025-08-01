@@ -117,6 +117,11 @@ class SkyLearn_Billing_Pro_LMS_Manager {
         
         $lms_data = $this->supported_lms[$lms_key];
         
+        // Add debugging information
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            error_log("SkyLearn Billing Pro: Checking if {$lms_key} is active - plugin_path: {$lms_data['plugin_path']}");
+        }
+        
         // Check if plugin is active by plugin path
         if (!function_exists('is_plugin_active')) {
             // Use proper WordPress path if available
@@ -128,17 +133,30 @@ class SkyLearn_Billing_Pro_LMS_Manager {
         
         // Check if plugin is active (only if function is available)
         if (function_exists('is_plugin_active') && is_plugin_active($lms_data['plugin_path'])) {
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log("SkyLearn Billing Pro: {$lms_key} detected as active via plugin path");
+            }
             return true;
         }
         
         // Fallback: Check if class exists
         if (isset($lms_data['class_name']) && class_exists($lms_data['class_name'])) {
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log("SkyLearn Billing Pro: {$lms_key} detected as active via class existence: {$lms_data['class_name']}");
+            }
             return true;
         }
         
         // Fallback: Check if function exists
         if (isset($lms_data['function_name']) && function_exists($lms_data['function_name'])) {
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log("SkyLearn Billing Pro: {$lms_key} detected as active via function existence: {$lms_data['function_name']}");
+            }
             return true;
+        }
+        
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            error_log("SkyLearn Billing Pro: {$lms_key} not detected as active");
         }
         
         return false;
@@ -371,12 +389,9 @@ class SkyLearn_Billing_Pro_LMS_Manager {
                         if ($this->active_connector) {
                             error_log('SkyLearn Billing Pro: Active connector exists, class: ' . get_class($this->active_connector));
                             
-                            // Test LearnDash detection directly
+                            // Test LearnDash detection directly (now using public method)
                             if (method_exists($this->active_connector, 'is_learndash_active')) {
-                                $reflection = new ReflectionClass($this->active_connector);
-                                $method = $reflection->getMethod('is_learndash_active');
-                                $method->setAccessible(true);
-                                $is_ld_active = $method->invoke($this->active_connector);
+                                $is_ld_active = $this->active_connector->is_learndash_active();
                                 error_log('SkyLearn Billing Pro: LearnDash active status: ' . ($is_ld_active ? 'YES' : 'NO'));
                             }
                         } else {
