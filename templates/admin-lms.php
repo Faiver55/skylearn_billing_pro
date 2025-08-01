@@ -203,7 +203,7 @@ function render_lms_settings_tab($lms_manager) {
                                 </div>
                                 <div class="skylearn-billing-stat-content">
                                     <div class="skylearn-billing-stat-label"><?php esc_html_e('Course Mappings', 'skylearn-billing-pro'); ?></div>
-                                    <div class="skylearn-billing-stat-number"><?php echo count($lms_manager->get_integration_status()['course_count'] ?? 0); ?></div>
+                                    <div class="skylearn-billing-stat-number"><?php echo $course_mapping ? count($course_mapping->get_course_mappings()) : 0; ?></div>
                                 </div>
                             </div>
                         </div>
