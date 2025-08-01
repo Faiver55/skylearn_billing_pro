@@ -119,17 +119,17 @@
                     self.hideLoading();
                     
                     if (response.success) {
-                        if (response.data.redirect) {
-                            window.location.href = response.data.redirect;
-                        } else if (response.data.next_step) {
-                            self.goToStep(response.data.next_step);
+                        if (response.redirect) {
+                            window.location.href = response.redirect;
+                        } else if (response.next_step) {
+                            self.goToStep(response.next_step);
                         }
                         
-                        if (response.data.message) {
-                            self.showMessage(response.data.message, 'success');
+                        if (response.message) {
+                            self.showMessage(response.message, 'success');
                         }
                     } else {
-                        self.showMessage(response.data.message || skylernOnboarding.strings.error, 'error');
+                        self.showMessage(response.message || skylernOnboarding.strings.error, 'error');
                     }
                 },
                 error: function() {
@@ -160,8 +160,8 @@
                 success: function(response) {
                     self.hideLoading();
                     
-                    if (response.success && response.data.redirect) {
-                        window.location.href = response.data.redirect;
+                    if (response.success && response.redirect) {
+                        window.location.href = response.redirect;
                     } else {
                         self.showMessage(skylernOnboarding.strings.error, 'error');
                     }
