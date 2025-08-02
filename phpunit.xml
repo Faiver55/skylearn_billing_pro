@@ -34,6 +34,6 @@
     </filter>
     
     <logging>
-        <junit outputFile="tests/results.xml"/>
+        <log type="junit" target="tests/results.xml"/>
     </logging>
 </phpunit>
