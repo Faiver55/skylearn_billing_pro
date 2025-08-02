@@ -77,7 +77,7 @@ class SkyLearn_Billing_Pro_Addon_Manager {
      * Constructor
      */
     public function __construct() {
-        $this->addons_dir = SKYLEARN_BILLING_PLUGIN_DIR . 'addons/';
+        $this->addons_dir = SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'addons/';
         $this->licensing_manager = skylearn_billing_pro_licensing();
         $this->feature_flags = skylearn_billing_pro_features();
         
@@ -427,4 +427,4 @@ function skylearn_billing_pro_addon_manager() {
 }
 
 // Initialize addon manager
-skylearn_billing_pro_addon_manager();
+// skylearn_billing_pro_addon_manager();

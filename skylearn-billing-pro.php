@@ -447,6 +447,8 @@ class SkyLearnBillingPro {
         
         // Include admin class if in admin
         if (is_admin()) {
+            $this->safe_include('includes/admin/class-addon-manager.php', 'Addon Manager');
+            $this->safe_include('includes/admin/class-license-manager.php', 'License Manager Admin');
             $this->safe_include('includes/admin/class-welcome-email.php', 'Welcome Email Admin');
             $this->safe_include('includes/admin/class-reporting.php', 'Reporting Admin');
             $this->safe_include('includes/class-admin.php', 'Main Admin Class');
@@ -485,6 +487,41 @@ class SkyLearnBillingPro {
                 add_action('admin_notices', function() use ($e) {
                     echo '<div class="notice notice-error"><p><strong>SkyLearn Billing Pro:</strong> Fatal error in admin initialization. Error: ' . esc_html($e->getMessage()) . '</p></div>';
                 });
+            }
+            
+            // Initialize admin addon and license managers with error handling
+            $admin_functions = array(
+                'skylearn_billing_pro_addon_manager',
+                'skylearn_billing_pro_license_manager'
+            );
+            
+            foreach ($admin_functions as $function_name) {
+                if (function_exists($function_name)) {
+                    try {
+                        if (class_exists('SkyLearn_Billing_Pro_Debug_Logger')) {
+                            SkyLearn_Billing_Pro_Debug_Logger::function_start($function_name);
+                        }
+                        call_user_func($function_name);
+                        if (class_exists('SkyLearn_Billing_Pro_Debug_Logger')) {
+                            SkyLearn_Billing_Pro_Debug_Logger::function_end($function_name, true);
+                        }
+                    } catch (Exception $e) {
+                        if (class_exists('SkyLearn_Billing_Pro_Debug_Logger')) {
+                            SkyLearn_Billing_Pro_Debug_Logger::exception($e, "Failed to initialize $function_name");
+                        }
+                        error_log('SkyLearn Billing Pro: Failed to initialize ' . $function_name . ' - ' . $e->getMessage());
+                    } catch (Error $e) {
+                        if (class_exists('SkyLearn_Billing_Pro_Debug_Logger')) {
+                            SkyLearn_Billing_Pro_Debug_Logger::error("Fatal error in $function_name: " . $e->getMessage(), $e->getFile() . ':' . $e->getLine());
+                        }
+                        error_log('SkyLearn Billing Pro: Fatal error in ' . $function_name . ' - ' . $e->getMessage());
+                    }
+                } else {
+                    if (class_exists('SkyLearn_Billing_Pro_Debug_Logger')) {
+                        SkyLearn_Billing_Pro_Debug_Logger::warning("Function $function_name does not exist");
+                    }
+                    error_log('SkyLearn Billing Pro: Function ' . $function_name . ' does not exist');
+                }
             }
             
             // Initialize admin email functions with error handling

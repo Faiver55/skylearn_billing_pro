@@ -302,4 +302,4 @@ function skylearn_billing_pro_license_manager() {
 }
 
 // Initialize license manager
-skylearn_billing_pro_license_manager();
+// skylearn_billing_pro_license_manager();
