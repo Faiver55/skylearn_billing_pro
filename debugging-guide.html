@@ -1,0 +1,124 @@
+<?php
+/**
+ * WordPress Plugin Debugging Guide
+ * For SkyLearn Billing Pro Critical Error Fix
+ */
+?>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SkyLearn Billing Pro - Debugging Guide</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f1f1f1; }
+        .container { background: white; padding: 20px; border-radius: 5px; max-width: 800px; margin: 0 auto; }
+        .section { margin-bottom: 30px; }
+        .error { background: #ffebee; border-left: 4px solid #e53e3e; padding: 15px; margin: 10px 0; }
+        .success { background: #e8f5e8; border-left: 4px solid #38a169; padding: 15px; margin: 10px 0; }
+        .warning { background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 10px 0; }
+        .code { background: #f8f9fa; border: 1px solid #e9ecef; padding: 10px; font-family: monospace; white-space: pre-wrap; }
+        h1 { color: #333; border-bottom: 2px solid #007cba; padding-bottom: 10px; }
+        h2 { color: #555; margin-top: 30px; }
+        ul li { margin-bottom: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>SkyLearn Billing Pro - Critical Error Fix Guide</h1>
+        
+        <div class="section">
+            <h2>🚨 What Was Fixed</h2>
+            <div class="success">
+                <strong>Critical Error Resolution:</strong> Added comprehensive error handling to prevent WordPress fatal errors from causing the "critical error" message across admin pages.
+            </div>
+            
+            <h3>Key Changes Made:</h3>
+            <ul>
+                <li>✅ Added debug logging system for better error tracking</li>
+                <li>✅ Implemented safe file inclusion with error handling</li>
+                <li>✅ Enhanced all initialization functions with try-catch blocks</li>
+                <li>✅ Added graceful error recovery in admin page rendering</li>
+                <li>✅ Created user-friendly error messages instead of fatal errors</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>🔧 How to Enable Debugging (Temporary)</h2>
+            <div class="warning">
+                <strong>Note:</strong> Only enable this temporarily for debugging. Disable in production.
+            </div>
+            
+            <p>Add these lines to your <code>wp-config.php</code> file:</p>
+            <div class="code">// Enable WordPress debugging
+define('WP_DEBUG', true);
+define('WP_DEBUG_LOG', true);
+define('WP_DEBUG_DISPLAY', false);
+define('SCRIPT_DEBUG', true);
+define('SKYLEARN_BILLING_PRO_DEBUG', true);
+
+// Enable error logging
+ini_set('log_errors', 1);
+ini_set('error_log', WP_CONTENT_DIR . '/debug.log');</div>
+        </div>
+
+        <div class="section">
+            <h2>📋 What to Check After Fix</h2>
+            <ul>
+                <li><strong>Dashboard:</strong> Visit <code>/wp-admin/</code> - should load without critical errors</li>
+                <li><strong>Payment Gateways:</strong> Visit <code>/wp-admin/admin.php?page=skylearn-billing-pro-payments</code></li>
+                <li><strong>Automation & Integrations:</strong> Visit <code>/wp-admin/admin.php?page=skylearn-billing-pro-automation</code></li>
+                <li><strong>All Admin Pages:</strong> Navigate through all SkyLearn Billing Pro menu items</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>📝 Debug Log Locations</h2>
+            <p>Check these files for detailed error information:</p>
+            <ul>
+                <li><code>/wp-content/debug.log</code> - WordPress debug log</li>
+                <li><code>/wp-content/skylearn-billing-debug.log</code> - Plugin-specific debug log</li>
+                <li>Server error logs (location varies by hosting provider)</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>🛡️ Error Prevention Features Added</h2>
+            <div class="success">
+                <h3>1. Safe File Inclusion</h3>
+                <p>All plugin files are now included with existence and readability checks.</p>
+                
+                <h3>2. Function Initialization Protection</h3>
+                <p>All initialization functions are wrapped in try-catch blocks to prevent fatal errors.</p>
+                
+                <h3>3. Admin Page Error Handling</h3>
+                <p>Template loading failures now show user-friendly messages instead of critical errors.</p>
+                
+                <h3>4. Debug Logging</h3>
+                <p>Comprehensive logging helps identify issues without breaking the site.</p>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>⚠️ If Issues Persist</h2>
+            <div class="error">
+                <p>If you still see critical errors after this fix:</p>
+                <ul>
+                    <li>Enable debugging (see above) and check the log files</li>
+                    <li>Check for plugin conflicts by deactivating other plugins temporarily</li>
+                    <li>Verify file permissions (files should be 644, directories 755)</li>
+                    <li>Check available memory (increase if needed: <code>ini_set('memory_limit', '256M');</code>)</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🎯 Testing Checklist</h2>
+            <div class="code">□ Dashboard loads without errors
+□ Plugin admin pages load correctly
+□ No "critical error" messages appear
+□ Error logs show debugging info (not fatal errors)
+□ Admin notices display properly
+□ All menu items are accessible</div>
+        </div>
+    </div>
+</body>
+</html>
