@@ -35,8 +35,8 @@
          * Bind event handlers
          */
         bindEvents: function() {
-            // Reset to defaults button
-            $('.skylearn-billing-btn-secondary').on('click', this.resetToDefaults);
+            // Reset to defaults button - only target buttons that are specifically for resetting
+            $('.skylearn-billing-btn-secondary:contains("Reset to Defaults")').on('click', this.resetToDefaults);
             
             // Tab navigation (for future use)
             $('.skylearn-billing-nav-link').on('click', this.handleTabClick);
