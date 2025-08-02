@@ -2023,3 +2023,62 @@
         max-width: 100%;
     }
 }
+
+/* Enhanced form states for licensing */
+.skylearn-billing-form-submitting {
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+.skylearn-billing-form-submitting .skylearn-billing-input {
+    background-color: #f8f9fa;
+    border-color: #e9ecef;
+}
+
+/* Demo key enhanced styles */
+.skylearn-billing-demo-keys code.demo-key-copied {
+    background-color: var(--skylearn-success);
+    color: white;
+    transform: scale(1.05);
+    transition: all 0.3s ease;
+}
+
+.skylearn-billing-demo-keys code:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px var(--skylearn-shadow);
+    cursor: pointer;
+}
+
+/* Loading state improvements */
+.skylearn-billing-btn .skylearn-billing-btn-loading {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.skylearn-billing-btn .skylearn-billing-btn-loading .dashicons {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Auto-submit timer feedback */
+.skylearn-billing-demo-keys .demo-key-item.auto-submitting {
+    background-color: #e3f2fd;
+    border-color: #2196f3;
+}
+
+/* Better error state styling */
+.skylearn-billing-input.error {
+    border-color: #dc3545;
+    box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.25);
+}
+
+/* Success state for inputs */
+.skylearn-billing-input.success {
+    border-color: var(--skylearn-success);
+    box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.25);
+}

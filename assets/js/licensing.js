@@ -35,6 +35,7 @@
             $submitBtn.prop('disabled', true);
             $btnText.hide();
             $btnLoading.show();
+            $form.addClass('skylearn-billing-form-submitting');
             
             // Clear previous messages
             clearMessages();
@@ -52,6 +53,10 @@
                 success: function(response) {
                     if (response && response.success) {
                         showMessage('success', response.message || 'License activated successfully!');
+                        
+                        // Clear the form
+                        $form.find('#skylearn-license-key').val('');
+                        
                         // Reload page after 2 seconds to show activated state
                         setTimeout(function() {
                             window.location.reload();
@@ -59,6 +64,9 @@
                     } else {
                         var errorMessage = response && response.message ? response.message : 'An error occurred while validating the license. Please try again.';
                         showMessage('error', errorMessage);
+                        
+                        // Re-focus on input for easy retry
+                        $form.find('#skylearn-license-key').focus().select();
                     }
                 },
                 error: function(xhr, status, error) {
@@ -70,13 +78,20 @@
                         errorMessage = 'Access denied. Please refresh the page and try again.';
                     } else if (xhr.status >= 500) {
                         errorMessage = 'Server error. Please try again later.';
+                    } else if (xhr.status === 0) {
+                        errorMessage = 'Connection error. Please check your internet connection.';
                     }
                     
                     showMessage('error', errorMessage);
+                    
+                    // Re-focus on input for easy retry
+                    $form.find('#skylearn-license-key').focus().select();
+                    
                     console.error('License validation error:', {
                         status: status,
                         error: error,
-                        response: xhr.responseText
+                        response: xhr.responseText,
+                        readyState: xhr.readyState
                     });
                 },
                 complete: function() {
@@ -84,6 +99,9 @@
                     $submitBtn.prop('disabled', false);
                     $btnText.show();
                     $btnLoading.hide();
+                    
+                    // Ensure form is responsive again
+                    $form.removeClass('skylearn-billing-form-submitting');
                 }
             });
         });
@@ -160,6 +178,8 @@
         $('.skylearn-billing-demo-keys code').on('click', function() {
             var licenseKey = $(this).text();
             var $input = $('#skylearn-license-key');
+            var $form = $('#skylearn-license-form');
+            
             $input.val(licenseKey).focus();
             
             // Add visual feedback
@@ -171,8 +191,21 @@
             // Clear any previous messages
             clearMessages();
             
-            // Show helpful message
-            showMessage('info', 'Demo license key copied to input field. Click "Activate License" to test.');
+            // Show helpful message with auto-submit option
+            showMessage('info', 'Demo license key copied to input field. Click "Activate License" to test, or press Enter to activate immediately.');
+            
+            // Auto-submit after 3 seconds if no other action is taken
+            var autoSubmitTimer = setTimeout(function() {
+                if ($input.val() === licenseKey && !$form.hasClass('skylearn-billing-form-submitting')) {
+                    showMessage('info', 'Auto-activating demo license...');
+                    $form.submit();
+                }
+            }, 3000);
+            
+            // Cancel auto-submit if user makes changes
+            $input.off('input.autosubmit').on('input.autosubmit', function() {
+                clearTimeout(autoSubmitTimer);
+            });
         });
         
         // Add keyboard shortcut for quick demo activation
@@ -185,6 +218,14 @@
                     $('#skylearn-license-key').val(firstDemoKey).focus();
                     showMessage('info', 'Demo license key inserted. Press Enter to activate.');
                 }
+            }
+        });
+        
+        // Handle Enter key in license input
+        $('#skylearn-license-key').on('keypress', function(e) {
+            if (e.which === 13) { // Enter key
+                e.preventDefault();
+                $('#skylearn-license-form').submit();
             }
         });
     });
