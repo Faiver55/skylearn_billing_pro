@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SkyLearn Billing Pro - License Management Demo</title>
+    <link rel="stylesheet" href="assets/css/admin.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f1f1f1;
+        }
+        .dashicons {
+            font-family: 'dashicons';
+            display: inline-block;
+            line-height: 1;
+            font-weight: 400;
+            font-style: normal;
+            speak: never;
+            text-decoration: inherit;
+            text-transform: none;
+            text-rendering: auto;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            width: 20px;
+            height: 20px;
+            font-size: 20px;
+            vertical-align: top;
+        }
+        .dashicons-admin-network:before { content: '\f325'; }
+        .dashicons-star-filled:before { content: '\f155'; }
+        .dashicons-update-alt:before { content: '\f463'; }
+        .notice {
+            background: #fff;
+            border-left: 4px solid #fff;
+            box-shadow: 0 1px 1px rgba(0,0,0,.04);
+            margin: 5px 0 15px;
+            padding: 1px 12px;
+        }
+        .notice-success { border-left-color: #46b450; }
+        .notice-error { border-left-color: #dc3232; }
+        .notice-info { border-left-color: #00a0d2; }
+        .notice-warning { border-left-color: #ffb900; }
+        .demo-highlight {
+            background: #e3f2fd;
+            border: 2px solid #2196f3;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .demo-highlight h3 {
+            margin-top: 0;
+            color: #1976d2;
+        }
+    </style>
+</head>
+<body>
+    <div class="wrap skylearn-billing-admin">
+        <div class="skylearn-billing-header">
+            <div class="skylearn-billing-header-content">
+                <h1 class="skylearn-billing-title">
+                    <span class="skylearn-billing-icon dashicons dashicons-admin-network"></span>
+                    License Management - DEMO
+                </h1>
+                <p class="skylearn-billing-subtitle">
+                    Manage your Skylearn Billing Pro license and access premium features
+                </p>
+            </div>
+        </div>
+
+        <div class="skylearn-billing-container">
+            <!-- Sidebar Navigation -->
+            <div class="skylearn-billing-sidebar">
+                <nav class="skylearn-billing-nav">
+                    <ul class="skylearn-billing-nav-list">
+                        <li class="skylearn-billing-nav-item">
+                            <a href="#" class="skylearn-billing-nav-link">
+                                <span class="dashicons dashicons-admin-generic"></span>
+                                General
+                            </a>
+                        </li>
+                        <li class="skylearn-billing-nav-item active">
+                            <a href="#" class="skylearn-billing-nav-link">
+                                <span class="dashicons dashicons-admin-network"></span>
+                                License
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+                
+                <!-- Tier Badge in Sidebar -->
+                <div class="skylearn-billing-tier-badge">
+                    <div class="skylearn-billing-tier-info">
+                        <div class="skylearn-billing-tier-icon" style="background-color: #666666">
+                            <span class="dashicons dashicons-star-filled"></span>
+                        </div>
+                        <div class="skylearn-billing-tier-details">
+                            <div class="skylearn-billing-tier-name">Free</div>
+                            <div class="skylearn-billing-tier-status">
+                                <span class="skylearn-billing-status-inactive">Inactive</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <a href="#" target="_blank" class="skylearn-billing-upgrade-btn">
+                        Upgrade Now
+                    </a>
+                </div>
+            </div>
+
+            <!-- Main Content Area -->
+            <div class="skylearn-billing-content">
+                
+                <!-- Demo Highlight -->
+                <div class="demo-highlight">
+                    <h3>🎯 License System Fixed!</h3>
+                    <p><strong>Key Improvements:</strong></p>
+                    <ul>
+                        <li>✅ Demo keys now work reliably (try SKYLRN-PLUS-DEMO-2024)</li>
+                        <li>✅ Fixed WordPress option caching issues</li>
+                        <li>✅ Enhanced JavaScript error handling and button states</li>
+                        <li>✅ Improved user experience with auto-submit and visual feedback</li>
+                        <li>✅ Better pattern matching for invalid demo key formats</li>
+                    </ul>
+                </div>
+                
+                <!-- License Activation Card -->
+                <div class="skylearn-billing-card">
+                    <div class="skylearn-billing-card-header">
+                        <h2>License Activation</h2>
+                        <p>Enter your license key to unlock premium features and receive updates.</p>
+                    </div>
+                    
+                    <div class="skylearn-billing-card-body">
+                        <div id="skylearn-license-messages">
+                            <div class="notice notice-info">
+                                <p>Ready to test! Click on any demo key below to automatically insert it.</p>
+                            </div>
+                        </div>
+                        
+                        <!-- License Activation Form -->
+                        <form id="skylearn-license-form" class="skylearn-billing-license-form">
+                            <div class="skylearn-billing-form-group">
+                                <label for="skylearn-license-key">License Key:</label>
+                                <input type="text" id="skylearn-license-key" name="license_key" class="skylearn-billing-input" 
+                                       placeholder="Enter your license key here..." 
+                                       value="" />
+                            </div>
+                            
+                            <div class="skylearn-billing-form-actions">
+                                <button type="submit" class="skylearn-billing-btn skylearn-billing-btn-primary">
+                                    <span class="skylearn-billing-btn-text">Activate License</span>
+                                    <span class="skylearn-billing-btn-loading" style="display: none;">
+                                        <span class="dashicons dashicons-update-alt"></span>
+                                        Validating...
+                                    </span>
+                                </button>
+                            </div>
+                        </form>
+                        
+                        <!-- Demo License Keys -->
+                        <div class="skylearn-billing-demo-keys">
+                            <h4>Demo License Keys (for testing):</h4>
+                            <div class="demo-keys-grid">
+                                <div class="demo-key-item">
+                                    <code>SKYLRN-PRO-DEMO-2024</code>
+                                    <span class="demo-key-label">Pro Plan</span>
+                                </div>
+                                <div class="demo-key-item">
+                                    <code>SKYLRN-PLUS-DEMO-2024</code>
+                                    <span class="demo-key-label">Pro Plus Plan</span>
+                                </div>
+                                <div class="demo-key-item">
+                                    <code>DEMO-PRO-2024</code>
+                                    <span class="demo-key-label">Pro Plan (6 months)</span>
+                                </div>
+                                <div class="demo-key-item">
+                                    <code>DEMO-PLUS-2024</code>
+                                    <span class="demo-key-label">Pro Plus Plan (6 months)</span>
+                                </div>
+                            </div>
+                            <p class="description">
+                                Click any demo key to automatically insert it into the license field. Use these keys to test premium features.
+                                <br>
+                                <strong>Tip:</strong> Press Ctrl+D (or Cmd+D on Mac) for quick demo key insertion.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Feature Comparison Card -->
+                <div class="skylearn-billing-card">
+                    <div class="skylearn-billing-card-header">
+                        <h3>Feature Comparison</h3>
+                        <p>See what features are available in each plan.</p>
+                    </div>
+                    
+                    <div class="skylearn-billing-card-body">
+                        <div class="skylearn-billing-feature-comparison">
+                            <table class="skylearn-billing-comparison-table">
+                                <thead>
+                                    <tr>
+                                        <th>Feature</th>
+                                        <th>Free</th>
+                                        <th>Pro</th>
+                                        <th>Pro Plus</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Basic Billing</td>
+                                        <td class="skylearn-billing-feature-cell">
+                                            <span class="skylearn-billing-feature-available">✓</span>
+                                        </td>
+                                        <td class="skylearn-billing-feature-cell">
+                                            <span class="skylearn-billing-feature-available">✓</span>
+                                        </td>
+                                        <td class="skylearn-billing-feature-cell">
+                                            <span class="skylearn-billing-feature-available">✓</span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Stripe Gateway</td>
+                                        <td class="skylearn-billing-feature-cell">
+                                            <span class="skylearn-billing-feature-unavailable">-</span>
+                                        </td>
+                                        <td class="skylearn-billing-feature-cell">
+                                            <span class="skylearn-billing-feature-available">✓</span>
+                                        </td>
+                                        <td class="skylearn-billing-feature-cell">
+                                            <span class="skylearn-billing-feature-available">✓</span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Advanced Analytics</td>
+                                        <td class="skylearn-billing-feature-cell">
+                                            <span class="skylearn-billing-feature-unavailable">-</span>
+                                        </td>
+                                        <td class="skylearn-billing-feature-cell">
+                                            <span class="skylearn-billing-feature-unavailable">-</span>
+                                        </td>
+                                        <td class="skylearn-billing-feature-cell">
+                                            <span class="skylearn-billing-feature-available">✓</span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>White Label</td>
+                                        <td class="skylearn-billing-feature-cell">
+                                            <span class="skylearn-billing-feature-unavailable">-</span>
+                                        </td>
+                                        <td class="skylearn-billing-feature-cell">
+                                            <span class="skylearn-billing-feature-unavailable">-</span>
+                                        </td>
+                                        <td class="skylearn-billing-feature-cell">
+                                            <span class="skylearn-billing-feature-available">✓</span>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div class="skylearn-billing-upgrade-cta">
+                            <p>Ready to unlock more features?</p>
+                            <a href="#" target="_blank" class="skylearn-billing-btn skylearn-billing-btn-primary">
+                                Upgrade Your Plan
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        // Demo functionality for the license keys
+        $(document).ready(function() {
+            $('.skylearn-billing-demo-keys code').on('click', function() {
+                var licenseKey = $(this).text();
+                var $input = $('#skylearn-license-key');
+                
+                $input.val(licenseKey).focus();
+                
+                // Add visual feedback
+                $(this).addClass('demo-key-copied');
+                setTimeout(function() {
+                    $('.skylearn-billing-demo-keys code').removeClass('demo-key-copied');
+                }, 1000);
+                
+                // Show message
+                $('#skylearn-license-messages').html('<div class="notice notice-success"><p>Demo license key "' + licenseKey + '" copied to input field! Click "Activate License" to test.</p></div>');
+                
+                // Add success styling to input
+                $input.removeClass('error').addClass('success');
+            });
+            
+            // Form submission demo
+            $('#skylearn-license-form').on('submit', function(e) {
+                e.preventDefault();
+                
+                var licenseKey = $('#skylearn-license-key').val().trim();
+                var $btn = $(this).find('button[type="submit"]');
+                var $btnText = $btn.find('.skylearn-billing-btn-text');
+                var $btnLoading = $btn.find('.skylearn-billing-btn-loading');
+                
+                if (!licenseKey) {
+                    $('#skylearn-license-messages').html('<div class="notice notice-error"><p>Please enter a license key.</p></div>');
+                    return;
+                }
+                
+                // Show loading state
+                $btn.prop('disabled', true);
+                $btnText.hide();
+                $btnLoading.show();
+                $(this).addClass('skylearn-billing-form-submitting');
+                
+                // Simulate API call
+                setTimeout(function() {
+                    var validKeys = ['SKYLRN-PRO-DEMO-2024', 'SKYLRN-PLUS-DEMO-2024', 'DEMO-PRO-2024', 'DEMO-PLUS-2024'];
+                    
+                    if (validKeys.includes(licenseKey)) {
+                        var tier = licenseKey.includes('PLUS') ? 'Pro Plus' : 'Pro';
+                        $('#skylearn-license-messages').html('<div class="notice notice-success"><p>License activated successfully! You now have access to ' + tier + ' features. <strong>Page would reload in real implementation.</strong></p></div>');
+                        $('#skylearn-license-key').val('').removeClass('error').addClass('success');
+                    } else {
+                        $('#skylearn-license-messages').html('<div class="notice notice-error"><p>Invalid license key. Please check your key and try again, or use one of the demo keys for testing.</p></div>');
+                        $('#skylearn-license-key').removeClass('success').addClass('error').focus().select();
+                    }
+                    
+                    // Reset button state
+                    $btn.prop('disabled', false);
+                    $btnText.show();
+                    $btnLoading.hide();
+                    $('#skylearn-license-form').removeClass('skylearn-billing-form-submitting');
+                }, 2000);
+            });
+            
+            // Enter key support
+            $('#skylearn-license-key').on('keypress', function(e) {
+                if (e.which === 13) {
+                    e.preventDefault();
+                    $('#skylearn-license-form').submit();
+                }
+            });
+            
+            // Ctrl+D shortcut
+            $(document).on('keydown', function(e) {
+                if ((e.ctrlKey || e.metaKey) && e.key === 'd' && $('#skylearn-license-key').is(':visible')) {
+                    e.preventDefault();
+                    var firstDemoKey = $('.skylearn-billing-demo-keys code').first().text();
+                    $('#skylearn-license-key').val(firstDemoKey).focus();
+                    $('#skylearn-license-messages').html('<div class="notice notice-info"><p>Demo license key inserted via keyboard shortcut. Press Enter to activate.</p></div>');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
