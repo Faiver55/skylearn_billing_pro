@@ -767,6 +767,13 @@ function skylearn_billing_pro_lms_manager() {
     
     if ($instance === null) {
         $instance = new SkyLearn_Billing_Pro_LMS_Manager();
+        
+        // Ensure immediate initialization to avoid WordPress hook timing issues
+        // This fixes the course dropdown population issue where LMS detection
+        // and auto-setting of active LMS wasn't happening due to late init hook
+        if (method_exists($instance, 'init')) {
+            $instance->init();
+        }
     }
     
     return $instance;
