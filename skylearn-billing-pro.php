@@ -102,10 +102,12 @@ class SkyLearnBillingPro {
         // Core classes
         require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/class-licensing-manager.php';
         require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/class-feature-flags.php';
+        require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/class-database-manager.php';
         
         // LMS integration classes
         require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/lms/class-lms-manager.php';
         require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/lms/class-course-mapping.php';
+        require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/lms/class-course-mapping-migration.php';
         
         // Payment integration classes
         require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/payment/class-payment-manager.php';
@@ -147,6 +149,7 @@ class SkyLearnBillingPro {
         
         // Initialize instances with error handling
         $functions_to_init = array(
+            'skylearn_billing_pro_database_manager',
             'skylearn_billing_pro_lms_manager',
             'skylearn_billing_pro_course_mapping',
             'skylearn_billing_pro_payment_manager',
@@ -504,12 +507,17 @@ class SkyLearnBillingPro {
         // Remove all plugin options
         delete_option('skylearn_billing_pro_options');
         delete_option('skylearn_billing_pro_installed');
+        delete_option('skylearn_billing_pro_mappings_migrated');
         
-        // Remove any custom database tables if they exist
-        global $wpdb;
-        
-        // Note: In the future, we would drop custom tables here
-        // Example: $wpdb->query("DROP TABLE IF EXISTS {$wpdb->prefix}skylearn_billing_subscriptions");
+        // Remove custom database tables if they exist
+        if (class_exists('SkyLearn_Billing_Pro_Database_Manager')) {
+            try {
+                $db_manager = new SkyLearn_Billing_Pro_Database_Manager();
+                $db_manager->drop_tables();
+            } catch (Exception $e) {
+                error_log('SkyLearn Billing Pro: Error dropping tables during uninstall - ' . $e->getMessage());
+            }
+        }
         
         // Clear any scheduled events
         wp_clear_scheduled_hook('skylearn_billing_pro_daily_tasks');

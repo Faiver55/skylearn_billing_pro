@@ -22,22 +22,18 @@
         </testsuite>
     </testsuites>
     
-    <coverage>
-        <include>
+    <filter>
+        <whitelist>
             <directory suffix=".php">includes</directory>
-        </include>
-        <exclude>
-            <directory>tests</directory>
-            <directory>vendor</directory>
-            <file>includes/index.php</file>
-        </exclude>
-        <report>
-            <html outputDirectory="tests/coverage"/>
-            <text outputFile="tests/coverage.txt"/>
-        </report>
-    </coverage>
+            <exclude>
+                <directory>tests</directory>
+                <directory>vendor</directory>
+                <file>includes/index.php</file>
+            </exclude>
+        </whitelist>
+    </filter>
     
     <logging>
-        <junit outputFile="tests/results.xml"/>
+        <log type="junit" target="tests/results.xml"/>
     </logging>
 </phpunit>
