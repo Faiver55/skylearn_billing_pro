@@ -270,25 +270,63 @@ class SkyLearn_Billing_Pro_LMS_Manager {
      * Set active LMS in settings
      *
      * @param string $lms_key LMS key to set as active
-     * @return bool Success status
+     * @return bool|WP_Error Success status or WP_Error on failure
      */
     public function set_active_lms($lms_key) {
         if (!isset($this->supported_lms[$lms_key])) {
-            return false;
+            return new WP_Error('invalid_lms', __('Invalid LMS specified.', 'skylearn-billing-pro'));
         }
         
         if (!$this->is_lms_active($lms_key)) {
-            return false;
+            return new WP_Error('lms_not_available', __('The specified LMS is not installed or activated.', 'skylearn-billing-pro'));
         }
         
-        $options = get_option('skylearn_billing_pro_options', array());
-        if (!isset($options['lms_settings'])) {
-            $options['lms_settings'] = array();
+        try {
+            $options = get_option('skylearn_billing_pro_options', array());
+            $current_active = $this->get_active_lms();
+            
+            if (!isset($options['lms_settings'])) {
+                $options['lms_settings'] = array();
+            }
+            
+            // Check if this is actually a change
+            if ($current_active === $lms_key) {
+                // Already set to this LMS, no change needed
+                return true;
+            }
+            
+            $options['lms_settings']['active_lms'] = $lms_key;
+            
+            $result = update_option('skylearn_billing_pro_options', $options);
+            
+            if ($result === false) {
+                global $wpdb;
+                $last_error = $wpdb->last_error;
+                
+                error_log('SkyLearn Billing Pro: Failed to set active LMS - LMS: ' . $lms_key . ', Error: ' . $last_error);
+                
+                if (!empty($last_error)) {
+                    return new WP_Error('save_failed', sprintf(__('Failed to set active LMS: Database error (%s).', 'skylearn-billing-pro'), esc_html($last_error)));
+                } else {
+                    return new WP_Error('save_failed', __('Failed to set active LMS: WordPress unable to update settings.', 'skylearn-billing-pro'));
+                }
+            }
+            
+            // Verify the change was successful
+            $verification_options = get_option('skylearn_billing_pro_options', array());
+            if (!isset($verification_options['lms_settings']['active_lms']) || 
+                $verification_options['lms_settings']['active_lms'] !== $lms_key) {
+                
+                error_log('SkyLearn Billing Pro: LMS setting verification failed - active LMS not set correctly');
+                return new WP_Error('save_failed', __('Failed to set active LMS: Data verification failed.', 'skylearn-billing-pro'));
+            }
+            
+            return true;
+            
+        } catch (Exception $e) {
+            error_log('SkyLearn Billing Pro: Exception setting active LMS - ' . $e->getMessage());
+            return new WP_Error('exception', __('An unexpected error occurred while setting the active LMS.', 'skylearn-billing-pro'));
         }
-        
-        $options['lms_settings']['active_lms'] = $lms_key;
-        
-        return update_option('skylearn_billing_pro_options', $options);
     }
     
     /**
@@ -663,33 +701,70 @@ class SkyLearn_Billing_Pro_LMS_Manager {
      *
      * @param string $lms_key LMS key to override
      * @param bool $override Whether to enable override
-     * @return bool Success status
+     * @return bool|WP_Error Success status or WP_Error on failure
      */
     public function set_lms_manual_override($lms_key, $override = true) {
         if (!isset($this->supported_lms[$lms_key])) {
-            return false;
+            return new WP_Error('invalid_lms', __('Invalid LMS specified for manual override.', 'skylearn-billing-pro'));
         }
         
-        $this->supported_lms[$lms_key]['manual_override'] = $override;
-        
-        // Save to WordPress options
-        $options = get_option('skylearn_billing_pro_options', array());
-        if (!isset($options['lms_settings'])) {
-            $options['lms_settings'] = array();
+        try {
+            // Update in-memory setting
+            $this->supported_lms[$lms_key]['manual_override'] = $override;
+            
+            // Save to WordPress options
+            $options = get_option('skylearn_billing_pro_options', array());
+            $current_override = $this->get_lms_manual_override($lms_key);
+            
+            if (!isset($options['lms_settings'])) {
+                $options['lms_settings'] = array();
+            }
+            if (!isset($options['lms_settings']['manual_overrides'])) {
+                $options['lms_settings']['manual_overrides'] = array();
+            }
+            
+            // Check if this is actually a change
+            if ($current_override === $override) {
+                // Already set to this value, no change needed
+                return true;
+            }
+            
+            $options['lms_settings']['manual_overrides'][$lms_key] = $override;
+            
+            $result = update_option('skylearn_billing_pro_options', $options);
+            
+            if ($result === false) {
+                global $wpdb;
+                $last_error = $wpdb->last_error;
+                
+                error_log('SkyLearn Billing Pro: Failed to set manual override - LMS: ' . $lms_key . ', Override: ' . ($override ? 'true' : 'false') . ', Error: ' . $last_error);
+                
+                if (!empty($last_error)) {
+                    return new WP_Error('save_failed', sprintf(__('Failed to set manual override: Database error (%s).', 'skylearn-billing-pro'), esc_html($last_error)));
+                } else {
+                    return new WP_Error('save_failed', __('Failed to set manual override: WordPress unable to update settings.', 'skylearn-billing-pro'));
+                }
+            }
+            
+            // Verify the change was successful
+            $verification_options = get_option('skylearn_billing_pro_options', array());
+            if (!isset($verification_options['lms_settings']['manual_overrides'][$lms_key]) || 
+                $verification_options['lms_settings']['manual_overrides'][$lms_key] !== $override) {
+                
+                error_log('SkyLearn Billing Pro: Manual override setting verification failed');
+                return new WP_Error('save_failed', __('Failed to set manual override: Data verification failed.', 'skylearn-billing-pro'));
+            }
+            
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log("SkyLearn Billing Pro: Manual override for {$lms_key} set to " . ($override ? 'enabled' : 'disabled'));
+            }
+            
+            return true;
+            
+        } catch (Exception $e) {
+            error_log('SkyLearn Billing Pro: Exception setting manual override - ' . $e->getMessage());
+            return new WP_Error('exception', __('An unexpected error occurred while setting the manual override.', 'skylearn-billing-pro'));
         }
-        if (!isset($options['lms_settings']['manual_overrides'])) {
-            $options['lms_settings']['manual_overrides'] = array();
-        }
-        
-        $options['lms_settings']['manual_overrides'][$lms_key] = $override;
-        
-        $result = update_option('skylearn_billing_pro_options', $options);
-        
-        if (defined('WP_DEBUG') && WP_DEBUG) {
-            error_log("SkyLearn Billing Pro: Manual override for {$lms_key} set to " . ($override ? 'enabled' : 'disabled'));
-        }
-        
-        return $result;
     }
     
     /**

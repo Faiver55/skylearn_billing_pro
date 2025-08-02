@@ -119,6 +119,7 @@ function render_lms_settings_tab($lms_manager) {
     // Handle manual override form submission
     if (isset($_POST['save_manual_override']) && wp_verify_nonce($_POST['manual_override_nonce'], 'save_manual_override')) {
         $messages = array();
+        $errors = array();
         
         // Process each LMS override setting
         $supported_lms = $lms_manager->get_supported_lms();
@@ -128,23 +129,30 @@ function render_lms_settings_tab($lms_manager) {
             
             if ($override_enabled !== $current_override) {
                 $result = $lms_manager->set_lms_manual_override($lms_key, $override_enabled);
-                if ($result) {
+                if (is_wp_error($result)) {
+                    $errors[] = sprintf(__('Failed to update manual override for %s: %s', 'skylearn-billing-pro'), $lms_data['name'], $result->get_error_message());
+                } elseif ($result === true) {
                     if ($override_enabled) {
                         $messages[] = sprintf(__('Manual override enabled for %s', 'skylearn-billing-pro'), $lms_data['name']);
                     } else {
                         $messages[] = sprintf(__('Manual override disabled for %s', 'skylearn-billing-pro'), $lms_data['name']);
                     }
                 } else {
-                    $messages[] = sprintf(__('Failed to update manual override for %s', 'skylearn-billing-pro'), $lms_data['name']);
+                    $errors[] = sprintf(__('Unexpected result when updating manual override for %s', 'skylearn-billing-pro'), $lms_data['name']);
                 }
             }
         }
         
-        // Show success message
+        // Show messages
         if (!empty($messages)) {
             echo '<div class="notice notice-success"><p>' . implode('<br>', array_map('esc_html', $messages)) . '</p></div>';
-            
-            // Refresh LMS status after changes
+        }
+        if (!empty($errors)) {
+            echo '<div class="notice notice-error"><p><strong>' . esc_html__('Errors:', 'skylearn-billing-pro') . '</strong><br>' . implode('<br>', array_map('esc_html', $errors)) . '</p></div>';
+        }
+        
+        // Refresh LMS status after changes (only if there were no errors)
+        if (empty($errors)) {
             $lms_status = $lms_manager->get_integration_status();
         }
     }
@@ -374,9 +382,15 @@ function render_webhook_settings_tab($webhook_handler) {
             'enabled' => isset($_POST['webhook_enabled'])
         );
         
-        if ($webhook_handler->save_webhook_settings($new_settings)) {
+        $result = $webhook_handler->save_webhook_settings($new_settings);
+        
+        if (is_wp_error($result)) {
+            echo '<div class="notice notice-error"><p><strong>' . esc_html__('Error:', 'skylearn-billing-pro') . '</strong> ' . esc_html($result->get_error_message()) . '</p></div>';
+        } elseif ($result === true) {
             echo '<div class="notice notice-success"><p>' . esc_html__('Webhook settings saved successfully.', 'skylearn-billing-pro') . '</p></div>';
             $webhook_settings = $new_settings;
+        } else {
+            echo '<div class="notice notice-error"><p>' . esc_html__('Failed to save webhook settings. Please try again.', 'skylearn-billing-pro') . '</p></div>';
         }
     }
     ?>
