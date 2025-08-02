@@ -173,10 +173,14 @@ class SkyLearn_Billing_Pro_Course_Mapping {
             
             // Verify the save was successful by reading it back
             $verification_options = get_option('skylearn_billing_pro_options', array());
-            if (!isset($verification_options['course_mappings'][$product_id]) || 
-                $verification_options['course_mappings'][$product_id]['course_id'] != $course_id) {
-                
+            if (!isset($verification_options['course_mappings'][$product_id])) {
                 error_log('SkyLearn Billing Pro: Course mapping save verification failed - data not found after save');
+                return new WP_Error('save_failed', __('Failed to save course mapping: Data verification failed. Please try again or contact support.', 'skylearn-billing-pro'));
+            }
+            
+            // Additional verification: check if the course_id matches
+            if ($verification_options['course_mappings'][$product_id]['course_id'] != $course_id) {
+                error_log('SkyLearn Billing Pro: Course mapping save verification failed - course ID mismatch');
                 return new WP_Error('save_failed', __('Failed to save course mapping: Data verification failed. Please try again or contact support.', 'skylearn-billing-pro'));
             }
             
