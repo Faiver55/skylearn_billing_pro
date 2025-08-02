@@ -27,30 +27,49 @@ class SkyLearn_Billing_Pro_LMS_Manager {
         'learndash' => array(
             'name' => 'LearnDash',
             'plugin_path' => 'sfwd-lms/sfwd_lms.php',
+            'alternative_paths' => array(
+                'learndash/learndash.php',
+                'learndash-core/learndash-core.php',
+                'sfwd-lms/sfwd-lms.php'
+            ),
             'class_name' => 'SFWD_LMS',
+            'alternative_classes' => array(
+                'LearnDash_Settings_Section',
+                'learndash_LMS',
+                'LDLMS_Post_Types'
+            ),
             'function_name' => 'learndash_get_course_id',
-            'connector_class' => 'SkyLearn_Billing_Pro_LearnDash_Connector'
+            'alternative_functions' => array(
+                'learndash_get_courses',
+                'learndash_user_get_enrolled_courses',
+                'learndash_is_active'
+            ),
+            'connector_class' => 'SkyLearn_Billing_Pro_LearnDash_Connector',
+            'manual_override' => false
         ),
         'tutor' => array(
             'name' => 'TutorLMS',
             'plugin_path' => 'tutor/tutor.php',
             'class_name' => 'TUTOR',
             'function_name' => 'tutor_get_course_id',
-            'connector_class' => 'SkyLearn_Billing_Pro_Tutor_Connector'
+            'connector_class' => 'SkyLearn_Billing_Pro_Tutor_Connector',
+            'manual_override' => false
         ),
         'lifter' => array(
             'name' => 'LifterLMS',
             'plugin_path' => 'lifterlms/lifterlms.php',
             'class_name' => 'LifterLMS',
             'function_name' => 'llms_get_course',
-            'connector_class' => 'SkyLearn_Billing_Pro_Lifter_Connector'
+            'connector_class' => 'SkyLearn_Billing_Pro_Lifter_Connector',
+            'manual_override' => false
         ),
         'learnpress' => array(
             'name' => 'LearnPress',
             'plugin_path' => 'learnpress/learnpress.php',
             'class_name' => 'LearnPress',
             'function_name' => 'learn_press_get_course',
-            'connector_class' => 'SkyLearn_Billing_Pro_LearnPress_Connector'
+            'connector_class' => 'SkyLearn_Billing_Pro_LearnPress_Connector',
+            'manual_override' => false
         )
     );
     
@@ -79,6 +98,7 @@ class SkyLearn_Billing_Pro_LMS_Manager {
      * Initialize LMS Manager
      */
     public function init() {
+        $this->load_manual_overrides();
         $this->detect_lms_plugins();
         $this->load_active_connector();
     }
@@ -112,51 +132,106 @@ class SkyLearn_Billing_Pro_LMS_Manager {
      */
     public function is_lms_active($lms_key) {
         if (!isset($this->supported_lms[$lms_key])) {
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log("SkyLearn Billing Pro: Unknown LMS key: {$lms_key}");
+            }
             return false;
         }
         
         $lms_data = $this->supported_lms[$lms_key];
         
-        // Add debugging information
+        // Add comprehensive debugging information
         if (defined('WP_DEBUG') && WP_DEBUG) {
-            error_log("SkyLearn Billing Pro: Checking if {$lms_key} is active - plugin_path: {$lms_data['plugin_path']}");
+            error_log("SkyLearn Billing Pro: Checking if {$lms_key} is active - primary plugin_path: {$lms_data['plugin_path']}");
         }
         
-        // Check if plugin is active by plugin path
+        // Check manual override first
+        if ($this->get_lms_manual_override($lms_key)) {
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log("SkyLearn Billing Pro: {$lms_key} detected as active via manual override");
+            }
+            return true;
+        }
+        
+        // Ensure is_plugin_active function is available
         if (!function_exists('is_plugin_active')) {
-            // Use proper WordPress path if available
             $plugin_file = defined('ABSPATH') ? ABSPATH . 'wp-admin/includes/plugin.php' : '';
             if ($plugin_file && file_exists($plugin_file)) {
                 include_once($plugin_file);
             }
         }
         
-        // Check if plugin is active (only if function is available)
+        // Check primary plugin path
         if (function_exists('is_plugin_active') && is_plugin_active($lms_data['plugin_path'])) {
             if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log("SkyLearn Billing Pro: {$lms_key} detected as active via plugin path");
+                error_log("SkyLearn Billing Pro: {$lms_key} detected as active via primary plugin path: {$lms_data['plugin_path']}");
             }
             return true;
         }
         
-        // Fallback: Check if class exists
+        // Check alternative plugin paths
+        if (isset($lms_data['alternative_paths']) && is_array($lms_data['alternative_paths'])) {
+            foreach ($lms_data['alternative_paths'] as $alt_path) {
+                if (function_exists('is_plugin_active') && is_plugin_active($alt_path)) {
+                    if (defined('WP_DEBUG') && WP_DEBUG) {
+                        error_log("SkyLearn Billing Pro: {$lms_key} detected as active via alternative plugin path: {$alt_path}");
+                    }
+                    return true;
+                }
+            }
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log("SkyLearn Billing Pro: {$lms_key} not found in any alternative plugin paths: " . implode(', ', $lms_data['alternative_paths']));
+            }
+        }
+        
+        // Check primary class
         if (isset($lms_data['class_name']) && class_exists($lms_data['class_name'])) {
             if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log("SkyLearn Billing Pro: {$lms_key} detected as active via class existence: {$lms_data['class_name']}");
+                error_log("SkyLearn Billing Pro: {$lms_key} detected as active via primary class existence: {$lms_data['class_name']}");
             }
             return true;
         }
         
-        // Fallback: Check if function exists
+        // Check alternative classes
+        if (isset($lms_data['alternative_classes']) && is_array($lms_data['alternative_classes'])) {
+            foreach ($lms_data['alternative_classes'] as $alt_class) {
+                if (class_exists($alt_class)) {
+                    if (defined('WP_DEBUG') && WP_DEBUG) {
+                        error_log("SkyLearn Billing Pro: {$lms_key} detected as active via alternative class existence: {$alt_class}");
+                    }
+                    return true;
+                }
+            }
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log("SkyLearn Billing Pro: {$lms_key} not found in any alternative classes: " . implode(', ', $lms_data['alternative_classes']));
+            }
+        }
+        
+        // Check primary function
         if (isset($lms_data['function_name']) && function_exists($lms_data['function_name'])) {
             if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log("SkyLearn Billing Pro: {$lms_key} detected as active via function existence: {$lms_data['function_name']}");
+                error_log("SkyLearn Billing Pro: {$lms_key} detected as active via primary function existence: {$lms_data['function_name']}");
             }
             return true;
+        }
+        
+        // Check alternative functions
+        if (isset($lms_data['alternative_functions']) && is_array($lms_data['alternative_functions'])) {
+            foreach ($lms_data['alternative_functions'] as $alt_function) {
+                if (function_exists($alt_function)) {
+                    if (defined('WP_DEBUG') && WP_DEBUG) {
+                        error_log("SkyLearn Billing Pro: {$lms_key} detected as active via alternative function existence: {$alt_function}");
+                    }
+                    return true;
+                }
+            }
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log("SkyLearn Billing Pro: {$lms_key} not found in any alternative functions: " . implode(', ', $lms_data['alternative_functions']));
+            }
         }
         
         if (defined('WP_DEBUG') && WP_DEBUG) {
-            error_log("SkyLearn Billing Pro: {$lms_key} not detected as active");
+            error_log("SkyLearn Billing Pro: {$lms_key} not detected as active - no detection method succeeded");
         }
         
         return false;
@@ -515,6 +590,76 @@ class SkyLearn_Billing_Pro_LMS_Manager {
             'detected_lms' => array_keys($detected),
             'available_lms' => array_keys($this->supported_lms)
         );
+    }
+    
+    /**
+     * Set manual override for an LMS
+     *
+     * @param string $lms_key LMS key to override
+     * @param bool $override Whether to enable override
+     * @return bool Success status
+     */
+    public function set_lms_manual_override($lms_key, $override = true) {
+        if (!isset($this->supported_lms[$lms_key])) {
+            return false;
+        }
+        
+        $this->supported_lms[$lms_key]['manual_override'] = $override;
+        
+        // Save to WordPress options
+        $options = get_option('skylearn_billing_pro_options', array());
+        if (!isset($options['lms_settings'])) {
+            $options['lms_settings'] = array();
+        }
+        if (!isset($options['lms_settings']['manual_overrides'])) {
+            $options['lms_settings']['manual_overrides'] = array();
+        }
+        
+        $options['lms_settings']['manual_overrides'][$lms_key] = $override;
+        
+        $result = update_option('skylearn_billing_pro_options', $options);
+        
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            error_log("SkyLearn Billing Pro: Manual override for {$lms_key} set to " . ($override ? 'enabled' : 'disabled'));
+        }
+        
+        return $result;
+    }
+    
+    /**
+     * Get manual override status for an LMS
+     *
+     * @param string $lms_key LMS key to check
+     * @return bool Override status
+     */
+    public function get_lms_manual_override($lms_key) {
+        if (!isset($this->supported_lms[$lms_key])) {
+            return false;
+        }
+        
+        // Check saved options first
+        $options = get_option('skylearn_billing_pro_options', array());
+        if (isset($options['lms_settings']['manual_overrides'][$lms_key])) {
+            return $options['lms_settings']['manual_overrides'][$lms_key];
+        }
+        
+        // Fall back to in-memory setting
+        return isset($this->supported_lms[$lms_key]['manual_override']) ? 
+               $this->supported_lms[$lms_key]['manual_override'] : false;
+    }
+    
+    /**
+     * Load manual overrides from options
+     */
+    private function load_manual_overrides() {
+        $options = get_option('skylearn_billing_pro_options', array());
+        if (isset($options['lms_settings']['manual_overrides']) && is_array($options['lms_settings']['manual_overrides'])) {
+            foreach ($options['lms_settings']['manual_overrides'] as $lms_key => $override) {
+                if (isset($this->supported_lms[$lms_key])) {
+                    $this->supported_lms[$lms_key]['manual_override'] = $override;
+                }
+            }
+        }
     }
     
     /**

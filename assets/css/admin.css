@@ -1724,3 +1724,139 @@
 .skylearn-billing-status-actions .button {
     margin-left: 10px;
 }
+
+/* Manual LMS Override Styles */
+.skylearn-billing-override-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+    margin: 20px 0;
+}
+
+.skylearn-billing-override-item {
+    background: var(--skylearn-white);
+    border: 1px solid var(--skylearn-border);
+    border-radius: 8px;
+    padding: 20px;
+    transition: all 0.3s ease;
+}
+
+.skylearn-billing-override-item:hover {
+    box-shadow: 0 2px 8px var(--skylearn-shadow);
+}
+
+.skylearn-billing-override-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+}
+
+.skylearn-billing-override-info {
+    flex: 1;
+}
+
+.skylearn-billing-override-info h4 {
+    margin: 0 0 8px 0;
+    color: var(--skylearn-primary);
+    font-size: 16px;
+}
+
+.skylearn-billing-override-status {
+    margin: 0;
+}
+
+.skylearn-billing-status-override {
+    background: var(--skylearn-warning);
+    color: #333;
+    font-size: 11px;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.skylearn-billing-override-control {
+    display: flex;
+    align-items: center;
+}
+
+/* Toggle Switch Styles */
+.skylearn-billing-toggle {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 24px;
+}
+
+.skylearn-billing-toggle input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.skylearn-billing-toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 24px;
+}
+
+.skylearn-billing-toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+.skylearn-billing-toggle input:checked + .skylearn-billing-toggle-slider {
+    background-color: var(--skylearn-primary);
+}
+
+.skylearn-billing-toggle input:focus + .skylearn-billing-toggle-slider {
+    box-shadow: 0 0 1px var(--skylearn-primary);
+}
+
+.skylearn-billing-toggle input:checked + .skylearn-billing-toggle-slider:before {
+    transform: translateX(26px);
+}
+
+.skylearn-billing-toggle input:disabled + .skylearn-billing-toggle-slider {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.skylearn-billing-override-details {
+    margin-top: 8px;
+}
+
+.skylearn-billing-override-details p {
+    margin: 0;
+    color: var(--skylearn-medium-gray);
+    font-size: 13px;
+}
+
+/* Responsive adjustments for manual override */
+@media (max-width: 768px) {
+    .skylearn-billing-override-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+    
+    .skylearn-billing-override-control {
+        align-self: flex-start;
+    }
+}
