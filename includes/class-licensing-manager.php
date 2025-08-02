@@ -89,6 +89,29 @@ class SkyLearn_Billing_Pro_Licensing_Manager {
     }
     
     /**
+     * Force refresh license data from database
+     * This helps prevent caching issues
+     */
+    private function refresh_license_data() {
+        // Clear any object cache for this option if wp_cache_delete exists
+        if (function_exists('wp_cache_delete')) {
+            wp_cache_delete(self::LICENSE_OPTION_NAME, 'options');
+        }
+        
+        // Reload from database
+        $this->load_license_data();
+    }
+    
+    /**
+     * Clear WordPress option cache if available
+     */
+    private function clear_option_cache() {
+        if (function_exists('wp_cache_delete')) {
+            wp_cache_delete(self::LICENSE_OPTION_NAME, 'options');
+        }
+    }
+    
+    /**
      * Get current tier
      *
      * @return string
@@ -242,7 +265,12 @@ class SkyLearn_Billing_Pro_Licensing_Manager {
                 'last_check' => current_time('mysql')
             ));
             
+            // Force update and clear cache
             update_option(self::LICENSE_OPTION_NAME, $this->license_data);
+            $this->clear_option_cache();
+            
+            // Refresh our local copy to ensure consistency
+            $this->refresh_license_data();
             
             $this->log_license_attempt($license_key, 'validation_success', $mock_response['tier']);
             
@@ -278,7 +306,12 @@ class SkyLearn_Billing_Pro_Licensing_Manager {
             'last_check' => ''
         );
         
+        // Force update and clear cache
         update_option(self::LICENSE_OPTION_NAME, $this->license_data);
+        $this->clear_option_cache();
+        
+        // Refresh our local copy to ensure consistency
+        $this->refresh_license_data();
         
         $this->log_license_attempt($old_key, 'deactivation_success', $old_tier);
         
@@ -352,11 +385,20 @@ class SkyLearn_Billing_Pro_Licensing_Manager {
         }
         
         // Check for common demo key patterns that might be variations
-        if (preg_match('/^(SKYLRN|SKYLEARN).*DEMO.*2024$/i', $normalized_key)) {
+        if (preg_match('/^(SKYLRN|SKYLEARN).*(DEMO|TEST).*2024$/i', $normalized_key)) {
             $this->log_license_attempt($license_key, 'demo_key_pattern_match_failed');
             return array(
                 'success' => false,
-                'message' => __('Demo license key format recognized but not valid. Please use one of the provided demo keys.', 'skylearn-billing-pro')
+                'message' => __('Demo license key format recognized but not valid. Please use one of the provided demo keys: SKYLRN-PRO-DEMO-2024 or SKYLRN-PLUS-DEMO-2024', 'skylearn-billing-pro')
+            );
+        }
+        
+        // Check for other demo patterns
+        if (preg_match('/^DEMO-.*(PRO|PLUS).*2024$/i', $normalized_key)) {
+            $this->log_license_attempt($license_key, 'demo_key_pattern_match_failed');
+            return array(
+                'success' => false,
+                'message' => __('Demo license key format recognized but not valid. Please use: DEMO-PRO-2024 or DEMO-PLUS-2024', 'skylearn-billing-pro')
             );
         }
         
