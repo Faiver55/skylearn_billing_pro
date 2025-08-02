@@ -105,6 +105,39 @@ $licensing_manager = skylearn_billing_pro_licensing();
  */
 function render_lms_settings_tab($lms_manager) {
     $lms_status = $lms_manager->get_integration_status();
+    
+    // Handle manual override form submission
+    if (isset($_POST['save_manual_override']) && wp_verify_nonce($_POST['manual_override_nonce'], 'save_manual_override')) {
+        $messages = array();
+        
+        // Process each LMS override setting
+        $supported_lms = $lms_manager->get_supported_lms();
+        foreach ($supported_lms as $lms_key => $lms_data) {
+            $override_enabled = isset($_POST['manual_override_' . $lms_key]) && $_POST['manual_override_' . $lms_key] === '1';
+            $current_override = $lms_manager->get_lms_manual_override($lms_key);
+            
+            if ($override_enabled !== $current_override) {
+                $result = $lms_manager->set_lms_manual_override($lms_key, $override_enabled);
+                if ($result) {
+                    if ($override_enabled) {
+                        $messages[] = sprintf(__('Manual override enabled for %s', 'skylearn-billing-pro'), $lms_data['name']);
+                    } else {
+                        $messages[] = sprintf(__('Manual override disabled for %s', 'skylearn-billing-pro'), $lms_data['name']);
+                    }
+                } else {
+                    $messages[] = sprintf(__('Failed to update manual override for %s', 'skylearn-billing-pro'), $lms_data['name']);
+                }
+            }
+        }
+        
+        // Show success message
+        if (!empty($messages)) {
+            echo '<div class="notice notice-success"><p>' . implode('<br>', array_map('esc_html', $messages)) . '</p></div>';
+            
+            // Refresh LMS status after changes
+            $lms_status = $lms_manager->get_integration_status();
+        }
+    }
     ?>
     <div class="skylearn-billing-tab-content">
         <!-- LMS Detection Card -->
@@ -146,6 +179,79 @@ function render_lms_settings_tab($lms_manager) {
                         <?php endforeach; ?>
                     </div>
                 <?php endif; ?>
+            </div>
+        </div>
+
+        <!-- Manual LMS Override Card -->
+        <div class="skylearn-billing-card">
+            <div class="skylearn-billing-card-header">
+                <h2><?php esc_html_e('Manual LMS Override', 'skylearn-billing-pro'); ?></h2>
+                <p><?php esc_html_e('Force enable LMS detection for troubleshooting. Use this if your LMS is installed but not being detected automatically.', 'skylearn-billing-pro'); ?></p>
+            </div>
+            
+            <div class="skylearn-billing-card-body">
+                <form method="post">
+                    <?php wp_nonce_field('save_manual_override', 'manual_override_nonce'); ?>
+                    
+                    <div class="skylearn-billing-override-grid">
+                        <?php 
+                        $supported_lms = $lms_manager->get_supported_lms();
+                        foreach ($supported_lms as $lms_key => $lms_data): 
+                            $is_detected = isset($lms_status['detected_lms'][$lms_key]);
+                            $manual_override = $lms_manager->get_lms_manual_override($lms_key);
+                            $is_naturally_active = $is_detected && !$manual_override;
+                        ?>
+                            <div class="skylearn-billing-override-item">
+                                <div class="skylearn-billing-override-header">
+                                    <div class="skylearn-billing-override-info">
+                                        <h4><?php echo esc_html($lms_data['name']); ?></h4>
+                                        <p class="skylearn-billing-override-status">
+                                            <?php if ($is_naturally_active): ?>
+                                                <span class="skylearn-billing-status-active"><?php esc_html_e('Naturally Detected', 'skylearn-billing-pro'); ?></span>
+                                            <?php elseif ($manual_override): ?>
+                                                <span class="skylearn-billing-status-override"><?php esc_html_e('Manual Override Active', 'skylearn-billing-pro'); ?></span>
+                                            <?php else: ?>
+                                                <span class="skylearn-billing-status-inactive"><?php esc_html_e('Not Detected', 'skylearn-billing-pro'); ?></span>
+                                            <?php endif; ?>
+                                        </p>
+                                    </div>
+                                    <div class="skylearn-billing-override-control">
+                                        <label class="skylearn-billing-toggle">
+                                            <input type="checkbox" 
+                                                   name="manual_override_<?php echo esc_attr($lms_key); ?>" 
+                                                   value="1" 
+                                                   <?php checked($manual_override, true); ?>
+                                                   <?php echo $is_naturally_active ? 'disabled title="' . esc_attr__('This LMS is already naturally detected', 'skylearn-billing-pro') . '"' : ''; ?> />
+                                            <span class="skylearn-billing-toggle-slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="skylearn-billing-override-details">
+                                    <p><small><?php printf(esc_html__('Primary plugin path: %s', 'skylearn-billing-pro'), $lms_data['plugin_path']); ?></small></p>
+                                    <?php if ($manual_override): ?>
+                                        <div class="skylearn-billing-notice skylearn-billing-notice-info" style="margin-top: 8px; padding: 8px 12px;">
+                                            <small><?php esc_html_e('⚠️ Manual override is active. The LMS will be treated as installed even if not detected.', 'skylearn-billing-pro'); ?></small>
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                    
+                    <div class="skylearn-billing-form-actions" style="margin-top: 20px;">
+                        <button type="submit" name="save_manual_override" class="skylearn-billing-btn skylearn-billing-btn-primary">
+                            <?php esc_html_e('Save Manual Override Settings', 'skylearn-billing-pro'); ?>
+                        </button>
+                    </div>
+                    
+                    <div class="skylearn-billing-notice skylearn-billing-notice-warning" style="margin-top: 15px;">
+                        <span class="dashicons dashicons-warning"></span>
+                        <div>
+                            <strong><?php esc_html_e('Important Note:', 'skylearn-billing-pro'); ?></strong><br>
+                            <?php esc_html_e('Manual override should only be used for troubleshooting when you know the LMS is properly installed. Using override without the actual LMS installed may cause errors.', 'skylearn-billing-pro'); ?>
+                        </div>
+                    </div>
+                </form>
             </div>
         </div>
 
