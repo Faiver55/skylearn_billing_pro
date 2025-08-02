@@ -71,6 +71,12 @@ class SkyLearn_Billing_Pro_LearnDash_Connector {
         $courses = array();
         
         try {
+            // Check if WP_Query class exists (WordPress environment)
+            if (!class_exists('WP_Query')) {
+                error_log('SkyLearn Billing Pro: WP_Query class not available - cannot retrieve courses');
+                return array();
+            }
+            
             // Get LearnDash courses
             $course_query = new WP_Query(array(
                 'post_type' => 'sfwd-courses',
