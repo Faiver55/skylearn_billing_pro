@@ -324,63 +324,71 @@ class SkyLearn_Billing_Pro_Admin {
      * Render admin page
      */
     public function admin_page() {
-        $current_page = sanitize_text_field($_GET['page']);
-        
-        // Check if onboarding should be shown
-        if (isset($_GET['onboarding']) && $_GET['onboarding'] === '1') {
-            include SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'templates/admin/onboarding.php';
-            return;
-        }
-        
-        // Check if help page is requested
-        if ($current_page === 'skylearn-billing-pro-help') {
-            include SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'templates/admin/help.php';
-            return;
-        }
-        
-        if ($current_page === 'skylearn-billing-pro-license') {
-            include SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'templates/admin-licensing.php';
-        } elseif ($current_page === 'skylearn-billing-pro-lms') {
-            include SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'templates/admin-lms.php';
-        } elseif ($current_page === 'skylearn-billing-pro-payments') {
-            include SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'templates/admin-payments.php';
-        } elseif ($current_page === 'skylearn-billing-pro-products') {
-            $this->render_products_page();
-        } elseif ($current_page === 'skylearn-billing-pro-bundles') {
-            $this->render_bundles_page();
-        } elseif ($current_page === 'skylearn-billing-pro-subscriptions') {
-            $this->render_subscriptions_page();
-        } elseif ($current_page === 'skylearn-billing-pro-memberships') {
-            $this->render_memberships_page();
-        } elseif ($current_page === 'skylearn-billing-pro-loyalty') {
-            $this->render_loyalty_page();
-        } elseif ($current_page === 'skylearn-billing-pro-automation') {
-            $this->render_automation_page();
-        } elseif ($current_page === 'skylearn-billing-pro-addons') {
-            include SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'templates/admin/addons.php';
-        } elseif ($current_page === 'skylearn-billing-pro-audit-logs') {
-            // Check capability before including
-            if (current_user_can('skylearn_view_logs')) {
-                include SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'templates/admin/audit-log.php';
-            } else {
-                wp_die(__('You do not have sufficient permissions to access this page.', 'skylearn-billing-pro'));
+        // Add error handling for admin page rendering
+        try {
+            $current_page = isset($_GET['page']) ? sanitize_text_field($_GET['page']) : '';
+            
+            // Check if onboarding should be shown
+            if (isset($_GET['onboarding']) && $_GET['onboarding'] === '1') {
+                $this->safe_include_template('templates/admin/onboarding.php', 'Onboarding page');
+                return;
             }
-        } elseif ($current_page === 'skylearn-billing-pro-privacy') {
-            // Check capability before including
-            if (current_user_can('skylearn_manage_privacy')) {
-                include SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'templates/admin/privacy-settings.php';
-            } else {
-                wp_die(__('You do not have sufficient permissions to access this page.', 'skylearn-billing-pro'));
+            
+            // Check if help page is requested
+            if ($current_page === 'skylearn-billing-pro-help') {
+                $this->safe_include_template('templates/admin/help.php', 'Help page');
+                return;
             }
-        } elseif ($current_page === 'skylearn-billing-pro-status') {
-            include SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'templates/admin/status.php';
-        } elseif ($current_page === 'skylearn-billing-pro-email') {
-            include SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'templates/admin/email-settings.php';
-        } elseif ($current_page === 'skylearn-billing-pro-reports') {
-            include SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'templates/admin-reports.php';
-        } else {
-            $active_tab = isset($_GET['tab']) ? sanitize_text_field($_GET['tab']) : 'general';
-            include SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'templates/admin-page.php';
+            
+            if ($current_page === 'skylearn-billing-pro-license') {
+                $this->safe_include_template('templates/admin-licensing.php', 'License page');
+            } elseif ($current_page === 'skylearn-billing-pro-lms') {
+                $this->safe_include_template('templates/admin-lms.php', 'LMS Integration page');
+            } elseif ($current_page === 'skylearn-billing-pro-payments') {
+                $this->safe_include_template('templates/admin-payments.php', 'Payment Gateways page');
+            } elseif ($current_page === 'skylearn-billing-pro-products') {
+                $this->render_products_page();
+            } elseif ($current_page === 'skylearn-billing-pro-bundles') {
+                $this->render_bundles_page();
+            } elseif ($current_page === 'skylearn-billing-pro-subscriptions') {
+                $this->render_subscriptions_page();
+            } elseif ($current_page === 'skylearn-billing-pro-memberships') {
+                $this->render_memberships_page();
+            } elseif ($current_page === 'skylearn-billing-pro-loyalty') {
+                $this->render_loyalty_page();
+            } elseif ($current_page === 'skylearn-billing-pro-automation') {
+                $this->render_automation_page();
+            } elseif ($current_page === 'skylearn-billing-pro-addons') {
+                $this->safe_include_template('templates/admin/addons.php', 'Addons page');
+            } elseif ($current_page === 'skylearn-billing-pro-audit-logs') {
+                // Check capability before including
+                if (current_user_can('skylearn_view_logs')) {
+                    $this->safe_include_template('templates/admin/audit-log.php', 'Audit logs page');
+                } else {
+                    wp_die(__('You do not have sufficient permissions to access this page.', 'skylearn-billing-pro'));
+                }
+            } elseif ($current_page === 'skylearn-billing-pro-privacy') {
+                // Check capability before including
+                if (current_user_can('skylearn_manage_privacy')) {
+                    $this->safe_include_template('templates/admin/privacy-settings.php', 'Privacy settings page');
+                } else {
+                    wp_die(__('You do not have sufficient permissions to access this page.', 'skylearn-billing-pro'));
+                }
+            } elseif ($current_page === 'skylearn-billing-pro-status') {
+                $this->safe_include_template('templates/admin/status.php', 'Status page');
+            } elseif ($current_page === 'skylearn-billing-pro-email') {
+                $this->safe_include_template('templates/admin/email-settings.php', 'Email settings page');
+            } elseif ($current_page === 'skylearn-billing-pro-reports') {
+                $this->safe_include_template('templates/admin-reports.php', 'Reports page');
+            } else {
+                $active_tab = isset($_GET['tab']) ? sanitize_text_field($_GET['tab']) : 'general';
+                $this->safe_include_template('templates/admin-page.php', 'Main admin page');
+            }
+            
+        } catch (Error $e) {
+            $this->handle_admin_error('Fatal error in admin page rendering', $e);
+        } catch (Exception $e) {
+            $this->handle_admin_error('Exception in admin page rendering', $e);
         }
     }
     
@@ -1412,6 +1420,110 @@ class SkyLearn_Billing_Pro_Admin {
             echo '</table>';
         }
         
+        echo '</div>';
+    }
+    
+    /**
+     * Safely include a template file with error handling
+     * 
+     * @param string $template_path The template file path relative to plugin directory
+     * @param string $description Human-readable description for logging
+     * @return bool Whether the template was successfully included
+     */
+    private function safe_include_template($template_path, $description = '') {
+        $full_path = SKYLEARN_BILLING_PRO_PLUGIN_DIR . $template_path;
+        
+        try {
+            // Check if file exists
+            if (!file_exists($full_path)) {
+                $this->handle_template_error("Template file not found: $template_path", $description);
+                return false;
+            }
+            
+            // Check if file is readable
+            if (!is_readable($full_path)) {
+                $this->handle_template_error("Template file not readable: $template_path", $description);
+                return false;
+            }
+            
+            // Include the template
+            include $full_path;
+            return true;
+            
+        } catch (ParseError $e) {
+            $this->handle_template_error("Parse error in template $template_path: " . $e->getMessage(), $description);
+            return false;
+        } catch (Error $e) {
+            $this->handle_template_error("Fatal error in template $template_path: " . $e->getMessage(), $description);
+            return false;
+        } catch (Exception $e) {
+            $this->handle_template_error("Exception in template $template_path: " . $e->getMessage(), $description);
+            return false;
+        }
+    }
+    
+    /**
+     * Handle template errors gracefully
+     * 
+     * @param string $error_message The error message
+     * @param string $description Template description
+     */
+    private function handle_template_error($error_message, $description = '') {
+        // Log the error
+        error_log('SkyLearn Billing Pro Admin: ' . $error_message . ($description ? " ($description)" : ''));
+        
+        // Log to debug logger if available
+        if (class_exists('SkyLearn_Billing_Pro_Debug_Logger')) {
+            SkyLearn_Billing_Pro_Debug_Logger::error($error_message, $description);
+        }
+        
+        // Display user-friendly error message
+        echo '<div class="notice notice-error"><p>';
+        echo '<strong>' . esc_html__('SkyLearn Billing Pro Error:', 'skylearn-billing-pro') . '</strong> ';
+        echo esc_html__('Unable to load the requested page. Please try again or contact support if the problem persists.', 'skylearn-billing-pro');
+        echo '</p></div>';
+        
+        // Show basic fallback content
+        echo '<div class="wrap">';
+        echo '<h1>' . esc_html__('SkyLearn Billing Pro', 'skylearn-billing-pro') . '</h1>';
+        echo '<p>' . esc_html__('The requested page could not be loaded due to a technical issue.', 'skylearn-billing-pro') . '</p>';
+        echo '<p><a href="' . esc_url(admin_url('admin.php?page=skylearn-billing-pro')) . '" class="button button-primary">' . 
+             esc_html__('Return to Main Page', 'skylearn-billing-pro') . '</a></p>';
+        echo '</div>';
+    }
+    
+    /**
+     * Handle admin errors gracefully
+     * 
+     * @param string $context The context where the error occurred
+     * @param Throwable $error The error object
+     */
+    private function handle_admin_error($context, $error) {
+        // Log the error
+        $error_message = $context . ': ' . $error->getMessage() . ' in ' . $error->getFile() . ':' . $error->getLine();
+        error_log('SkyLearn Billing Pro Admin: ' . $error_message);
+        
+        // Log to debug logger if available
+        if (class_exists('SkyLearn_Billing_Pro_Debug_Logger')) {
+            if ($error instanceof Exception) {
+                SkyLearn_Billing_Pro_Debug_Logger::exception($error, $context);
+            } else {
+                SkyLearn_Billing_Pro_Debug_Logger::error($error_message, $context);
+            }
+        }
+        
+        // Display user-friendly error message
+        echo '<div class="notice notice-error"><p>';
+        echo '<strong>' . esc_html__('SkyLearn Billing Pro Error:', 'skylearn-billing-pro') . '</strong> ';
+        echo esc_html__('A technical error occurred while loading this page. The error has been logged for review.', 'skylearn-billing-pro');
+        echo '</p></div>';
+        
+        // Show basic fallback content
+        echo '<div class="wrap">';
+        echo '<h1>' . esc_html__('SkyLearn Billing Pro', 'skylearn-billing-pro') . '</h1>';
+        echo '<p>' . esc_html__('We apologize for the inconvenience. Please try refreshing the page or contact support if the problem persists.', 'skylearn-billing-pro') . '</p>';
+        echo '<p><a href="' . esc_url(admin_url('admin.php?page=skylearn-billing-pro')) . '" class="button button-primary">' . 
+             esc_html__('Return to Main Page', 'skylearn-billing-pro') . '</a></p>';
         echo '</div>';
     }
 }
