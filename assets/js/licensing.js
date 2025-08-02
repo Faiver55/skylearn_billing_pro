@@ -26,6 +26,11 @@
                 return;
             }
             
+            // Prevent multiple submissions
+            if ($submitBtn.prop('disabled')) {
+                return;
+            }
+            
             // Show loading state
             $submitBtn.prop('disabled', true);
             $btnText.hide();
@@ -43,22 +48,39 @@
                     license_key: licenseKey,
                     nonce: skylernLicensing.nonce
                 },
+                timeout: 30000, // 30 second timeout
                 success: function(response) {
-                    if (response.success) {
-                        showMessage('success', response.message);
+                    if (response && response.success) {
+                        showMessage('success', response.message || 'License activated successfully!');
                         // Reload page after 2 seconds to show activated state
                         setTimeout(function() {
                             window.location.reload();
                         }, 2000);
                     } else {
-                        showMessage('error', response.message || 'An error occurred while validating the license.');
+                        var errorMessage = response && response.message ? response.message : 'An error occurred while validating the license. Please try again.';
+                        showMessage('error', errorMessage);
                     }
                 },
-                error: function() {
-                    showMessage('error', 'An error occurred while validating the license. Please try again.');
+                error: function(xhr, status, error) {
+                    var errorMessage = 'An error occurred while validating the license. Please try again.';
+                    
+                    if (status === 'timeout') {
+                        errorMessage = 'Request timed out. Please check your connection and try again.';
+                    } else if (xhr.status === 403) {
+                        errorMessage = 'Access denied. Please refresh the page and try again.';
+                    } else if (xhr.status >= 500) {
+                        errorMessage = 'Server error. Please try again later.';
+                    }
+                    
+                    showMessage('error', errorMessage);
+                    console.error('License validation error:', {
+                        status: status,
+                        error: error,
+                        response: xhr.responseText
+                    });
                 },
                 complete: function() {
-                    // Hide loading state
+                    // Reset button state
                     $submitBtn.prop('disabled', false);
                     $btnText.show();
                     $btnLoading.hide();
@@ -75,6 +97,12 @@
             }
             
             var $btn = $(this);
+            var originalText = $btn.text();
+            
+            // Prevent multiple clicks
+            if ($btn.prop('disabled')) {
+                return;
+            }
             
             // Show loading state
             $btn.prop('disabled', true).text(skylernLicensing.strings.deactivating);
@@ -90,23 +118,40 @@
                     action: 'skylearn_deactivate_license',
                     nonce: skylernLicensing.nonce
                 },
+                timeout: 30000, // 30 second timeout
                 success: function(response) {
-                    if (response.success) {
-                        showMessage('success', response.message);
+                    if (response && response.success) {
+                        showMessage('success', response.message || 'License deactivated successfully!');
                         // Reload page after 2 seconds to show deactivated state
                         setTimeout(function() {
                             window.location.reload();
                         }, 2000);
                     } else {
-                        showMessage('error', response.message || 'An error occurred while deactivating the license.');
+                        var errorMessage = response && response.message ? response.message : 'An error occurred while deactivating the license.';
+                        showMessage('error', errorMessage);
                     }
                 },
-                error: function() {
-                    showMessage('error', 'An error occurred while deactivating the license. Please try again.');
+                error: function(xhr, status, error) {
+                    var errorMessage = 'An error occurred while deactivating the license. Please try again.';
+                    
+                    if (status === 'timeout') {
+                        errorMessage = 'Request timed out. Please check your connection and try again.';
+                    } else if (xhr.status === 403) {
+                        errorMessage = 'Access denied. Please refresh the page and try again.';
+                    } else if (xhr.status >= 500) {
+                        errorMessage = 'Server error. Please try again later.';
+                    }
+                    
+                    showMessage('error', errorMessage);
+                    console.error('License deactivation error:', {
+                        status: status,
+                        error: error,
+                        response: xhr.responseText
+                    });
                 },
                 complete: function() {
                     // Reset button state
-                    $btn.prop('disabled', false).text('Deactivate License');
+                    $btn.prop('disabled', false).text(originalText);
                 }
             });
         });
@@ -114,7 +159,33 @@
         // Demo license key quick insertion
         $('.skylearn-billing-demo-keys code').on('click', function() {
             var licenseKey = $(this).text();
-            $('#skylearn-license-key').val(licenseKey).focus();
+            var $input = $('#skylearn-license-key');
+            $input.val(licenseKey).focus();
+            
+            // Add visual feedback
+            $(this).addClass('demo-key-copied');
+            setTimeout(function() {
+                $('.skylearn-billing-demo-keys code').removeClass('demo-key-copied');
+            }, 1000);
+            
+            // Clear any previous messages
+            clearMessages();
+            
+            // Show helpful message
+            showMessage('info', 'Demo license key copied to input field. Click "Activate License" to test.');
+        });
+        
+        // Add keyboard shortcut for quick demo activation
+        $(document).on('keydown', function(e) {
+            // Ctrl/Cmd + D to quickly insert first demo key
+            if ((e.ctrlKey || e.metaKey) && e.key === 'd' && $('#skylearn-license-key').is(':visible')) {
+                e.preventDefault();
+                var firstDemoKey = $('.skylearn-billing-demo-keys code').first().text();
+                if (firstDemoKey) {
+                    $('#skylearn-license-key').val(firstDemoKey).focus();
+                    showMessage('info', 'Demo license key inserted. Press Enter to activate.');
+                }
+            }
         });
     });
     
@@ -123,7 +194,15 @@
      */
     function showMessage(type, message) {
         var $container = $('#skylearn-license-messages');
-        var alertClass = type === 'success' ? 'notice-success' : 'notice-error';
+        var alertClass = 'notice-info'; // default
+        
+        if (type === 'success') {
+            alertClass = 'notice-success';
+        } else if (type === 'error') {
+            alertClass = 'notice-error';
+        } else if (type === 'warning') {
+            alertClass = 'notice-warning';
+        }
         
         var html = '<div class="notice ' + alertClass + ' is-dismissible">' +
                    '<p>' + message + '</p>' +
@@ -139,12 +218,15 @@
             $(this).parent().fadeOut();
         });
         
-        // Auto-dismiss success messages after 5 seconds
-        if (type === 'success') {
+        // Auto-dismiss success and info messages after 5 seconds
+        if (type === 'success' || type === 'info') {
             setTimeout(function() {
                 $container.find('.notice').fadeOut();
             }, 5000);
         }
+        
+        // Scroll to message if it's not visible
+        $container[0].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
     
     /**

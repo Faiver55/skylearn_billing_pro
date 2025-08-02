@@ -1860,3 +1860,166 @@
         align-self: flex-start;
     }
 }
+
+/* Demo License Keys Styling */
+.skylearn-billing-demo-keys {
+    margin-top: 24px;
+    padding: 20px;
+    background: var(--skylearn-light-gray);
+    border: 1px solid var(--skylearn-border);
+    border-radius: 8px;
+}
+
+.skylearn-billing-demo-keys h4 {
+    margin: 0 0 16px 0;
+    color: var(--skylearn-primary);
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.demo-keys-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.demo-key-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 12px;
+    background: var(--skylearn-white);
+    border: 1px solid var(--skylearn-border);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.demo-key-item:hover {
+    border-color: var(--skylearn-accent);
+    box-shadow: 0 2px 8px var(--skylearn-shadow);
+    transform: translateY(-1px);
+}
+
+.demo-key-item code {
+    font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--skylearn-primary);
+    background: transparent;
+    padding: 0;
+    border: none;
+    margin: 0;
+}
+
+.demo-key-item.demo-key-copied {
+    border-color: var(--skylearn-success);
+    background: rgba(40, 167, 69, 0.05);
+}
+
+.demo-key-item.demo-key-copied code {
+    color: var(--skylearn-success);
+}
+
+.demo-key-label {
+    font-size: 12px;
+    color: var(--skylearn-medium-gray);
+    font-weight: 500;
+}
+
+.skylearn-billing-demo-keys .description {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--skylearn-medium-gray);
+}
+
+.skylearn-billing-demo-keys .description strong {
+    color: var(--skylearn-primary);
+}
+
+/* License form improvements */
+.skylearn-billing-license-form .skylearn-billing-form-group {
+    margin-bottom: 20px;
+}
+
+.skylearn-billing-license-form .skylearn-billing-input {
+    width: 100%;
+    max-width: 400px;
+    padding: 12px 16px;
+    border: 2px solid var(--skylearn-border);
+    border-radius: 6px;
+    font-size: 14px;
+    transition: border-color 0.2s ease;
+}
+
+.skylearn-billing-license-form .skylearn-billing-input:focus {
+    outline: none;
+    border-color: var(--skylearn-primary);
+    box-shadow: 0 0 0 3px rgba(24, 49, 83, 0.1);
+}
+
+/* Button loading state improvements */
+.skylearn-billing-btn .skylearn-billing-btn-loading {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.skylearn-billing-btn .skylearn-billing-btn-loading .dashicons {
+    animation: skylearn-spin 1s linear infinite;
+}
+
+@keyframes skylearn-spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Message container improvements */
+#skylearn-license-messages {
+    margin-bottom: 20px;
+}
+
+#skylearn-license-messages .notice {
+    margin: 0 0 16px 0;
+    padding: 12px 16px;
+    border-left: 4px solid;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px var(--skylearn-shadow);
+}
+
+#skylearn-license-messages .notice-info {
+    border-left-color: #0073aa;
+    background: #f7fcfe;
+}
+
+#skylearn-license-messages .notice-success {
+    border-left-color: var(--skylearn-success);
+    background: #f0f9f0;
+}
+
+#skylearn-license-messages .notice-error {
+    border-left-color: #dc3545;
+    background: #fdf2f2;
+}
+
+#skylearn-license-messages .notice-warning {
+    border-left-color: var(--skylearn-warning);
+    background: #fffbf0;
+}
+
+/* Responsive demo keys */
+@media (max-width: 768px) {
+    .demo-keys-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .skylearn-billing-demo-keys {
+        padding: 16px;
+    }
+    
+    .skylearn-billing-license-form .skylearn-billing-input {
+        max-width: 100%;
+    }
+}

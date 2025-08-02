@@ -138,6 +138,33 @@ class SkyLearn_Billing_Pro_Licensing_Manager {
     }
     
     /**
+     * Check if current license has access to a specific tier
+     *
+     * @param string $required_tier
+     * @return bool
+     */
+    public function has_tier($required_tier) {
+        // If license is not active, only free tier is available
+        if (!$this->is_license_active()) {
+            return $required_tier === self::TIER_FREE;
+        }
+        
+        $current_tier = $this->get_current_tier();
+        
+        // Tier hierarchy: free < pro < pro_plus
+        $tier_hierarchy = array(
+            self::TIER_FREE => 0,
+            self::TIER_PRO => 1,
+            self::TIER_PRO_PLUS => 2
+        );
+        
+        $current_level = isset($tier_hierarchy[$current_tier]) ? $tier_hierarchy[$current_tier] : 0;
+        $required_level = isset($tier_hierarchy[$required_tier]) ? $tier_hierarchy[$required_tier] : 0;
+        
+        return $current_level >= $required_level;
+    }
+    
+    /**
      * Get tier display name
      *
      * @param string $tier
@@ -187,9 +214,13 @@ class SkyLearn_Billing_Pro_Licensing_Manager {
      */
     public function validate_license($license_key) {
         // Sanitize the license key
-        $license_key = sanitize_text_field($license_key);
+        $license_key = sanitize_text_field(trim($license_key));
+        
+        // Log license validation attempt
+        $this->log_license_attempt($license_key, 'validation_started');
         
         if (empty($license_key)) {
+            $this->log_license_attempt($license_key, 'empty_key');
             return array(
                 'success' => false,
                 'message' => __('Please enter a license key.', 'skylearn-billing-pro')
@@ -213,6 +244,8 @@ class SkyLearn_Billing_Pro_Licensing_Manager {
             
             update_option(self::LICENSE_OPTION_NAME, $this->license_data);
             
+            $this->log_license_attempt($license_key, 'validation_success', $mock_response['tier']);
+            
             return array(
                 'success' => true,
                 'message' => sprintf(__('License activated successfully! You now have access to %s features.', 'skylearn-billing-pro'), $this->get_tier_display_name($mock_response['tier'])),
@@ -220,6 +253,7 @@ class SkyLearn_Billing_Pro_Licensing_Manager {
             );
         }
         
+        $this->log_license_attempt($license_key, 'validation_failed', null, $mock_response['message']);
         return $mock_response;
     }
     
@@ -229,6 +263,11 @@ class SkyLearn_Billing_Pro_Licensing_Manager {
      * @return array
      */
     public function deactivate_license() {
+        $old_key = $this->license_data['license_key'];
+        $old_tier = $this->license_data['tier'];
+        
+        $this->log_license_attempt($old_key, 'deactivation_started', $old_tier);
+        
         $this->license_data = array(
             'license_key' => '',
             'tier' => self::TIER_FREE,
@@ -240,6 +279,8 @@ class SkyLearn_Billing_Pro_Licensing_Manager {
         );
         
         update_option(self::LICENSE_OPTION_NAME, $this->license_data);
+        
+        $this->log_license_attempt($old_key, 'deactivation_success', $old_tier);
         
         return array(
             'success' => true,
@@ -254,6 +295,9 @@ class SkyLearn_Billing_Pro_Licensing_Manager {
      * @return array
      */
     private function mock_license_validation($license_key) {
+        // Normalize the license key for comparison
+        $normalized_key = strtoupper(trim($license_key));
+        
         // Demo license keys for testing
         $demo_licenses = array(
             'SKYLRN-PRO-DEMO-2024' => array(
@@ -264,23 +308,42 @@ class SkyLearn_Billing_Pro_Licensing_Manager {
                 'tier' => self::TIER_PRO_PLUS,
                 'expires' => date('Y-m-d', strtotime('+1 year'))
             ),
+            'SKYLEARN-PRO-DEMO-2024' => array(
+                'tier' => self::TIER_PRO,
+                'expires' => date('Y-m-d', strtotime('+1 year'))
+            ),
+            'SKYLEARN-PLUS-DEMO-2024' => array(
+                'tier' => self::TIER_PRO_PLUS,
+                'expires' => date('Y-m-d', strtotime('+1 year'))
+            ),
             'SKYLRN-EXPIRED-DEMO' => array(
                 'tier' => self::TIER_PRO,
                 'expires' => date('Y-m-d', strtotime('-1 day'))
+            ),
+            // Additional demo keys for testing
+            'DEMO-PRO-2024' => array(
+                'tier' => self::TIER_PRO,
+                'expires' => date('Y-m-d', strtotime('+6 months'))
+            ),
+            'DEMO-PLUS-2024' => array(
+                'tier' => self::TIER_PRO_PLUS,
+                'expires' => date('Y-m-d', strtotime('+6 months'))
             )
         );
         
-        if (isset($demo_licenses[$license_key])) {
-            $license_info = $demo_licenses[$license_key];
+        if (isset($demo_licenses[$normalized_key])) {
+            $license_info = $demo_licenses[$normalized_key];
             
             // Check if expired
             if (strtotime($license_info['expires']) < time()) {
+                $this->log_license_attempt($license_key, 'expired_demo_key');
                 return array(
                     'success' => false,
-                    'message' => __('This license key has expired. Please renew your license.', 'skylearn-billing-pro')
+                    'message' => __('This demo license key has expired. Please use a current demo key or purchase a license.', 'skylearn-billing-pro')
                 );
             }
             
+            $this->log_license_attempt($license_key, 'valid_demo_key', $license_info['tier']);
             return array(
                 'success' => true,
                 'tier' => $license_info['tier'],
@@ -288,9 +351,19 @@ class SkyLearn_Billing_Pro_Licensing_Manager {
             );
         }
         
+        // Check for common demo key patterns that might be variations
+        if (preg_match('/^(SKYLRN|SKYLEARN).*DEMO.*2024$/i', $normalized_key)) {
+            $this->log_license_attempt($license_key, 'demo_key_pattern_match_failed');
+            return array(
+                'success' => false,
+                'message' => __('Demo license key format recognized but not valid. Please use one of the provided demo keys.', 'skylearn-billing-pro')
+            );
+        }
+        
+        $this->log_license_attempt($license_key, 'invalid_key');
         return array(
             'success' => false,
-            'message' => __('Invalid license key. Please check your key and try again.', 'skylearn-billing-pro')
+            'message' => __('Invalid license key. Please check your key and try again, or use one of the demo keys for testing.', 'skylearn-billing-pro')
         );
     }
     
@@ -368,6 +441,95 @@ class SkyLearn_Billing_Pro_Licensing_Manager {
             default:
                 return $base_url;
         }
+    }
+    
+    /**
+     * Log license validation attempts for debugging
+     *
+     * @param string $license_key
+     * @param string $action
+     * @param string $tier
+     * @param string $message
+     */
+    private function log_license_attempt($license_key, $action, $tier = null, $message = null) {
+        // Mask the license key for security (show only first 4 and last 4 characters)
+        $masked_key = '';
+        if (strlen($license_key) > 8) {
+            $masked_key = substr($license_key, 0, 4) . '****' . substr($license_key, -4);
+        } else {
+            $masked_key = str_repeat('*', strlen($license_key));
+        }
+        
+        $log_entry = array(
+            'timestamp' => current_time('mysql'),
+            'masked_key' => $masked_key,
+            'action' => $action,
+            'tier' => $tier,
+            'message' => $message,
+            'user_id' => get_current_user_id(),
+            'ip_address' => $this->get_client_ip()
+        );
+        
+        // Store in transient for admin review
+        $log_key = 'skylearn_billing_license_log';
+        $log = get_transient($log_key) ?: array();
+        $log[] = $log_entry;
+        
+        // Keep only last 50 entries
+        $log = array_slice($log, -50);
+        set_transient($log_key, $log, WEEK_IN_SECONDS);
+        
+        // Also log to WordPress debug log if WP_DEBUG is enabled
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            error_log(sprintf(
+                'SkyLearn Billing Pro License: %s - Key: %s, Action: %s, Tier: %s, Message: %s',
+                current_time('mysql'),
+                $masked_key,
+                $action,
+                $tier ?: 'N/A',
+                $message ?: 'N/A'
+            ));
+        }
+    }
+    
+    /**
+     * Get client IP address
+     *
+     * @return string
+     */
+    private function get_client_ip() {
+        $ip_keys = array('HTTP_CF_CONNECTING_IP', 'HTTP_CLIENT_IP', 'HTTP_X_FORWARDED_FOR', 'HTTP_X_FORWARDED', 'HTTP_FORWARDED_FOR', 'HTTP_FORWARDED', 'REMOTE_ADDR');
+        
+        foreach ($ip_keys as $key) {
+            if (array_key_exists($key, $_SERVER) === true) {
+                $ip = $_SERVER[$key];
+                if (strpos($ip, ',') !== false) {
+                    $ip = explode(',', $ip)[0];
+                }
+                $ip = trim($ip);
+                if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
+                    return $ip;
+                }
+            }
+        }
+        
+        return isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : 'unknown';
+    }
+    
+    /**
+     * Get license validation log
+     *
+     * @return array
+     */
+    public function get_license_log() {
+        return get_transient('skylearn_billing_license_log') ?: array();
+    }
+    
+    /**
+     * Clear license validation log
+     */
+    public function clear_license_log() {
+        delete_transient('skylearn_billing_license_log');
     }
 }
 
