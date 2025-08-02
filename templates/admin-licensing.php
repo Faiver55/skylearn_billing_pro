@@ -154,11 +154,29 @@ $is_active = $licensing_manager->is_license_active();
                         <!-- Demo License Keys -->
                         <div class="skylearn-billing-demo-keys">
                             <h4><?php esc_html_e('Demo License Keys (for testing):', 'skylearn-billing-pro'); ?></h4>
-                            <ul>
-                                <li><code>SKYLRN-PRO-DEMO-2024</code> - <?php esc_html_e('Pro Plan', 'skylearn-billing-pro'); ?></li>
-                                <li><code>SKYLRN-PLUS-DEMO-2024</code> - <?php esc_html_e('Pro Plus Plan', 'skylearn-billing-pro'); ?></li>
-                            </ul>
-                            <p class="description"><?php esc_html_e('Use these demo keys to test premium features.', 'skylearn-billing-pro'); ?></p>
+                            <div class="demo-keys-grid">
+                                <div class="demo-key-item">
+                                    <code>SKYLRN-PRO-DEMO-2024</code>
+                                    <span class="demo-key-label"><?php esc_html_e('Pro Plan', 'skylearn-billing-pro'); ?></span>
+                                </div>
+                                <div class="demo-key-item">
+                                    <code>SKYLRN-PLUS-DEMO-2024</code>
+                                    <span class="demo-key-label"><?php esc_html_e('Pro Plus Plan', 'skylearn-billing-pro'); ?></span>
+                                </div>
+                                <div class="demo-key-item">
+                                    <code>DEMO-PRO-2024</code>
+                                    <span class="demo-key-label"><?php esc_html_e('Pro Plan (6 months)', 'skylearn-billing-pro'); ?></span>
+                                </div>
+                                <div class="demo-key-item">
+                                    <code>DEMO-PLUS-2024</code>
+                                    <span class="demo-key-label"><?php esc_html_e('Pro Plus Plan (6 months)', 'skylearn-billing-pro'); ?></span>
+                                </div>
+                            </div>
+                            <p class="description">
+                                <?php esc_html_e('Click any demo key to automatically insert it into the license field. Use these keys to test premium features.', 'skylearn-billing-pro'); ?>
+                                <br>
+                                <strong><?php esc_html_e('Tip:', 'skylearn-billing-pro'); ?></strong> <?php esc_html_e('Press Ctrl+D (or Cmd+D on Mac) for quick demo key insertion.', 'skylearn-billing-pro'); ?>
+                            </p>
                         </div>
                     <?php endif; ?>
                 </div>
