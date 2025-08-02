@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SkyLearn Billing Pro - LMS Integration (Fixed)</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f1f1f1;
+            line-height: 1.6;
+        }
+        .wrap { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .skylearn-billing-header {
+            background: white;
+            padding: 30px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .skylearn-billing-title {
+            color: #2271b1;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .skylearn-billing-subtitle { color: #666; margin-top: 5px; }
+        .skylearn-billing-container {
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            gap: 20px;
+        }
+        .skylearn-billing-sidebar {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            height: fit-content;
+        }
+        .skylearn-billing-nav-list { list-style: none; }
+        .skylearn-billing-nav-item {
+            margin-bottom: 8px;
+        }
+        .skylearn-billing-nav-link {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px;
+            text-decoration: none;
+            color: #666;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+        .skylearn-billing-nav-item.active .skylearn-billing-nav-link {
+            background: #2271b1;
+            color: white;
+        }
+        .skylearn-billing-nav-link:hover {
+            background: #f0f0f0;
+        }
+        .skylearn-billing-nav-item.active .skylearn-billing-nav-link:hover {
+            background: #1d5f96;
+        }
+        .skylearn-billing-content {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .skylearn-billing-card {
+            margin-bottom: 20px;
+        }
+        .skylearn-billing-card-header {
+            background: #f8f9fa;
+            padding: 20px;
+            border-bottom: 1px solid #e1e5e9;
+        }
+        .skylearn-billing-card-header h3 {
+            color: #2271b1;
+            margin-bottom: 5px;
+        }
+        .skylearn-billing-card-body { padding: 20px; }
+        .skylearn-billing-form-group {
+            margin-bottom: 20px;
+        }
+        .skylearn-billing-form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #333;
+        }
+        .skylearn-billing-form-group input,
+        .skylearn-billing-form-group select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .skylearn-billing-form-group input:focus,
+        .skylearn-billing-form-group select:focus {
+            outline: none;
+            border-color: #2271b1;
+            box-shadow: 0 0 0 2px rgba(34, 113, 177, 0.1);
+        }
+        .description {
+            font-size: 13px;
+            color: #666;
+            margin-top: 5px;
+        }
+        .skylearn-billing-btn {
+            background: #2271b1;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+        .skylearn-billing-btn:hover { background: #1d5f96; }
+        .skylearn-billing-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .notice {
+            padding: 12px 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            border-left: 4px solid;
+        }
+        .notice-success {
+            background: #d1fae5;
+            border-left-color: #10b981;
+            color: #065f46;
+        }
+        .notice-error {
+            background: #fee2e2;
+            border-left-color: #ef4444;
+            color: #991b1b;
+        }
+        .notice-warning {
+            background: #fef3c7;
+            border-left-color: #f59e0b;
+            color: #92400e;
+        }
+        .dashicons {
+            width: 20px;
+            height: 20px;
+            display: inline-block;
+            vertical-align: middle;
+        }
+        .dashicons-welcome-learn-more::before { content: "🎓"; }
+        .dashicons-admin-links::before { content: "🔗"; }
+        .dashicons-admin-settings::before { content: "⚙️"; }
+        .dashicons-rest-api::before { content: "🔌"; }
+        .dashicons-list-view::before { content: "📋"; }
+        .dashicons-arrow-left-alt::before { content: "←"; }
+        .skylearn-billing-form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .demo-section {
+            background: #fffbeb;
+            border: 1px solid #f59e0b;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .demo-section h4 {
+            color: #92400e;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .demo-section h4::before { content: "🧪"; }
+        @media (max-width: 768px) {
+            .skylearn-billing-container {
+                grid-template-columns: 1fr;
+            }
+            .skylearn-billing-form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <div class="skylearn-billing-header">
+            <h1 class="skylearn-billing-title">
+                <span class="dashicons dashicons-welcome-learn-more"></span>
+                LMS Integration (Database Fixes Applied)
+            </h1>
+            <p class="skylearn-billing-subtitle">
+                Manage Learning Management System integration and course mappings with improved error handling
+            </p>
+        </div>
+
+        <div class="skylearn-billing-container">
+            <!-- Sidebar Navigation -->
+            <div class="skylearn-billing-sidebar">
+                <nav class="skylearn-billing-nav">
+                    <ul class="skylearn-billing-nav-list">
+                        <li class="skylearn-billing-nav-item">
+                            <a href="#" class="skylearn-billing-nav-link">
+                                <span class="dashicons dashicons-admin-settings"></span>
+                                LMS Settings
+                            </a>
+                        </li>
+                        <li class="skylearn-billing-nav-item active">
+                            <a href="#" class="skylearn-billing-nav-link">
+                                <span class="dashicons dashicons-admin-links"></span>
+                                Course Mapping
+                            </a>
+                        </li>
+                        <li class="skylearn-billing-nav-item">
+                            <a href="#" class="skylearn-billing-nav-link">
+                                <span class="dashicons dashicons-rest-api"></span>
+                                Webhook Settings
+                            </a>
+                        </li>
+                        <li class="skylearn-billing-nav-item">
+                            <a href="#" class="skylearn-billing-nav-link">
+                                <span class="dashicons dashicons-list-view"></span>
+                                Enrollment Log
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+
+            <!-- Main Content Area -->
+            <div class="skylearn-billing-content">
+                
+                <!-- Demo Notice -->
+                <div class="demo-section">
+                    <h4>Database Saving Fixes Demo</h4>
+                    <p>This interface now includes comprehensive database error handling, input validation, and user-friendly error messages. Try the examples below to see the improvements.</p>
+                </div>
+
+                <!-- Success Message Example -->
+                <div class="notice notice-success">
+                    <strong>✅ Course mapping saved successfully!</strong> Product ID "stripe_prod_abc123" has been mapped to course "Advanced WordPress Development".
+                </div>
+
+                <!-- Add New Mapping Section -->
+                <div class="skylearn-billing-card">
+                    <div class="skylearn-billing-card-header">
+                        <h3>Add Course Mapping</h3>
+                        <p>Map payment processor product IDs to LMS courses for automatic enrollment.</p>
+                    </div>
+                    <div class="skylearn-billing-card-body">
+                        <form>
+                            <div class="skylearn-billing-form-row">
+                                <div class="skylearn-billing-form-group">
+                                    <label for="product_id">Product ID <span style="color: red;">*</span></label>
+                                    <input type="text" id="product_id" name="product_id" 
+                                           placeholder="e.g., stripe_prod_123, ls_variant_456" 
+                                           value="stripe_prod_wordpress_course" required>
+                                    <p class="description">Enter the product ID from your payment processor (Stripe, Lemon Squeezy, etc.).</p>
+                                </div>
+                                
+                                <div class="skylearn-billing-form-group">
+                                    <label for="course_id">Course <span style="color: red;">*</span></label>
+                                    <select id="course_id" name="course_id" required>
+                                        <option value="">Select a course...</option>
+                                        <option value="123" selected>Advanced WordPress Development (ID: 123)</option>
+                                        <option value="124">React for Beginners (ID: 124)</option>
+                                        <option value="125">PHP Mastery Course (ID: 125)</option>
+                                    </select>
+                                    <p class="description">Select from 3 available courses.</p>
+                                </div>
+                            </div>
+                            
+                            <div class="skylearn-billing-form-row">
+                                <div class="skylearn-billing-form-group">
+                                    <label for="trigger_type">Enrollment Trigger</label>
+                                    <select id="trigger_type" name="trigger_type">
+                                        <option value="payment" selected>Payment Completed</option>
+                                        <option value="webhook">Webhook Received</option>
+                                        <option value="manual">Manual Enrollment</option>
+                                        <option value="any">Any Event</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="skylearn-billing-form-group">
+                                    <label>&nbsp;</label>
+                                    <button type="button" class="skylearn-billing-btn" onclick="simulateSave()">
+                                        Add Mapping
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Error Examples Section -->
+                <div class="skylearn-billing-card">
+                    <div class="skylearn-billing-card-header">
+                        <h3>Error Handling Examples</h3>
+                        <p>Click the buttons below to see examples of the improved error messages.</p>
+                    </div>
+                    <div class="skylearn-billing-card-body">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-bottom: 20px;">
+                            <button type="button" class="skylearn-billing-btn" onclick="showValidationError()">
+                                Show Validation Error
+                            </button>
+                            <button type="button" class="skylearn-billing-btn" onclick="showDatabaseError()">
+                                Show Database Error
+                            </button>
+                            <button type="button" class="skylearn-billing-btn" onclick="showPermissionError()">
+                                Show Permission Error
+                            </button>
+                            <button type="button" class="skylearn-billing-btn" onclick="showDuplicateError()">
+                                Show Duplicate Error
+                            </button>
+                        </div>
+                        
+                        <div id="error-display" style="min-height: 60px;">
+                            <p style="color: #666; font-style: italic;">Click a button above to see example error messages...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function simulateSave() {
+            const errorDisplay = document.getElementById('error-display');
+            errorDisplay.innerHTML = '<div class="notice notice-success"><strong>✅ Course mapping saved successfully!</strong> Product ID "stripe_prod_wordpress_course" has been mapped to course "Advanced WordPress Development".</div>';
+        }
+
+        function showValidationError() {
+            const errorDisplay = document.getElementById('error-display');
+            errorDisplay.innerHTML = '<div class="notice notice-error"><strong>❌ Validation Error:</strong> Product ID must be at least 3 characters long.</div>';
+        }
+
+        function showDatabaseError() {
+            const errorDisplay = document.getElementById('error-display');
+            errorDisplay.innerHTML = '<div class="notice notice-error"><strong>❌ Database Error:</strong> Failed to save course mapping: Database temporarily busy. Please try again in a moment.</div>';
+        }
+
+        function showPermissionError() {
+            const errorDisplay = document.getElementById('error-display');
+            errorDisplay.innerHTML = '<div class="notice notice-error"><strong>❌ Permission Error:</strong> Failed to save course mapping: Database permission error. Please contact your administrator.</div>';
+        }
+
+        function showDuplicateError() {
+            const errorDisplay = document.getElementById('error-display');
+            errorDisplay.innerHTML = '<div class="notice notice-warning"><strong>⚠️ Duplicate Mapping:</strong> A mapping for this product ID already exists.</div>';
+        }
+    </script>
+</body>
+</html>

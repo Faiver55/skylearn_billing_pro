@@ -625,13 +625,51 @@ Best regards,
      * Save webhook settings
      *
      * @param array $settings Webhook settings
-     * @return bool Success status
+     * @return bool|WP_Error Success status or WP_Error on failure
      */
     public function save_webhook_settings($settings) {
-        $options = get_option('skylearn_billing_pro_options', array());
-        $options['webhook_settings'] = $settings;
-        
-        return update_option('skylearn_billing_pro_options', $options);
+        try {
+            $options = get_option('skylearn_billing_pro_options', array());
+            $current_settings = isset($options['webhook_settings']) ? $options['webhook_settings'] : array();
+            
+            // Check if settings have actually changed
+            if ($current_settings === $settings) {
+                // No change needed, but this is still successful
+                return true;
+            }
+            
+            $options['webhook_settings'] = $settings;
+            
+            $result = update_option('skylearn_billing_pro_options', $options);
+            
+            if ($result === false) {
+                global $wpdb;
+                $last_error = $wpdb->last_error;
+                
+                error_log('SkyLearn Billing Pro: Failed to save webhook settings - Error: ' . $last_error);
+                
+                if (!empty($last_error)) {
+                    return new WP_Error('save_failed', sprintf(__('Failed to save webhook settings: Database error (%s).', 'skylearn-billing-pro'), esc_html($last_error)));
+                } else {
+                    return new WP_Error('save_failed', __('Failed to save webhook settings: WordPress unable to update options.', 'skylearn-billing-pro'));
+                }
+            }
+            
+            // Verify the save was successful
+            $verification_options = get_option('skylearn_billing_pro_options', array());
+            if (!isset($verification_options['webhook_settings']) || 
+                $verification_options['webhook_settings'] !== $settings) {
+                
+                error_log('SkyLearn Billing Pro: Webhook settings save verification failed');
+                return new WP_Error('save_failed', __('Failed to save webhook settings: Data verification failed.', 'skylearn-billing-pro'));
+            }
+            
+            return true;
+            
+        } catch (Exception $e) {
+            error_log('SkyLearn Billing Pro: Exception saving webhook settings - ' . $e->getMessage());
+            return new WP_Error('exception', __('An unexpected error occurred while saving webhook settings.', 'skylearn-billing-pro'));
+        }
     }
 }
 

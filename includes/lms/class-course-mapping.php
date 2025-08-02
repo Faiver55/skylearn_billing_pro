@@ -72,6 +72,12 @@ class SkyLearn_Billing_Pro_Course_Mapping {
                 return $validation_result;
             }
             
+            // Additional data integrity checks
+            $integrity_result = $this->validate_data_integrity($product_id, $course_id);
+            if (is_wp_error($integrity_result)) {
+                return $integrity_result;
+            }
+            
             $options = get_option('skylearn_billing_pro_options', array());
             
             if (!isset($options['course_mappings'])) {
@@ -106,10 +112,76 @@ class SkyLearn_Billing_Pro_Course_Mapping {
             // Save mapping (using product_id as key for easy lookup)
             $options['course_mappings'][$product_id] = $mapping_data;
             
+            // Get current options to compare and detect if update is actually needed
+            $current_options = get_option('skylearn_billing_pro_options', array());
+            $current_mappings = isset($current_options['course_mappings']) ? $current_options['course_mappings'] : array();
+            
+            // Check if this is actually a new mapping or if data has changed
+            $is_new_mapping = !isset($current_mappings[$product_id]);
+            $data_changed = $is_new_mapping || ($current_mappings[$product_id] !== $mapping_data);
+            
+            if (!$data_changed) {
+                // Data hasn't changed, but this is still considered a successful operation
+                error_log('SkyLearn Billing Pro: Course mapping for product ' . $product_id . ' already exists with identical data - no update needed');
+                return true;
+            }
+            
+            // Check data size before saving to prevent MySQL max_allowed_packet issues
+            $options_size = strlen(serialize($options));
+            if ($options_size > 1048576) { // 1MB limit to be safe
+                error_log('SkyLearn Billing Pro: Course mapping data size warning - ' . $options_size . ' bytes, ' . count($options['course_mappings']) . ' mappings');
+                
+                if ($options_size > 16777216) { // 16MB - MySQL default max_allowed_packet
+                    return new WP_Error('save_failed', __('Failed to save course mapping: Too much data stored. Please contact support to optimize your data.', 'skylearn-billing-pro'));
+                }
+            }
+            
+            // Attempt to save the options with detailed error logging
             $result = update_option('skylearn_billing_pro_options', $options);
             
-            if (!$result) {
-                return new WP_Error('save_failed', __('Failed to save course mapping to database.', 'skylearn-billing-pro'));
+            if ($result === false) {
+                // Get more specific error information
+                global $wpdb;
+                $last_error = $wpdb->last_error;
+                
+                $error_details = array(
+                    'wpdb_error' => $last_error,
+                    'product_id' => $product_id,
+                    'course_id' => $course_id,
+                    'data_size' => strlen(serialize($options)),
+                    'mapping_count' => count($options['course_mappings'])
+                );
+                
+                error_log('SkyLearn Billing Pro: Failed to save course mapping to database - Details: ' . json_encode($error_details));
+                
+                // Try to determine the specific cause of failure
+                if (!empty($last_error)) {
+                    if (strpos($last_error, 'max_allowed_packet') !== false) {
+                        return new WP_Error('save_failed', __('Failed to save course mapping: Data too large for database. Please contact support.', 'skylearn-billing-pro'));
+                    } elseif (strpos($last_error, 'Deadlock') !== false) {
+                        return new WP_Error('save_failed', __('Failed to save course mapping: Database temporarily busy. Please try again in a moment.', 'skylearn-billing-pro'));
+                    } elseif (strpos($last_error, 'Access denied') !== false || strpos($last_error, 'permission') !== false) {
+                        return new WP_Error('save_failed', __('Failed to save course mapping: Database permission error. Please contact your administrator.', 'skylearn-billing-pro'));
+                    } else {
+                        return new WP_Error('save_failed', sprintf(__('Failed to save course mapping: Database error (%s). Please contact support.', 'skylearn-billing-pro'), esc_html($last_error)));
+                    }
+                } else {
+                    // Generic failure - could be a WordPress issue
+                    return new WP_Error('save_failed', __('Failed to save course mapping: WordPress unable to update options. Please check your database connection and try again.', 'skylearn-billing-pro'));
+                }
+            }
+            
+            // Verify the save was successful by reading it back
+            $verification_options = get_option('skylearn_billing_pro_options', array());
+            if (!isset($verification_options['course_mappings'][$product_id])) {
+                error_log('SkyLearn Billing Pro: Course mapping save verification failed - data not found after save');
+                return new WP_Error('save_failed', __('Failed to save course mapping: Data verification failed. Please try again or contact support.', 'skylearn-billing-pro'));
+            }
+            
+            // Additional verification: check if the course_id matches
+            if ($verification_options['course_mappings'][$product_id]['course_id'] != $course_id) {
+                error_log('SkyLearn Billing Pro: Course mapping save verification failed - course ID mismatch');
+                return new WP_Error('save_failed', __('Failed to save course mapping: Data verification failed. Please try again or contact support.', 'skylearn-billing-pro'));
             }
             
             // Log successful mapping creation
@@ -129,6 +201,41 @@ class SkyLearn_Billing_Pro_Course_Mapping {
             error_log('SkyLearn Billing Pro: Error saving course mapping - ' . $e->getMessage());
             return new WP_Error('exception', __('An unexpected error occurred while saving the course mapping.', 'skylearn-billing-pro'));
         }
+    }
+    
+    /**
+     * Validate data integrity for course mapping
+     *
+     * @param string $product_id Product ID
+     * @param int $course_id Course ID
+     * @return bool|WP_Error True if valid, WP_Error if invalid
+     */
+    private function validate_data_integrity($product_id, $course_id) {
+        // Check if we have too many mappings (performance consideration)
+        $current_options = get_option('skylearn_billing_pro_options', array());
+        $current_mappings = isset($current_options['course_mappings']) ? $current_options['course_mappings'] : array();
+        
+        if (count($current_mappings) >= 1000) {
+            return new WP_Error('too_many_mappings', __('Cannot create more course mappings. Maximum limit of 1000 mappings reached. Please contact support.', 'skylearn-billing-pro'));
+        }
+        
+        // Check for potential data corruption
+        if (isset($current_mappings[$product_id]) && !is_array($current_mappings[$product_id])) {
+            error_log('SkyLearn Billing Pro: Data corruption detected in course mappings for product: ' . $product_id);
+            return new WP_Error('data_corruption', __('Data corruption detected in existing mappings. Please contact support.', 'skylearn-billing-pro'));
+        }
+        
+        // Validate product ID format (basic sanitization check)
+        if ($product_id !== sanitize_text_field($product_id)) {
+            return new WP_Error('invalid_product_format', __('Product ID contains invalid characters.', 'skylearn-billing-pro'));
+        }
+        
+        // Validate course ID is within reasonable bounds
+        if ($course_id < 1 || $course_id > 999999999) {
+            return new WP_Error('invalid_course_range', __('Course ID is outside the valid range.', 'skylearn-billing-pro'));
+        }
+        
+        return true;
     }
     
     /**
@@ -171,18 +278,51 @@ class SkyLearn_Billing_Pro_Course_Mapping {
      * Delete course mapping
      *
      * @param string $product_id Product ID
-     * @return bool Success status
+     * @return bool|WP_Error Success status or WP_Error on failure
      */
     public function delete_course_mapping($product_id) {
-        $options = get_option('skylearn_billing_pro_options', array());
-        
-        if (!isset($options['course_mappings'][$product_id])) {
-            return false;
+        try {
+            $options = get_option('skylearn_billing_pro_options', array());
+            
+            if (!isset($options['course_mappings'][$product_id])) {
+                // Mapping doesn't exist - this could be considered successful deletion
+                return true;
+            }
+            
+            // Store the mapping being deleted for logging
+            $deleted_mapping = $options['course_mappings'][$product_id];
+            
+            unset($options['course_mappings'][$product_id]);
+            
+            $result = update_option('skylearn_billing_pro_options', $options);
+            
+            if ($result === false) {
+                // Get more specific error information
+                global $wpdb;
+                $last_error = $wpdb->last_error;
+                
+                error_log('SkyLearn Billing Pro: Failed to delete course mapping from database - Product ID: ' . $product_id . ', Error: ' . $last_error);
+                
+                if (!empty($last_error)) {
+                    return new WP_Error('delete_failed', sprintf(__('Failed to delete course mapping: Database error (%s).', 'skylearn-billing-pro'), esc_html($last_error)));
+                } else {
+                    return new WP_Error('delete_failed', __('Failed to delete course mapping: WordPress unable to update options.', 'skylearn-billing-pro'));
+                }
+            }
+            
+            // Verify the deletion was successful
+            $verification_options = get_option('skylearn_billing_pro_options', array());
+            if (isset($verification_options['course_mappings'][$product_id])) {
+                error_log('SkyLearn Billing Pro: Course mapping deletion verification failed - data still exists after delete');
+                return new WP_Error('delete_failed', __('Failed to delete course mapping: Data verification failed.', 'skylearn-billing-pro'));
+            }
+            
+            return true;
+            
+        } catch (Exception $e) {
+            error_log('SkyLearn Billing Pro: Exception during course mapping deletion - ' . $e->getMessage());
+            return new WP_Error('exception', __('An unexpected error occurred while deleting the course mapping.', 'skylearn-billing-pro'));
         }
-        
-        unset($options['course_mappings'][$product_id]);
-        
-        return update_option('skylearn_billing_pro_options', $options);
     }
     
     /**
@@ -761,7 +901,12 @@ class SkyLearn_Billing_Pro_Course_Mapping {
             if (is_wp_error($result)) {
                 wp_send_json_error(array(
                     'message' => $result->get_error_message(),
-                    'code' => $result->get_error_code()
+                    'code' => $result->get_error_code(),
+                    'details' => array(
+                        'product_id' => $product_id,
+                        'course_id' => $course_id,
+                        'trigger_type' => $trigger_type
+                    )
                 ));
             }
             
@@ -775,9 +920,11 @@ class SkyLearn_Billing_Pro_Course_Mapping {
                     )
                 ));
             } else {
+                // This shouldn't happen with the new logic, but just in case
+                error_log('SkyLearn Billing Pro: Unexpected return value from save_course_mapping: ' . var_export($result, true));
                 wp_send_json_error(array(
                     'message' => __('Failed to save course mapping. Please try again.', 'skylearn-billing-pro'),
-                    'code' => 'save_failed'
+                    'code' => 'unexpected_result'
                 ));
             }
             
@@ -830,7 +977,12 @@ class SkyLearn_Billing_Pro_Course_Mapping {
             
             $result = $this->delete_course_mapping($product_id);
             
-            if ($result) {
+            if (is_wp_error($result)) {
+                wp_send_json_error(array(
+                    'message' => $result->get_error_message(),
+                    'code' => $result->get_error_code()
+                ));
+            } elseif ($result === true) {
                 // Log successful deletion
                 error_log(sprintf(
                     'SkyLearn Billing Pro: Course mapping deleted - Product: %s',
