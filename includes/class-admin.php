@@ -215,6 +215,16 @@ class SkyLearn_Billing_Pro_Admin {
             SKYLEARN_BILLING_PRO_VERSION
         );
         
+        // Enqueue course mapping styles on LMS page
+        if (strpos($hook, 'skylearn-billing-pro-lms') !== false) {
+            wp_enqueue_style(
+                'skylearn-billing-pro-course-mapping',
+                SKYLEARN_BILLING_PRO_PLUGIN_URL . 'assets/css/course-mapping.css',
+                array('skylearn-billing-pro-admin'),
+                SKYLEARN_BILLING_PRO_VERSION
+            );
+        }
+        
         // Enqueue reports styles and scripts if on reports page
         if (strpos($hook, 'skylearn-billing-pro-reports') !== false) {
             wp_enqueue_style(
@@ -256,6 +266,37 @@ class SkyLearn_Billing_Pro_Admin {
             SKYLEARN_BILLING_PRO_VERSION,
             true
         );
+        
+        // Enqueue course mapping scripts on LMS page
+        if (strpos($hook, 'skylearn-billing-pro-lms') !== false) {
+            wp_enqueue_script(
+                'skylearn-billing-pro-course-mapping',
+                SKYLEARN_BILLING_PRO_PLUGIN_URL . 'assets/js/course-mapping.js',
+                array('jquery'),
+                SKYLEARN_BILLING_PRO_VERSION,
+                true
+            );
+            
+            // Localize script with course mapping data
+            wp_localize_script('skylearn-billing-pro-course-mapping', 'skylernCourseMappingData', array(
+                'ajaxUrl' => admin_url('admin-ajax.php'),
+                'nonce' => wp_create_nonce('skylearn_course_mapping_nonce'),
+                'strings' => array(
+                    'saving' => __('Saving...', 'skylearn-billing-pro'),
+                    'deleting' => __('Deleting...', 'skylearn-billing-pro'),
+                    'addMapping' => __('Add Mapping', 'skylearn-billing-pro'),
+                    'delete' => __('Delete', 'skylearn-billing-pro'),
+                    'confirmDelete' => __('Are you sure you want to delete this mapping? This action cannot be undone.', 'skylearn-billing-pro'),
+                    'noCoursesAvailable' => __('No Courses Available', 'skylearn-billing-pro'),
+                    'mappingSaved' => __('Course mapping saved successfully!', 'skylearn-billing-pro'),
+                    'mappingDeleted' => __('Mapping deleted successfully.', 'skylearn-billing-pro'),
+                    'networkError' => __('Network error occurred. Please check your connection and try again.', 'skylearn-billing-pro'),
+                    'permissionDenied' => __('Permission denied. Please refresh the page and try again.', 'skylearn-billing-pro'),
+                    'serverError' => __('Server error occurred. Please contact support if this persists.', 'skylearn-billing-pro'),
+                    'connectionLost' => __('Connection lost. Please check your internet connection.', 'skylearn-billing-pro')
+                )
+            ));
+        }
         
         // Enqueue licensing scripts on license page
         if (strpos($hook, 'skylearn-billing-pro-license') !== false) {

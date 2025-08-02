@@ -471,13 +471,30 @@ function render_webhook_settings_tab($webhook_handler) {
  * Render Enrollment Log tab
  */
 function render_enrollment_log_tab($course_mapping) {
+    // Handle log clearing if requested
+    if (isset($_POST['clear_enrollment_log']) && wp_verify_nonce($_POST['clear_log_nonce'], 'clear_enrollment_log')) {
+        if (current_user_can('manage_options')) {
+            $options = get_option('skylearn_billing_pro_options', array());
+            $options['enrollment_log'] = array();
+            update_option('skylearn_billing_pro_options', $options);
+            echo '<div class="notice notice-success"><p>' . esc_html__('Enrollment log cleared successfully.', 'skylearn-billing-pro') . '</p></div>';
+        }
+    }
+    
     $enrollment_log = $course_mapping->get_enrollment_log(100);
+    $total_entries = count($course_mapping->get_enrollment_log(0)); // Get total count
     ?>
     <div class="skylearn-billing-tab-content">
         <div class="skylearn-billing-card">
             <div class="skylearn-billing-card-header">
                 <h2><?php esc_html_e('Enrollment Log', 'skylearn-billing-pro'); ?></h2>
                 <p><?php esc_html_e('Track all course enrollment activities and their status.', 'skylearn-billing-pro'); ?></p>
+                
+                <?php if ($total_entries > 0): ?>
+                    <div class="skylearn-billing-log-stats">
+                        <p><?php printf(esc_html__('Showing latest %d of %d total entries.', 'skylearn-billing-pro'), min(100, $total_entries), $total_entries); ?></p>
+                    </div>
+                <?php endif; ?>
             </div>
             
             <div class="skylearn-billing-card-body">
@@ -486,10 +503,66 @@ function render_enrollment_log_tab($course_mapping) {
                         <span class="dashicons dashicons-list-view"></span>
                         <h4><?php esc_html_e('No enrollment activity yet', 'skylearn-billing-pro'); ?></h4>
                         <p><?php esc_html_e('Enrollment activities will appear here once users start purchasing courses.', 'skylearn-billing-pro'); ?></p>
+                        <p><small><?php esc_html_e('Activities are logged for payment completions, webhook enrollments, and manual enrollments.', 'skylearn-billing-pro'); ?></small></p>
                     </div>
                 <?php else: ?>
+                    <!-- Quick stats -->
+                    <?php
+                    $successful_enrollments = array_filter($enrollment_log, function($entry) { return $entry['status'] === 'success'; });
+                    $failed_enrollments = array_filter($enrollment_log, function($entry) { return $entry['status'] === 'failed'; });
+                    $payment_triggers = array_filter($enrollment_log, function($entry) { return $entry['trigger'] === 'payment'; });
+                    $webhook_triggers = array_filter($enrollment_log, function($entry) { return $entry['trigger'] === 'webhook'; });
+                    ?>
+                    
+                    <div class="skylearn-billing-log-summary">
+                        <div class="skylearn-billing-stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); margin-bottom: 20px;">
+                            <div class="skylearn-billing-stat-item" style="text-align: center; padding: 15px; background: #f8f9fa; border-radius: 6px;">
+                                <div class="skylearn-billing-stat-number" style="font-size: 24px; font-weight: bold; color: #28a745;"><?php echo count($successful_enrollments); ?></div>
+                                <div class="skylearn-billing-stat-label" style="font-size: 12px; color: #666;"><?php esc_html_e('Successful', 'skylearn-billing-pro'); ?></div>
+                            </div>
+                            <div class="skylearn-billing-stat-item" style="text-align: center; padding: 15px; background: #f8f9fa; border-radius: 6px;">
+                                <div class="skylearn-billing-stat-number" style="font-size: 24px; font-weight: bold; color: #dc3545;"><?php echo count($failed_enrollments); ?></div>
+                                <div class="skylearn-billing-stat-label" style="font-size: 12px; color: #666;"><?php esc_html_e('Failed', 'skylearn-billing-pro'); ?></div>
+                            </div>
+                            <div class="skylearn-billing-stat-item" style="text-align: center; padding: 15px; background: #f8f9fa; border-radius: 6px;">
+                                <div class="skylearn-billing-stat-number" style="font-size: 24px; font-weight: bold; color: #0073aa;"><?php echo count($payment_triggers); ?></div>
+                                <div class="skylearn-billing-stat-label" style="font-size: 12px; color: #666;"><?php esc_html_e('Payment', 'skylearn-billing-pro'); ?></div>
+                            </div>
+                            <div class="skylearn-billing-stat-item" style="text-align: center; padding: 15px; background: #f8f9fa; border-radius: 6px;">
+                                <div class="skylearn-billing-stat-number" style="font-size: 24px; font-weight: bold; color: #6f42c1;"><?php echo count($webhook_triggers); ?></div>
+                                <div class="skylearn-billing-stat-label" style="font-size: 12px; color: #666;"><?php esc_html_e('Webhook', 'skylearn-billing-pro'); ?></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Filter and actions -->
+                    <div class="skylearn-billing-log-actions" style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                        <div class="skylearn-billing-log-filters">
+                            <select id="status-filter" onchange="filterEnrollmentLog()">
+                                <option value=""><?php esc_html_e('All Statuses', 'skylearn-billing-pro'); ?></option>
+                                <option value="success"><?php esc_html_e('Success Only', 'skylearn-billing-pro'); ?></option>
+                                <option value="failed"><?php esc_html_e('Failed Only', 'skylearn-billing-pro'); ?></option>
+                            </select>
+                            <select id="trigger-filter" onchange="filterEnrollmentLog()">
+                                <option value=""><?php esc_html_e('All Triggers', 'skylearn-billing-pro'); ?></option>
+                                <option value="payment"><?php esc_html_e('Payment', 'skylearn-billing-pro'); ?></option>
+                                <option value="webhook"><?php esc_html_e('Webhook', 'skylearn-billing-pro'); ?></option>
+                                <option value="manual"><?php esc_html_e('Manual', 'skylearn-billing-pro'); ?></option>
+                            </select>
+                        </div>
+                        
+                        <?php if (current_user_can('manage_options') && $total_entries > 0): ?>
+                            <form method="post" style="display: inline;" onsubmit="return confirm('<?php esc_js_e('Are you sure you want to clear the enrollment log? This action cannot be undone.', 'skylearn-billing-pro'); ?>');">
+                                <?php wp_nonce_field('clear_enrollment_log', 'clear_log_nonce'); ?>
+                                <button type="submit" name="clear_enrollment_log" class="button button-secondary">
+                                    <?php esc_html_e('Clear Log', 'skylearn-billing-pro'); ?>
+                                </button>
+                            </form>
+                        <?php endif; ?>
+                    </div>
+
                     <div class="skylearn-billing-log-table">
-                        <table class="wp-list-table widefat fixed striped">
+                        <table class="wp-list-table widefat fixed striped" id="enrollment-log-table">
                             <thead>
                                 <tr>
                                     <th><?php esc_html_e('Date', 'skylearn-billing-pro'); ?></th>
@@ -502,39 +575,46 @@ function render_enrollment_log_tab($course_mapping) {
                             </thead>
                             <tbody>
                                 <?php foreach ($enrollment_log as $entry): ?>
-                                    <tr>
+                                    <tr data-status="<?php echo esc_attr($entry['status']); ?>" data-trigger="<?php echo esc_attr($entry['trigger']); ?>">
                                         <td>
-                                            <?php echo esc_html(date_i18n(get_option('date_format') . ' ' . get_option('time_format'), strtotime($entry['timestamp']))); ?>
+                                            <span title="<?php echo esc_attr(date_i18n(get_option('date_format') . ' ' . get_option('time_format'), strtotime($entry['timestamp']))); ?>">
+                                                <?php echo esc_html(date_i18n(get_option('date_format'), strtotime($entry['timestamp']))); ?>
+                                            </span>
+                                            <br><small style="color: #666;"><?php echo esc_html(date_i18n(get_option('time_format'), strtotime($entry['timestamp']))); ?></small>
                                         </td>
                                         <td>
                                             <?php if (!empty($entry['user_email'])): ?>
-                                                <?php echo esc_html($entry['user_email']); ?>
-                                                <br><small>ID: <?php echo esc_html($entry['user_id']); ?></small>
+                                                <strong><?php echo esc_html($entry['user_email']); ?></strong>
+                                                <br><small style="color: #666;">ID: <?php echo esc_html($entry['user_id']); ?></small>
                                             <?php else: ?>
-                                                <?php esc_html_e('User ID:', 'skylearn-billing-pro'); ?> <?php echo esc_html($entry['user_id']); ?>
+                                                <span style="color: #666;"><?php esc_html_e('User ID:', 'skylearn-billing-pro'); ?> <?php echo esc_html($entry['user_id']); ?></span>
                                             <?php endif; ?>
                                         </td>
                                         <td>
                                             <?php if (!empty($entry['course_title'])): ?>
-                                                <?php echo esc_html($entry['course_title']); ?>
-                                                <br><small>ID: <?php echo esc_html($entry['course_id']); ?></small>
+                                                <strong><?php echo esc_html($entry['course_title']); ?></strong>
+                                                <br><small style="color: #666;">ID: <?php echo esc_html($entry['course_id']); ?></small>
                                             <?php else: ?>
-                                                <?php esc_html_e('Course ID:', 'skylearn-billing-pro'); ?> <?php echo esc_html($entry['course_id']); ?>
+                                                <span style="color: #666;"><?php esc_html_e('Course ID:', 'skylearn-billing-pro'); ?> <?php echo esc_html($entry['course_id']); ?></span>
                                             <?php endif; ?>
                                         </td>
                                         <td>
-                                            <code><?php echo esc_html($entry['product_id']); ?></code>
+                                            <code style="background: #f8f9fa; padding: 2px 6px; border-radius: 3px;"><?php echo esc_html($entry['product_id']); ?></code>
                                         </td>
                                         <td>
-                                            <span class="skylearn-billing-badge">
+                                            <span class="skylearn-billing-badge" style="display: inline-block; padding: 4px 8px; font-size: 11px; font-weight: 600; text-transform: uppercase; border-radius: 3px; background: #e9ecef; color: #495057;">
                                                 <?php echo esc_html(ucfirst($entry['trigger'])); ?>
                                             </span>
                                         </td>
                                         <td>
                                             <?php if ($entry['status'] === 'success'): ?>
-                                                <span class="skylearn-billing-status-active"><?php esc_html_e('Success', 'skylearn-billing-pro'); ?></span>
+                                                <span class="skylearn-billing-status-active" style="color: #155724; background: #d4edda; padding: 4px 8px; border-radius: 3px; font-size: 11px; font-weight: 600; text-transform: uppercase;">
+                                                    <?php esc_html_e('Success', 'skylearn-billing-pro'); ?>
+                                                </span>
                                             <?php else: ?>
-                                                <span class="skylearn-billing-status-inactive"><?php esc_html_e('Failed', 'skylearn-billing-pro'); ?></span>
+                                                <span class="skylearn-billing-status-inactive" style="color: #721c24; background: #f8d7da; padding: 4px 8px; border-radius: 3px; font-size: 11px; font-weight: 600; text-transform: uppercase;">
+                                                    <?php esc_html_e('Failed', 'skylearn-billing-pro'); ?>
+                                                </span>
                                             <?php endif; ?>
                                         </td>
                                     </tr>
@@ -542,6 +622,28 @@ function render_enrollment_log_tab($course_mapping) {
                             </tbody>
                         </table>
                     </div>
+
+                    <script>
+                    function filterEnrollmentLog() {
+                        const statusFilter = document.getElementById('status-filter').value;
+                        const triggerFilter = document.getElementById('trigger-filter').value;
+                        const rows = document.querySelectorAll('#enrollment-log-table tbody tr');
+                        
+                        rows.forEach(row => {
+                            const status = row.getAttribute('data-status');
+                            const trigger = row.getAttribute('data-trigger');
+                            
+                            const statusMatch = !statusFilter || status === statusFilter;
+                            const triggerMatch = !triggerFilter || trigger === triggerFilter;
+                            
+                            if (statusMatch && triggerMatch) {
+                                row.style.display = '';
+                            } else {
+                                row.style.display = 'none';
+                            }
+                        });
+                    }
+                    </script>
                 <?php endif; ?>
             </div>
         </div>
