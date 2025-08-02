@@ -334,6 +334,18 @@ class SkyLearn_Billing_Pro_Course_Mapping {
             // Get courses with error handling
             try {
                 $courses = $this->lms_manager->get_courses();
+                
+                // Add debugging information when courses are retrieved
+                if (defined('WP_DEBUG') && WP_DEBUG) {
+                    error_log('SkyLearn Billing Pro: Course Mapping UI - Retrieved ' . count($courses) . ' courses for dropdown');
+                    if (empty($courses)) {
+                        $integration_status = $this->lms_manager->get_integration_status();
+                        error_log('SkyLearn Billing Pro: Course Mapping UI - No courses found. LMS Status: Active=' . 
+                                  ($integration_status['active_lms'] ?: 'none') . 
+                                  ', Connector=' . ($integration_status['has_active_connector'] ? 'yes' : 'no') .
+                                  ', Count=' . $integration_status['course_count']);
+                    }
+                }
             } catch (Exception $e) {
                 error_log('SkyLearn Billing Pro: Error getting courses - ' . $e->getMessage());
                 $courses = array();
@@ -352,6 +364,25 @@ class SkyLearn_Billing_Pro_Course_Mapping {
                     'has_active_connector' => false,
                     'course_count' => 0
                 );
+            }
+            
+            // Fallback: If courses array is empty but status shows courses are available,
+            // try to retrieve courses again - this helps with potential timing issues
+            if (empty($courses) && isset($lms_status['course_count']) && $lms_status['course_count'] > 0) {
+                if (defined('WP_DEBUG') && WP_DEBUG) {
+                    error_log('SkyLearn Billing Pro: Course Mapping UI - Fallback: Retrying course retrieval. Status shows ' . 
+                              $lms_status['course_count'] . ' courses but courses array is empty');
+                }
+                
+                try {
+                    // Give it one more try
+                    $courses = $this->lms_manager->get_courses();
+                    if (defined('WP_DEBUG') && WP_DEBUG) {
+                        error_log('SkyLearn Billing Pro: Course Mapping UI - Fallback retrieved ' . count($courses) . ' courses');
+                    }
+                } catch (Exception $e) {
+                    error_log('SkyLearn Billing Pro: Course Mapping UI - Fallback course retrieval failed: ' . $e->getMessage());
+                }
             }
             
             $this->render_mapping_ui_content($mappings, $courses, $lms_status);
@@ -478,14 +509,27 @@ class SkyLearn_Billing_Pro_Course_Mapping {
                                 <div class="skylearn-billing-form-group">
                                     <label for="course_id"><?php esc_html_e('Course', 'skylearn-billing-pro'); ?></label>
                                     <select id="course_id" name="course_id" class="skylearn-billing-course-select" required>
-                                        <option value=""><?php esc_html_e('Select a course...', 'skylearn-billing-pro'); ?></option>
-                                        <?php foreach ($courses as $course): ?>
-                                            <option value="<?php echo esc_attr($course['id']); ?>">
-                                                <?php echo esc_html($course['title']); ?>
-                                                (ID: <?php echo esc_html($course['id']); ?>)
-                                            </option>
-                                        <?php endforeach; ?>
+                                        <?php if (empty($courses)): ?>
+                                            <option value=""><?php esc_html_e('No courses available - check LMS settings', 'skylearn-billing-pro'); ?></option>
+                                        <?php else: ?>
+                                            <option value=""><?php esc_html_e('Select a course...', 'skylearn-billing-pro'); ?></option>
+                                            <?php foreach ($courses as $course): ?>
+                                                <option value="<?php echo esc_attr($course['id']); ?>">
+                                                    <?php echo esc_html($course['title']); ?>
+                                                    (ID: <?php echo esc_html($course['id']); ?>)
+                                                </option>
+                                            <?php endforeach; ?>
+                                        <?php endif; ?>
                                     </select>
+                                    <?php if (empty($courses)): ?>
+                                        <p class="description" style="color: #d63638;">
+                                            <?php esc_html_e('No courses found. Ensure your LMS is properly configured and contains published courses.', 'skylearn-billing-pro'); ?>
+                                        </p>
+                                    <?php else: ?>
+                                        <p class="description">
+                                            <?php printf(esc_html__('Select from %d available courses.', 'skylearn-billing-pro'), count($courses)); ?>
+                                        </p>
+                                    <?php endif; ?>
                                 </div>
                             </div>
                             
@@ -601,9 +645,24 @@ class SkyLearn_Billing_Pro_Course_Mapping {
         
         <script type="text/javascript">
         jQuery(document).ready(function($) {
+            // Check if courses are available and disable form if not
+            var coursesAvailable = $('#course_id option').length > 1;
+            var $submitButton = $('#skylearn-course-mapping-form button[type="submit"]');
+            
+            if (!coursesAvailable) {
+                $submitButton.prop('disabled', true).text('<?php esc_js_e('No Courses Available', 'skylearn-billing-pro'); ?>');
+                $('#course_id').prop('disabled', true);
+            }
+            
             // Handle course mapping form submission
             $('#skylearn-course-mapping-form').on('submit', function(e) {
                 e.preventDefault();
+                
+                // Double-check courses are available
+                if (!coursesAvailable) {
+                    alert('<?php esc_js_e('No courses are available. Please check your LMS configuration.', 'skylearn-billing-pro'); ?>');
+                    return;
+                }
                 
                 var data = {
                     action: 'skylearn_billing_save_course_mapping',
