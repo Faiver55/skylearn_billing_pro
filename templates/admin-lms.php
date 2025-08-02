@@ -18,6 +18,16 @@ $lms_manager = skylearn_billing_pro_lms_manager();
 $course_mapping = skylearn_billing_pro_course_mapping();
 $webhook_handler = skylearn_billing_pro_webhook_handler();
 $licensing_manager = skylearn_billing_pro_licensing();
+
+// Ensure course_mapping is properly initialized
+if (!$course_mapping || !is_object($course_mapping)) {
+    if (defined('WP_DEBUG') && WP_DEBUG) {
+        error_log('SkyLearn Billing Pro: course_mapping not properly initialized');
+    }
+    // Create a fallback object with minimal functionality
+    $course_mapping = new stdClass();
+    $course_mapping->get_course_mappings = function() { return array(); };
+}
 ?>
 
 <div class="wrap skylearn-billing-admin">
@@ -314,7 +324,7 @@ function render_lms_settings_tab($lms_manager) {
                                 </div>
                                 <div class="skylearn-billing-stat-content">
                                     <div class="skylearn-billing-stat-label"><?php esc_html_e('Course Mappings', 'skylearn-billing-pro'); ?></div>
-                                    <div class="skylearn-billing-stat-number"><?php echo $course_mapping ? count($course_mapping->get_course_mappings()) : 0; ?></div>
+                                    <div class="skylearn-billing-stat-number"><?php echo ($course_mapping && method_exists($course_mapping, 'get_course_mappings')) ? count($course_mapping->get_course_mappings()) : 0; ?></div>
                                 </div>
                             </div>
                         </div>

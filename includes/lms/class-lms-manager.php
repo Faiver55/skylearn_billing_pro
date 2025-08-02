@@ -100,6 +100,7 @@ class SkyLearn_Billing_Pro_LMS_Manager {
     public function init() {
         $this->load_manual_overrides();
         $this->detect_lms_plugins();
+        $this->auto_set_active_lms();
         $this->load_active_connector();
     }
     
@@ -326,6 +327,40 @@ class SkyLearn_Billing_Pro_LMS_Manager {
     }
     
     /**
+     * Auto-set the first detected LMS as active if none is currently set
+     */
+    private function auto_set_active_lms() {
+        $current_active = $this->get_active_lms();
+        
+        // If there's already an active LMS set, don't change it
+        if ($current_active && $this->is_lms_active($current_active)) {
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log("SkyLearn Billing Pro: Active LMS already set to {$current_active}");
+            }
+            return;
+        }
+        
+        // Get detected LMS plugins
+        $detected_lms = $this->get_detected_lms();
+        
+        if (empty($detected_lms)) {
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log('SkyLearn Billing Pro: No LMS plugins detected for auto-setting');
+            }
+            return;
+        }
+        
+        // Set the first detected LMS as active
+        $first_lms = array_keys($detected_lms)[0];
+        
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            error_log("SkyLearn Billing Pro: Auto-setting {$first_lms} as active LMS");
+        }
+        
+        $this->set_active_lms($first_lms);
+    }
+    
+    /**
      * Get the active LMS connector
      *
      * @return object|null
@@ -453,10 +488,20 @@ class SkyLearn_Billing_Pro_LMS_Manager {
             $course_count = 0;
             $course_error = null;
             
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log('SkyLearn Billing Pro: get_integration_status() - Detected LMS count: ' . count($detected));
+                error_log('SkyLearn Billing Pro: get_integration_status() - Active LMS: ' . ($active ? $active : 'none'));
+                error_log('SkyLearn Billing Pro: get_integration_status() - Has active connector: ' . ($this->has_active_lms() ? 'yes' : 'no'));
+            }
+            
             if ($this->has_active_lms()) {
                 try {
                     $courses = $this->get_courses();
                     $course_count = count($courses);
+                    
+                    if (defined('WP_DEBUG') && WP_DEBUG) {
+                        error_log('SkyLearn Billing Pro: get_integration_status() - Course count retrieved: ' . $course_count);
+                    }
                     
                     // Add additional debugging for zero courses
                     if ($course_count === 0) {
@@ -479,6 +524,27 @@ class SkyLearn_Billing_Pro_LMS_Manager {
                 }
             } else {
                 error_log('SkyLearn Billing Pro: No active LMS connector available');
+                // Try to reload the connector as a recovery attempt
+                if ($active && $this->is_lms_active($active)) {
+                    if (defined('WP_DEBUG') && WP_DEBUG) {
+                        error_log('SkyLearn Billing Pro: Attempting to reload active connector for ' . $active);
+                    }
+                    $this->load_active_connector();
+                    
+                    // Retry getting courses if connector loaded successfully
+                    if ($this->has_active_lms()) {
+                        try {
+                            $courses = $this->get_courses();
+                            $course_count = count($courses);
+                            if (defined('WP_DEBUG') && WP_DEBUG) {
+                                error_log('SkyLearn Billing Pro: After reload - Course count: ' . $course_count);
+                            }
+                        } catch (Exception $e) {
+                            $course_error = $e->getMessage();
+                            error_log('SkyLearn Billing Pro: Error getting courses after reload - ' . $e->getMessage());
+                        }
+                    }
+                }
             }
             
             $status = array(
