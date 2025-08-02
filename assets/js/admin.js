@@ -35,14 +35,20 @@
          * Bind event handlers
          */
         bindEvents: function() {
-            // Reset to defaults button - only target buttons that are specifically for resetting
-            $('.skylearn-billing-btn-secondary:contains("Reset to Defaults")').on('click', this.resetToDefaults);
+            // Reset to defaults button - use more specific selector to avoid conflicts
+            $('button.skylearn-billing-btn-secondary[data-action="reset"], input.skylearn-billing-btn-secondary[data-action="reset"]').on('click', this.resetToDefaults);
+            
+            // Alternative selector for buttons with reset text that are actual reset buttons
+            $('button:contains("Reset to Defaults"), input[value*="Reset to Defaults"]').not('.skylearn-billing-back-link a').on('click', this.resetToDefaults);
             
             // Tab navigation (for future use)
             $('.skylearn-billing-nav-link').on('click', this.handleTabClick);
             
             // Form submission with validation
             $('form').on('submit', this.handleFormSubmit);
+            
+            // Back to dashboard button - ensure it only navigates
+            $('.skylearn-billing-back-link a').on('click', this.handleBackToDashboard);
         },
         
         /**
@@ -74,6 +80,15 @@
                     $label.append(' <span class="required" style="color: #FF3B00;">*</span>');
                 }
             });
+        },
+        
+        /**
+         * Handle back to dashboard button clicks
+         */
+        handleBackToDashboard: function(e) {
+            // Allow normal navigation - do not preventDefault
+            // This method ensures no reset confirmation is triggered
+            return true;
         },
         
         /**

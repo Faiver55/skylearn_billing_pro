@@ -1,0 +1,369 @@
+/**
+ * Skylearn Billing Pro - Course Mapping Styles
+ * Enhanced styles for course mapping functionality
+ *
+ * @package SkyLearnBillingPro  
+ * @author Ferdous Khalifa
+ * @copyright 2024 Skyian LLC
+ * @license GPLv3
+ */
+
+/* Form validation styles */
+.skylearn-field-error {
+    border-color: #dc3232 !important;
+    box-shadow: 0 0 0 1px #dc3232;
+}
+
+.skylearn-field-valid {
+    border-color: #46b450 !important;
+    box-shadow: 0 0 0 1px #46b450;
+}
+
+.skylearn-billing-form-group.has-error label {
+    color: #dc3232;
+}
+
+.skylearn-field-error-message {
+    color: #dc3232;
+    font-size: 12px;
+    margin-top: 5px;
+    display: block;
+}
+
+/* Loading states */
+.loading {
+    position: relative;
+    pointer-events: none;
+}
+
+.loading:after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    margin: -8px 0 0 -8px;
+    width: 16px;
+    height: 16px;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid #0073aa;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Enhanced notices */
+.skylearn-mapping-notice {
+    margin: 20px 0;
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Course mapping specific styles */
+.skylearn-billing-course-mapping {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.skylearn-billing-form-row {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.skylearn-billing-form-row .skylearn-billing-form-group {
+    flex: 1;
+}
+
+.skylearn-billing-form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+    color: #333;
+}
+
+.skylearn-billing-form-group input,
+.skylearn-billing-form-group select {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.skylearn-billing-form-group input:focus,
+.skylearn-billing-form-group select:focus {
+    outline: none;
+    border-color: #0073aa;
+    box-shadow: 0 0 0 1px #0073aa;
+}
+
+.skylearn-billing-form-group .description {
+    margin-top: 5px;
+    font-size: 12px;
+    color: #666;
+    line-height: 1.4;
+}
+
+/* Course select enhancement */
+.skylearn-billing-course-select {
+    position: relative;
+}
+
+.skylearn-billing-course-select option:disabled {
+    color: #999;
+    font-style: italic;
+}
+
+/* Status indicators */
+.skylearn-billing-lms-status-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin: 15px 0;
+}
+
+.skylearn-billing-status-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 15px;
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+}
+
+.skylearn-billing-status-item .dashicons {
+    color: #0073aa;
+    font-size: 20px;
+}
+
+.skylearn-billing-status-item strong {
+    display: block;
+    color: #333;
+    margin-bottom: 2px;
+}
+
+/* Empty state styling */
+.skylearn-billing-empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: #666;
+}
+
+.skylearn-billing-empty-state .dashicons {
+    font-size: 48px;
+    color: #ddd;
+    margin-bottom: 15px;
+}
+
+.skylearn-billing-empty-state h4 {
+    margin: 0 0 10px;
+    font-size: 18px;
+    color: #333;
+}
+
+.skylearn-billing-empty-state p {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+/* Table styling improvements */
+.skylearn-billing-mappings-table {
+    margin-top: 20px;
+}
+
+.skylearn-billing-mappings-table table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.skylearn-billing-mappings-table th,
+.skylearn-billing-mappings-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.skylearn-billing-mappings-table th {
+    background: #f8f9fa;
+    font-weight: 600;
+    color: #333;
+}
+
+.skylearn-billing-mappings-table tr:hover {
+    background: #f8f9fa;
+}
+
+.skylearn-billing-mappings-table .skylearn-billing-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    border-radius: 3px;
+    background: #e9ecef;
+    color: #495057;
+}
+
+.skylearn-billing-mappings-table .skylearn-billing-status-active {
+    color: #155724;
+    background: #d4edda;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.skylearn-billing-mappings-table .skylearn-billing-status-inactive {
+    color: #721c24;
+    background: #f8d7da;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+/* Button enhancements */
+.skylearn-billing-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 500;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.skylearn-billing-btn-primary {
+    background: #0073aa;
+    color: white;
+}
+
+.skylearn-billing-btn-primary:hover {
+    background: #005a87;
+    color: white;
+    text-decoration: none;
+}
+
+.skylearn-billing-btn-primary:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+.skylearn-billing-delete-mapping {
+    background: #dc3232;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 3px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.skylearn-billing-delete-mapping:hover {
+    background: #a92a2a;
+    color: white;
+}
+
+.skylearn-billing-delete-mapping:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+/* Required field indicator */
+.required {
+    color: #dc3232;
+    font-weight: bold;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .skylearn-billing-form-row {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .skylearn-billing-status-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .skylearn-billing-mappings-table {
+        overflow-x: auto;
+    }
+    
+    .skylearn-billing-mappings-table table {
+        min-width: 600px;
+    }
+}
+
+/* Focus improvements for accessibility */
+.skylearn-billing-form-group input:focus,
+.skylearn-billing-form-group select:focus,
+.skylearn-billing-btn:focus {
+    outline: 2px solid #0073aa;
+    outline-offset: 2px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .skylearn-field-error {
+        border-color: #000;
+        box-shadow: 0 0 0 2px #000;
+    }
+    
+    .skylearn-field-valid {
+        border-color: #000;
+        box-shadow: 0 0 0 2px #000;
+    }
+    
+    .skylearn-billing-status-active {
+        border: 1px solid #000;
+    }
+    
+    .skylearn-billing-status-inactive {
+        border: 1px solid #000;
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* Print styles */
+@media print {
+    .skylearn-billing-btn,
+    .skylearn-billing-delete-mapping,
+    .loading:after {
+        display: none !important;
+    }
+    
+    .skylearn-billing-mappings-table {
+        page-break-inside: avoid;
+    }
+}

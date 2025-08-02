@@ -62,39 +62,109 @@ class SkyLearn_Billing_Pro_Course_Mapping {
      * @param int $course_id Course ID
      * @param string $trigger_type Trigger type (payment, manual, webhook)
      * @param array $additional_settings Additional mapping settings
-     * @return bool Success status
+     * @return bool|WP_Error Success status or WP_Error on failure
      */
     public function save_course_mapping($product_id, $course_id, $trigger_type = 'payment', $additional_settings = array()) {
-        $options = get_option('skylearn_billing_pro_options', array());
-        
-        if (!isset($options['course_mappings'])) {
-            $options['course_mappings'] = array();
+        try {
+            // Validate inputs
+            $validation_result = $this->validate_mapping_inputs($product_id, $course_id, $trigger_type);
+            if (is_wp_error($validation_result)) {
+                return $validation_result;
+            }
+            
+            $options = get_option('skylearn_billing_pro_options', array());
+            
+            if (!isset($options['course_mappings'])) {
+                $options['course_mappings'] = array();
+            }
+            
+            // Check for duplicate mapping
+            if (isset($options['course_mappings'][$product_id])) {
+                return new WP_Error('duplicate_mapping', __('A mapping for this product ID already exists.', 'skylearn-billing-pro'));
+            }
+            
+            // Validate course exists
+            if (!$this->validate_course_exists($course_id)) {
+                return new WP_Error('invalid_course', __('The selected course does not exist or is not accessible.', 'skylearn-billing-pro'));
+            }
+            
+            // Create mapping data
+            $mapping_data = array(
+                'product_id' => sanitize_text_field($product_id),
+                'course_id' => intval($course_id),
+                'trigger_type' => sanitize_text_field($trigger_type),
+                'created_at' => current_time('mysql'),
+                'updated_at' => current_time('mysql'),
+                'status' => 'active'
+            );
+            
+            // Add additional settings
+            if (!empty($additional_settings) && is_array($additional_settings)) {
+                $mapping_data['settings'] = $additional_settings;
+            }
+            
+            // Save mapping (using product_id as key for easy lookup)
+            $options['course_mappings'][$product_id] = $mapping_data;
+            
+            $result = update_option('skylearn_billing_pro_options', $options);
+            
+            if (!$result) {
+                return new WP_Error('save_failed', __('Failed to save course mapping to database.', 'skylearn-billing-pro'));
+            }
+            
+            // Log successful mapping creation
+            error_log(sprintf(
+                'SkyLearn Billing Pro: Course mapping created - Product: %s, Course: %d, Trigger: %s',
+                $product_id,
+                $course_id,
+                $trigger_type
+            ));
+            
+            // Fire action hook for other plugins to use
+            do_action('skylearn_billing_pro_course_mapping_saved', $product_id, $course_id, $trigger_type, $mapping_data);
+            
+            return true;
+            
+        } catch (Exception $e) {
+            error_log('SkyLearn Billing Pro: Error saving course mapping - ' . $e->getMessage());
+            return new WP_Error('exception', __('An unexpected error occurred while saving the course mapping.', 'skylearn-billing-pro'));
+        }
+    }
+    
+    /**
+     * Validate mapping inputs
+     *
+     * @param string $product_id Product ID
+     * @param int $course_id Course ID  
+     * @param string $trigger_type Trigger type
+     * @return bool|WP_Error True if valid, WP_Error if invalid
+     */
+    private function validate_mapping_inputs($product_id, $course_id, $trigger_type) {
+        // Validate product ID
+        if (empty($product_id) || !is_string($product_id)) {
+            return new WP_Error('invalid_product_id', __('Product ID is required and must be a valid string.', 'skylearn-billing-pro'));
         }
         
-        // Validate course exists
-        if (!$this->validate_course_exists($course_id)) {
-            return false;
+        if (strlen($product_id) < 3) {
+            return new WP_Error('invalid_product_id', __('Product ID must be at least 3 characters long.', 'skylearn-billing-pro'));
         }
         
-        // Create mapping data
-        $mapping_data = array(
-            'product_id' => sanitize_text_field($product_id),
-            'course_id' => intval($course_id),
-            'trigger_type' => sanitize_text_field($trigger_type),
-            'created_at' => current_time('mysql'),
-            'updated_at' => current_time('mysql'),
-            'status' => 'active'
-        );
-        
-        // Add additional settings
-        if (!empty($additional_settings)) {
-            $mapping_data['settings'] = $additional_settings;
+        if (strlen($product_id) > 100) {
+            return new WP_Error('invalid_product_id', __('Product ID must be 100 characters or less.', 'skylearn-billing-pro'));
         }
         
-        // Save mapping (using product_id as key for easy lookup)
-        $options['course_mappings'][$product_id] = $mapping_data;
+        // Validate course ID
+        if (empty($course_id) || !is_numeric($course_id) || intval($course_id) <= 0) {
+            return new WP_Error('invalid_course_id', __('Course ID is required and must be a positive integer.', 'skylearn-billing-pro'));
+        }
         
-        return update_option('skylearn_billing_pro_options', $options);
+        // Validate trigger type
+        $valid_triggers = array('payment', 'webhook', 'manual', 'any');
+        if (!in_array($trigger_type, $valid_triggers)) {
+            return new WP_Error('invalid_trigger', __('Invalid trigger type specified.', 'skylearn-billing-pro'));
+        }
+        
+        return true;
     }
     
     /**
@@ -642,116 +712,6 @@ class SkyLearn_Billing_Pro_Course_Mapping {
                 </div>
             <?php endif; ?>
         </div>
-        
-        <script type="text/javascript">
-        jQuery(document).ready(function($) {
-            // Ensure ajaxurl is available
-            if (typeof ajaxurl === 'undefined') {
-                var ajaxurl = '<?php echo admin_url('admin-ajax.php'); ?>';
-            }
-            
-            // Check if courses are available and disable form if not
-            var coursesAvailable = $('#course_id option').length > 1;
-            var $submitButton = $('#skylearn-course-mapping-form button[type="submit"]');
-            
-            if (!coursesAvailable) {
-                $submitButton.prop('disabled', true).text('<?php esc_js_e('No Courses Available', 'skylearn-billing-pro'); ?>');
-                $('#course_id').prop('disabled', true);
-            }
-            
-            // Handle course mapping form submission
-            $('#skylearn-course-mapping-form').on('submit', function(e) {
-                e.preventDefault();
-                
-                // Double-check courses are available
-                if (!coursesAvailable) {
-                    alert('<?php esc_js_e('No courses are available. Please check your LMS configuration.', 'skylearn-billing-pro'); ?>');
-                    return;
-                }
-                
-                // Show loading state
-                $submitButton.prop('disabled', true).text('<?php esc_js_e('Saving...', 'skylearn-billing-pro'); ?>');
-                
-                var data = {
-                    action: 'skylearn_billing_save_course_mapping',
-                    nonce: '<?php echo wp_create_nonce('skylearn_course_mapping_nonce'); ?>',
-                    product_id: $('#product_id').val(),
-                    course_id: $('#course_id').val(),
-                    trigger_type: $('#trigger_type').val()
-                };
-                
-                $.post(ajaxurl, data)
-                .done(function(response) {
-                    if (response.success) {
-                        // Success - reload the page to show the new mapping
-                        location.reload();
-                    } else {
-                        // Handle error response
-                        var errorMessage = response.data && response.data.message ? 
-                            response.data.message : 
-                            '<?php esc_js_e('Error saving mapping. Please try again.', 'skylearn-billing-pro'); ?>';
-                        alert(errorMessage);
-                        
-                        // Reset button state
-                        $submitButton.prop('disabled', false).text('<?php esc_js_e('Add Mapping', 'skylearn-billing-pro'); ?>');
-                    }
-                })
-                .fail(function(xhr, status, error) {
-                    // Handle AJAX failure
-                    console.error('AJAX Error:', status, error);
-                    alert('<?php esc_js_e('Network error occurred. Please check your connection and try again.', 'skylearn-billing-pro'); ?>');
-                    
-                    // Reset button state
-                    $submitButton.prop('disabled', false).text('<?php esc_js_e('Add Mapping', 'skylearn-billing-pro'); ?>');
-                });
-            });
-            
-            // Handle mapping deletion
-            $('.skylearn-billing-delete-mapping').on('click', function(e) {
-                e.preventDefault();
-                
-                if (!confirm('<?php esc_js_e('Are you sure you want to delete this mapping?', 'skylearn-billing-pro'); ?>')) {
-                    return;
-                }
-                
-                var productId = $(this).data('product-id');
-                var $row = $(this).closest('tr');
-                var $button = $(this);
-                
-                // Show loading state
-                $button.prop('disabled', true).text('<?php esc_js_e('Deleting...', 'skylearn-billing-pro'); ?>');
-                
-                var data = {
-                    action: 'skylearn_billing_delete_course_mapping',
-                    nonce: '<?php echo wp_create_nonce('skylearn_course_mapping_nonce'); ?>',
-                    product_id: productId
-                };
-                
-                $.post(ajaxurl, data)
-                .done(function(response) {
-                    if (response.success) {
-                        $row.fadeOut();
-                    } else {
-                        var errorMessage = response.data && response.data.message ? 
-                            response.data.message : 
-                            '<?php esc_js_e('Error deleting mapping. Please try again.', 'skylearn-billing-pro'); ?>';
-                        alert(errorMessage);
-                        
-                        // Reset button state
-                        $button.prop('disabled', false).text('<?php esc_js_e('Delete', 'skylearn-billing-pro'); ?>');
-                    }
-                })
-                .fail(function(xhr, status, error) {
-                    // Handle AJAX failure
-                    console.error('AJAX Error:', status, error);
-                    alert('<?php esc_js_e('Network error occurred. Please check your connection and try again.', 'skylearn-billing-pro'); ?>');
-                    
-                    // Reset button state
-                    $button.prop('disabled', false).text('<?php esc_js_e('Delete', 'skylearn-billing-pro'); ?>');
-                });
-            });
-        });
-        </script>
         <?php
     }
     
@@ -760,30 +720,73 @@ class SkyLearn_Billing_Pro_Course_Mapping {
      */
     public function ajax_save_course_mapping() {
         try {
-            check_ajax_referer('skylearn_course_mapping_nonce', 'nonce');
+            // Verify nonce and permissions
+            if (!wp_verify_nonce($_POST['nonce'] ?? '', 'skylearn_course_mapping_nonce')) {
+                wp_send_json_error(array(
+                    'message' => __('Security verification failed. Please refresh the page and try again.', 'skylearn-billing-pro'),
+                    'code' => 'invalid_nonce'
+                ));
+            }
             
             if (!current_user_can('manage_options')) {
-                wp_die(__('Unauthorized', 'skylearn-billing-pro'));
+                wp_send_json_error(array(
+                    'message' => __('You do not have permission to perform this action.', 'skylearn-billing-pro'),
+                    'code' => 'insufficient_permissions'
+                ));
             }
             
-            $product_id = sanitize_text_field($_POST['product_id']);
-            $course_id = intval($_POST['course_id']);
-            $trigger_type = sanitize_text_field($_POST['trigger_type']);
+            // Sanitize and validate inputs
+            $product_id = sanitize_text_field($_POST['product_id'] ?? '');
+            $course_id = intval($_POST['course_id'] ?? 0);
+            $trigger_type = sanitize_text_field($_POST['trigger_type'] ?? 'payment');
             
-            if (empty($product_id) || empty($course_id)) {
-                wp_send_json_error(array('message' => __('Product ID and Course are required.', 'skylearn-billing-pro')));
+            // Basic validation
+            if (empty($product_id)) {
+                wp_send_json_error(array(
+                    'message' => __('Product ID is required.', 'skylearn-billing-pro'),
+                    'code' => 'missing_product_id'
+                ));
             }
             
+            if (empty($course_id)) {
+                wp_send_json_error(array(
+                    'message' => __('Please select a course.', 'skylearn-billing-pro'),
+                    'code' => 'missing_course_id'
+                ));
+            }
+            
+            // Attempt to save the mapping
             $result = $this->save_course_mapping($product_id, $course_id, $trigger_type);
             
-            if ($result) {
-                wp_send_json_success(array('message' => __('Mapping saved successfully.', 'skylearn-billing-pro')));
-            } else {
-                wp_send_json_error(array('message' => __('Failed to save mapping.', 'skylearn-billing-pro')));
+            if (is_wp_error($result)) {
+                wp_send_json_error(array(
+                    'message' => $result->get_error_message(),
+                    'code' => $result->get_error_code()
+                ));
             }
+            
+            if ($result === true) {
+                wp_send_json_success(array(
+                    'message' => __('Course mapping saved successfully!', 'skylearn-billing-pro'),
+                    'mapping' => array(
+                        'product_id' => $product_id,
+                        'course_id' => $course_id,
+                        'trigger_type' => $trigger_type
+                    )
+                ));
+            } else {
+                wp_send_json_error(array(
+                    'message' => __('Failed to save course mapping. Please try again.', 'skylearn-billing-pro'),
+                    'code' => 'save_failed'
+                ));
+            }
+            
         } catch (Exception $e) {
             error_log('SkyLearn Billing Pro: Error in ajax_save_course_mapping - ' . $e->getMessage());
-            wp_send_json_error(array('message' => __('An error occurred while saving the mapping.', 'skylearn-billing-pro')));
+            wp_send_json_error(array(
+                'message' => __('An unexpected error occurred. Please try again or contact support if the problem persists.', 'skylearn-billing-pro'),
+                'code' => 'exception'
+            ));
         }
     }
     
@@ -792,28 +795,68 @@ class SkyLearn_Billing_Pro_Course_Mapping {
      */
     public function ajax_delete_course_mapping() {
         try {
-            check_ajax_referer('skylearn_course_mapping_nonce', 'nonce');
-            
-            if (!current_user_can('manage_options')) {
-                wp_die(__('Unauthorized', 'skylearn-billing-pro'));
+            // Verify nonce and permissions
+            if (!wp_verify_nonce($_POST['nonce'] ?? '', 'skylearn_course_mapping_nonce')) {
+                wp_send_json_error(array(
+                    'message' => __('Security verification failed. Please refresh the page and try again.', 'skylearn-billing-pro'),
+                    'code' => 'invalid_nonce'
+                ));
             }
             
-            $product_id = sanitize_text_field($_POST['product_id']);
+            if (!current_user_can('manage_options')) {
+                wp_send_json_error(array(
+                    'message' => __('You do not have permission to perform this action.', 'skylearn-billing-pro'),
+                    'code' => 'insufficient_permissions'
+                ));
+            }
+            
+            $product_id = sanitize_text_field($_POST['product_id'] ?? '');
             
             if (empty($product_id)) {
-                wp_send_json_error(array('message' => __('Product ID is required.', 'skylearn-billing-pro')));
+                wp_send_json_error(array(
+                    'message' => __('Product ID is required for deletion.', 'skylearn-billing-pro'),
+                    'code' => 'missing_product_id'
+                ));
+            }
+            
+            // Check if mapping exists before attempting deletion
+            $existing_mapping = $this->get_course_mapping($product_id);
+            if (!$existing_mapping) {
+                wp_send_json_error(array(
+                    'message' => __('Course mapping not found. It may have already been deleted.', 'skylearn-billing-pro'),
+                    'code' => 'mapping_not_found'
+                ));
             }
             
             $result = $this->delete_course_mapping($product_id);
             
             if ($result) {
-                wp_send_json_success(array('message' => __('Mapping deleted successfully.', 'skylearn-billing-pro')));
+                // Log successful deletion
+                error_log(sprintf(
+                    'SkyLearn Billing Pro: Course mapping deleted - Product: %s',
+                    $product_id
+                ));
+                
+                // Fire action hook
+                do_action('skylearn_billing_pro_course_mapping_deleted', $product_id, $existing_mapping);
+                
+                wp_send_json_success(array(
+                    'message' => __('Course mapping deleted successfully.', 'skylearn-billing-pro'),
+                    'product_id' => $product_id
+                ));
             } else {
-                wp_send_json_error(array('message' => __('Failed to delete mapping.', 'skylearn-billing-pro')));
+                wp_send_json_error(array(
+                    'message' => __('Failed to delete course mapping. Please try again.', 'skylearn-billing-pro'),
+                    'code' => 'delete_failed'
+                ));
             }
+            
         } catch (Exception $e) {
             error_log('SkyLearn Billing Pro: Error in ajax_delete_course_mapping - ' . $e->getMessage());
-            wp_send_json_error(array('message' => __('An error occurred while deleting the mapping.', 'skylearn-billing-pro')));
+            wp_send_json_error(array(
+                'message' => __('An unexpected error occurred while deleting the mapping.', 'skylearn-billing-pro'),
+                'code' => 'exception'
+            ));
         }
     }
     
