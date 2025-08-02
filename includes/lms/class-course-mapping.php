@@ -645,6 +645,11 @@ class SkyLearn_Billing_Pro_Course_Mapping {
         
         <script type="text/javascript">
         jQuery(document).ready(function($) {
+            // Ensure ajaxurl is available
+            if (typeof ajaxurl === 'undefined') {
+                var ajaxurl = '<?php echo admin_url('admin-ajax.php'); ?>';
+            }
+            
             // Check if courses are available and disable form if not
             var coursesAvailable = $('#course_id option').length > 1;
             var $submitButton = $('#skylearn-course-mapping-form button[type="submit"]');
@@ -664,6 +669,9 @@ class SkyLearn_Billing_Pro_Course_Mapping {
                     return;
                 }
                 
+                // Show loading state
+                $submitButton.prop('disabled', true).text('<?php esc_js_e('Saving...', 'skylearn-billing-pro'); ?>');
+                
                 var data = {
                     action: 'skylearn_billing_save_course_mapping',
                     nonce: '<?php echo wp_create_nonce('skylearn_course_mapping_nonce'); ?>',
@@ -672,12 +680,29 @@ class SkyLearn_Billing_Pro_Course_Mapping {
                     trigger_type: $('#trigger_type').val()
                 };
                 
-                $.post(ajaxurl, data, function(response) {
+                $.post(ajaxurl, data)
+                .done(function(response) {
                     if (response.success) {
+                        // Success - reload the page to show the new mapping
                         location.reload();
                     } else {
-                        alert(response.data.message || 'Error saving mapping');
+                        // Handle error response
+                        var errorMessage = response.data && response.data.message ? 
+                            response.data.message : 
+                            '<?php esc_js_e('Error saving mapping. Please try again.', 'skylearn-billing-pro'); ?>';
+                        alert(errorMessage);
+                        
+                        // Reset button state
+                        $submitButton.prop('disabled', false).text('<?php esc_js_e('Add Mapping', 'skylearn-billing-pro'); ?>');
                     }
+                })
+                .fail(function(xhr, status, error) {
+                    // Handle AJAX failure
+                    console.error('AJAX Error:', status, error);
+                    alert('<?php esc_js_e('Network error occurred. Please check your connection and try again.', 'skylearn-billing-pro'); ?>');
+                    
+                    // Reset button state
+                    $submitButton.prop('disabled', false).text('<?php esc_js_e('Add Mapping', 'skylearn-billing-pro'); ?>');
                 });
             });
             
@@ -691,6 +716,10 @@ class SkyLearn_Billing_Pro_Course_Mapping {
                 
                 var productId = $(this).data('product-id');
                 var $row = $(this).closest('tr');
+                var $button = $(this);
+                
+                // Show loading state
+                $button.prop('disabled', true).text('<?php esc_js_e('Deleting...', 'skylearn-billing-pro'); ?>');
                 
                 var data = {
                     action: 'skylearn_billing_delete_course_mapping',
@@ -698,12 +727,27 @@ class SkyLearn_Billing_Pro_Course_Mapping {
                     product_id: productId
                 };
                 
-                $.post(ajaxurl, data, function(response) {
+                $.post(ajaxurl, data)
+                .done(function(response) {
                     if (response.success) {
                         $row.fadeOut();
                     } else {
-                        alert(response.data.message || 'Error deleting mapping');
+                        var errorMessage = response.data && response.data.message ? 
+                            response.data.message : 
+                            '<?php esc_js_e('Error deleting mapping. Please try again.', 'skylearn-billing-pro'); ?>';
+                        alert(errorMessage);
+                        
+                        // Reset button state
+                        $button.prop('disabled', false).text('<?php esc_js_e('Delete', 'skylearn-billing-pro'); ?>');
                     }
+                })
+                .fail(function(xhr, status, error) {
+                    // Handle AJAX failure
+                    console.error('AJAX Error:', status, error);
+                    alert('<?php esc_js_e('Network error occurred. Please check your connection and try again.', 'skylearn-billing-pro'); ?>');
+                    
+                    // Reset button state
+                    $button.prop('disabled', false).text('<?php esc_js_e('Delete', 'skylearn-billing-pro'); ?>');
                 });
             });
         });
