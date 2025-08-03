@@ -13,6 +13,11 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+// Load gateway registry
+if (!class_exists('SkyLearn_Billing_Pro_Gateway_Registry')) {
+    require_once SKYLEARN_BILLING_PRO_PLUGIN_DIR . 'includes/gateways/class-gateway-registry.php';
+}
+
 /**
  * Payment Manager class
  */
@@ -90,13 +95,16 @@ class SkyLearn_Billing_Pro_Payment_Manager {
      */
     public function __construct() {
         add_action('init', array($this, 'init'));
+        
+        // Initialize gateway registry
+        SkyLearn_Billing_Pro_Gateway_Registry::init();
     }
     
     /**
      * Initialize payment manager
      */
     public function init() {
-        // Load gateway connectors
+        // Load gateway connectors (legacy support)
         $this->load_connectors();
     }
     
@@ -106,6 +114,29 @@ class SkyLearn_Billing_Pro_Payment_Manager {
      * @return array
      */
     public function get_supported_gateways() {
+        // Use new gateway registry to get gateway configurations
+        $registry_configs = SkyLearn_Billing_Pro_Gateway_Registry::get_admin_configs();
+        
+        if (!empty($registry_configs)) {
+            // Convert registry format to legacy format for backward compatibility
+            $legacy_format = array();
+            foreach ($registry_configs as $gateway_id => $config) {
+                $legacy_format[$gateway_id] = array(
+                    'name' => $config['name'],
+                    'description' => $config['description'],
+                    'supports_inline' => $config['supports_inline'],
+                    'supports_overlay' => $config['supports_overlay'],
+                    'supports_hosted' => $config['supports_hosted'],
+                    'requires_hosted_only' => $config['requires_hosted_only'],
+                    'connector_class' => 'SkyLearn_Billing_Pro_' . ucfirst($gateway_id) . '_Gateway',
+                    'tier_requirements' => $config['tier_requirements'],
+                    'credentials' => $config['credentials']
+                );
+            }
+            return apply_filters('skylearn_billing_pro_supported_gateways', $legacy_format);
+        }
+        
+        // Fallback to legacy hardcoded list if registry is empty
         return apply_filters('skylearn_billing_pro_supported_gateways', $this->supported_gateways);
     }
     
@@ -115,6 +146,30 @@ class SkyLearn_Billing_Pro_Payment_Manager {
      * @return array
      */
     public function get_available_gateways() {
+        // Use new gateway registry
+        $available_gateways = SkyLearn_Billing_Pro_Gateway_Registry::get_available_gateways();
+        
+        if (!empty($available_gateways)) {
+            // Convert to legacy format
+            $legacy_format = array();
+            foreach ($available_gateways as $gateway_id => $gateway) {
+                $config = $gateway->get_admin_config();
+                $legacy_format[$gateway_id] = array(
+                    'name' => $config['name'],
+                    'description' => $config['description'],
+                    'supports_inline' => $config['supports_inline'],
+                    'supports_overlay' => $config['supports_overlay'],
+                    'supports_hosted' => $config['supports_hosted'],
+                    'requires_hosted_only' => $config['requires_hosted_only'],
+                    'connector_class' => 'SkyLearn_Billing_Pro_' . ucfirst($gateway_id) . '_Gateway',
+                    'tier_requirements' => $config['tier_requirements'],
+                    'credentials' => $config['credentials']
+                );
+            }
+            return apply_filters('skylearn_billing_pro_available_gateways', $legacy_format);
+        }
+        
+        // Fallback to legacy implementation
         $licensing_manager = skylearn_billing_pro_licensing();
         $current_tier = $licensing_manager->get_license_tier();
         
@@ -134,6 +189,30 @@ class SkyLearn_Billing_Pro_Payment_Manager {
      * @return array
      */
     public function get_enabled_gateways() {
+        // Try to use new gateway registry first
+        $enabled_gateways = SkyLearn_Billing_Pro_Gateway_Registry::get_enabled_gateways();
+        
+        if (!empty($enabled_gateways)) {
+            // Convert to legacy format
+            $legacy_format = array();
+            foreach ($enabled_gateways as $gateway_id => $gateway) {
+                $config = $gateway->get_admin_config();
+                $legacy_format[$gateway_id] = array(
+                    'name' => $config['name'],
+                    'description' => $config['description'],
+                    'supports_inline' => $config['supports_inline'],
+                    'supports_overlay' => $config['supports_overlay'],
+                    'supports_hosted' => $config['supports_hosted'],
+                    'requires_hosted_only' => $config['requires_hosted_only'],
+                    'connector_class' => 'SkyLearn_Billing_Pro_' . ucfirst($gateway_id) . '_Gateway',
+                    'tier_requirements' => $config['tier_requirements'],
+                    'credentials' => $config['credentials']
+                );
+            }
+            return $legacy_format;
+        }
+        
+        // Fallback to legacy implementation
         $options = get_option('skylearn_billing_pro_options', array());
         $enabled = isset($options['payment_settings']['enabled_gateways']) ? $options['payment_settings']['enabled_gateways'] : array();
         
@@ -156,6 +235,13 @@ class SkyLearn_Billing_Pro_Payment_Manager {
      * @return bool
      */
     public function is_gateway_enabled($gateway_id) {
+        // Try new gateway registry first
+        $gateway = SkyLearn_Billing_Pro_Gateway_Registry::get_gateway($gateway_id);
+        if ($gateway) {
+            return $gateway->is_enabled();
+        }
+        
+        // Fallback to legacy implementation
         $enabled_gateways = $this->get_enabled_gateways();
         return isset($enabled_gateways[$gateway_id]);
     }
@@ -180,6 +266,13 @@ class SkyLearn_Billing_Pro_Payment_Manager {
      * @return bool
      */
     public function has_gateway_credentials($gateway_id) {
+        // Try new gateway registry first
+        $gateway = SkyLearn_Billing_Pro_Gateway_Registry::get_gateway($gateway_id);
+        if ($gateway) {
+            return $gateway->has_credentials();
+        }
+        
+        // Fallback to legacy implementation
         if (!isset($this->supported_gateways[$gateway_id])) {
             return false;
         }
@@ -203,6 +296,13 @@ class SkyLearn_Billing_Pro_Payment_Manager {
      * @return array
      */
     public function get_gateway_notices($gateway_id) {
+        // Try new gateway registry first
+        $gateway = SkyLearn_Billing_Pro_Gateway_Registry::get_gateway($gateway_id);
+        if ($gateway) {
+            return $gateway->get_notices();
+        }
+        
+        // Fallback to legacy implementation
         $notices = array();
         
         if (!isset($this->supported_gateways[$gateway_id])) {
@@ -277,6 +377,13 @@ class SkyLearn_Billing_Pro_Payment_Manager {
      * @return object|false Gateway connector instance or false
      */
     public function get_gateway_connector($gateway_id) {
+        // Try new gateway registry first
+        $gateway = SkyLearn_Billing_Pro_Gateway_Registry::get_gateway($gateway_id);
+        if ($gateway) {
+            return $gateway;
+        }
+        
+        // Fallback to legacy implementation
         if (!$this->is_gateway_enabled($gateway_id)) {
             return false;
         }
@@ -298,16 +405,8 @@ class SkyLearn_Billing_Pro_Payment_Manager {
      * @return array
      */
     public function process_payment_webhook($gateway_id, $payload) {
-        $connector = $this->get_gateway_connector($gateway_id);
-        
-        if (!$connector || !method_exists($connector, 'process_webhook')) {
-            return array(
-                'success' => false,
-                'message' => 'Gateway connector not found or webhook method not supported'
-            );
-        }
-        
-        return $connector->process_webhook($payload);
+        // Try new gateway registry first
+        return SkyLearn_Billing_Pro_Gateway_Registry::process_webhook($gateway_id, $payload);
     }
 }
 
